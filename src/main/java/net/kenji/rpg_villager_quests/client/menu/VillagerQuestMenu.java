@@ -1,11 +1,13 @@
 package net.kenji.rpg_villager_quests.client.menu;
 
 import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.blaze3d.vertex.BufferBuilder;
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.kenji.rpg_villager_quests.RpgVillagerQuests;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.gui.components.events.GuiEventListener;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.inventory.InventoryScreen;
 import net.minecraft.network.chat.Component;
@@ -15,6 +17,7 @@ import net.minecraft.world.entity.npc.Villager;
 import net.minecraft.world.entity.player.Player;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.fml.common.Mod;
+import org.jline.reader.Widget;
 
 import java.util.*;
 import java.util.regex.Pattern;
@@ -103,8 +106,8 @@ public class VillagerQuestMenu extends Screen {
     private static final int TYPE_SPEED_MS = 35;
     private static final int PERIOD_PAUSE_MS = 600; // Pause after periods
     private static final int COMMA_PAUSE_MS = 400; // Pause after periods
-    private static final int EXCLAMATION_PAUSE_MS = 450; // Pause after periods
-    private static final int QUESTION_MARK_PAUSE_MS = 450; // Pause after periods
+    private static final int EXCLAMATION_PAUSE_MS = 900; // Pause after periods
+    private static final int QUESTION_MARK_PAUSE_MS = 800; // Pause after periods
 
     private static final int SENTENCE_START_DELAY = 10; // Pause after periods
 
@@ -114,7 +117,9 @@ public class VillagerQuestMenu extends Screen {
     private boolean isPausedAfterExclamationMark = false;
     private long pauseStartTime = 0;
     private static boolean hasSentenceCompleted;
+    public Button posButton;
 
+    private boolean pendingInit = false;
     private enum DisplayType{
         BACKGROUND_DISPLAY,
         HEAD_DISPLAY
@@ -166,6 +171,7 @@ public class VillagerQuestMenu extends Screen {
         return (this.height - getBgHeight(ui)) / 2;
     }
 
+
     @Override
     protected void init() {
        Player player = Minecraft.getInstance().player;
@@ -216,9 +222,37 @@ public class VillagerQuestMenu extends Screen {
         int pX = bgX + padding;
         int pY = bgY + bgH - buttonHeight - padding;
 
+        // Bottom-left "Close"
+        this.addRenderableWidget(
+                Button.builder(
+                        Component.literal("Close"),
+                        btn -> this.onClose()
+                ).bounds(
+                        pX + xOffset,
+                        pY + negYOffset,
+                        buttonWidth,
+                        buttonHeight
+                ).build()
+        );
+    }
 
+    public void addPositiveButton(Player player){
+        int bgX = getX(backgroundGui);
+        int bgY = getY(backgroundGui);
+        int bgW = getBgWidth(backgroundGui);
+        int bgH = getBgHeight(backgroundGui);
+
+        int buttonWidth = 90;
+        int buttonHeight = 20;
+        int padding = 8;
+
+        int xOffset = -100;
+        int posYOffset = -10;
+        int negYOffset = 15;
+        int pX = bgX + padding;
+        int pY = bgY + bgH - buttonHeight - padding;
         if (currentPage == pages.size() - 1) {
-            this.addRenderableWidget(
+            posButton = this.addRenderableWidget(
                     Button.builder(
                             Component.literal("Accept Quest"),
                             btn -> onAcceptQuest(player)
@@ -232,7 +266,7 @@ public class VillagerQuestMenu extends Screen {
         }
         else{
             if(hasSentenceCompleted) {
-                this.addRenderableWidget(
+                posButton = this.addRenderableWidget(
                         Button.builder(
                                 Component.literal("Next"),
                                 btn -> onNextPage(player)
@@ -245,19 +279,6 @@ public class VillagerQuestMenu extends Screen {
                 );
             }
         }
-
-        // Bottom-left "Close"
-        this.addRenderableWidget(
-                Button.builder(
-                        Component.literal("Close"),
-                        btn -> this.onClose()
-                ).bounds(
-                        pX + xOffset,
-                        pY + negYOffset,
-                        buttonWidth,
-                        buttonHeight
-                ).build()
-        );
     }
 
     public void onAcceptQuest(Player player){
@@ -277,6 +298,7 @@ public class VillagerQuestMenu extends Screen {
             currentSentenceStartDelay = 0;
             hasSentenceCompleted = false;
             player.playSound(SoundEvents.VILLAGER_TRADE);
+
             this.clearWidgets();
             this.init();
         }
@@ -302,6 +324,8 @@ public class VillagerQuestMenu extends Screen {
         currentSentenceStartDelay = 0;
         super.onClose();
     }
+
+
 
     @Override
     public boolean isPauseScreen() {
@@ -416,6 +440,7 @@ public class VillagerQuestMenu extends Screen {
                         isPausedAfterComma = false;
                         lastTypeTime = now;
                     }
+                }
                     else if (isPausedAfterExclamationMark) {
                         if (now - pauseStartTime >= EXCLAMATION_PAUSE_MS) {
                             // Pause is over, resume typing
@@ -424,11 +449,10 @@ public class VillagerQuestMenu extends Screen {
                         }
                     }
                     else if (isPausedAfterQuestionMark) {
-                        if (now - pauseStartTime >= QUESTION_MARK_PAUSE_MS) {
-                            // Pause is over, resume typing
-                            isPausedAfterQuestionMark = false;
-                            lastTypeTime = now;
-                        }
+                    if (now - pauseStartTime >= QUESTION_MARK_PAUSE_MS) {
+                        // Pause is over, resume typing
+                        isPausedAfterQuestionMark = false;
+                        lastTypeTime = now;
                     }
                 } else {
                     // Normal typing
@@ -458,10 +482,9 @@ public class VillagerQuestMenu extends Screen {
                         }
                     }
                 }
-            } else if (!hasSentenceCompleted) {
+            }else if (!hasSentenceCompleted) {
                 hasSentenceCompleted = true;
-                this.clearWidgets();
-                this.init();
+                addPositiveButton(getMinecraft().player);
             }
 
 
@@ -519,6 +542,8 @@ public class VillagerQuestMenu extends Screen {
 
         super.render(gfx, mouseX, mouseY, partialTick);
     }
+
+
     private String buildSafeVisibleText(String fullText, int maxWidth) {
         if (words == null || words.isEmpty()) {
             return fullText.substring(0, Math.min(visibleChars, fullText.length()));
