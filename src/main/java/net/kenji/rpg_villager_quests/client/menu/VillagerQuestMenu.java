@@ -10,7 +10,9 @@ import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.inventory.InventoryScreen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.entity.npc.Villager;
+import net.minecraft.world.entity.player.Player;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.fml.common.Mod;
 
@@ -91,13 +93,27 @@ public class VillagerQuestMenu extends Screen {
     public static GuiDisplay headDisplayGui;
     private static final String PAGE_DELIMITER = "/--/";
 
+    public static boolean didAcceptQuest;
     private int currentPage = 0;
     private List<String> pages;
     private int visibleChars = 0;
     private long lastTypeTime = 0;
     private List<String> words;
-    private int visibleWordChars = 0;
-    private static final int TYPE_SPEED_MS = 45;
+    private int currentSentenceStartDelay = 0;
+    private static final int TYPE_SPEED_MS = 35;
+    private static final int PERIOD_PAUSE_MS = 600; // Pause after periods
+    private static final int COMMA_PAUSE_MS = 400; // Pause after periods
+    private static final int EXCLAMATION_PAUSE_MS = 450; // Pause after periods
+    private static final int QUESTION_MARK_PAUSE_MS = 450; // Pause after periods
+
+    private static final int SENTENCE_START_DELAY = 10; // Pause after periods
+
+    private boolean isPausedAfterPeriod = false;
+    private boolean isPausedAfterComma = false;
+    private boolean isPausedAfterQuestionMark = false;
+    private boolean isPausedAfterExclamationMark = false;
+    private long pauseStartTime = 0;
+    private static boolean hasSentenceCompleted;
 
     private enum DisplayType{
         BACKGROUND_DISPLAY,
@@ -106,15 +122,15 @@ public class VillagerQuestMenu extends Screen {
 
     private static final String RAW_QUEST_TEXT =
             """
-                    Brave traveler!
-                    
-                    The village has been plagued by monsters at night.
-                    We need you to defeat 5 zombies lurking nearby.
-                    
-                    Return once the task is complete.
-                    /--/
-                    Will You Accept?
-                    """;
+            Brave traveler!
+         
+            The village has been plagued by monsters at night,
+             we need you to defeat 5 zombies lurking nearby.
+            
+            Return once the task is complete...
+            /--/
+            Will You Accept?
+            """;
     private Villager villager;
 
     private static List<String> splitPages(String raw) {
@@ -152,6 +168,7 @@ public class VillagerQuestMenu extends Screen {
 
     @Override
     protected void init() {
+       Player player = Minecraft.getInstance().player;
         backgroundGui = new GuiDisplay(
                 MENU_BACKGROUND,
                 228,
@@ -175,7 +192,10 @@ public class VillagerQuestMenu extends Screen {
                 -35,
                 50,
                 50);
+        if(player == null)
+            return;
 
+        player.playSound(SoundEvents.VILLAGER_TRADE);
 
         int bgX = getX(backgroundGui);
         int bgY = getY(backgroundGui);
@@ -191,18 +211,17 @@ public class VillagerQuestMenu extends Screen {
         int negYOffset = 15;
         pages = splitPages(RAW_QUEST_TEXT);
         words = Arrays.asList(pages.get(currentPage).split("(?<=\\s)"));
-        visibleWordChars = 0;
+        currentSentenceStartDelay = 0;
 
         int pX = bgX + padding;
         int pY = bgY + bgH - buttonHeight - padding;
 
 
         if (currentPage == pages.size() - 1) {
-            // Bottom-right "Accept"
             this.addRenderableWidget(
                     Button.builder(
                             Component.literal("Accept Quest"),
-                            btn -> onAcceptQuest()
+                            btn -> onAcceptQuest(player)
                     ).bounds(
                             pX + xOffset,
                             pY + posYOffset,
@@ -212,17 +231,19 @@ public class VillagerQuestMenu extends Screen {
             );
         }
         else{
-            this.addRenderableWidget(
-                    Button.builder(
-                            Component.literal("Next"),
-                            btn -> onNextPage()
-                    ).bounds(
-                            pX + xOffset,
-                            pY + posYOffset,
-                            buttonWidth,
-                            buttonHeight
-                    ).build()
-            );
+            if(hasSentenceCompleted) {
+                this.addRenderableWidget(
+                        Button.builder(
+                                Component.literal("Next"),
+                                btn -> onNextPage(player)
+                        ).bounds(
+                                pX + xOffset,
+                                pY + posYOffset,
+                                buttonWidth,
+                                buttonHeight
+                        ).build()
+                );
+            }
         }
 
         // Bottom-left "Close"
@@ -239,17 +260,23 @@ public class VillagerQuestMenu extends Screen {
         );
     }
 
-    public void onAcceptQuest(){
-
+    public void onAcceptQuest(Player player){
+        player.playSound(SoundEvents.VILLAGER_YES);
+        didAcceptQuest = true;
+        hasSentenceCompleted = false;
+        onClose();
     }
-    public void onNextPage() {
+    public void onNextPage(Player player) {
         if (currentPage < pages.size() - 1) {
             currentPage++;
             visibleChars = 0;
             lastTypeTime = 0;
+            isPausedAfterPeriod = false;
+            pauseStartTime = 0;
             words = Arrays.asList(pages.get(currentPage).split("(?<=\\s)"));
-            visibleWordChars = 0;
-
+            currentSentenceStartDelay = 0;
+            hasSentenceCompleted = false;
+            player.playSound(SoundEvents.VILLAGER_TRADE);
             this.clearWidgets();
             this.init();
         }
@@ -257,13 +284,22 @@ public class VillagerQuestMenu extends Screen {
 
     @Override
     public void onClose() {
+        Player player = Minecraft.getInstance().player;
         currentPage = 0;
         visibleChars = 0;
         lastTypeTime = 0;
+        isPausedAfterPeriod = false;
+        pauseStartTime = 0;
         if(villager != null) {
             villager.setTradingPlayer(null);
             villager = null;
         }
+        if(player != null && !didAcceptQuest)
+            player.playSound(SoundEvents.VILLAGER_NO);
+
+        didAcceptQuest = false;
+        hasSentenceCompleted = false;
+        currentSentenceStartDelay = 0;
         super.onClose();
     }
 
@@ -308,7 +344,7 @@ public class VillagerQuestMenu extends Screen {
     @Override
     public void render(GuiGraphics gfx, int mouseX, int mouseY, float partialTick) {
         this.renderBackground(gfx);
-
+        villager.ambientSoundTime = 0;
 
         int DISPLAY_WIDTH = GetTextureSize(DisplayType.BACKGROUND_DISPLAY).x + 20;
         int DISPLAY_HEIGHT = GetTextureSize(DisplayType.BACKGROUND_DISPLAY).y + 10;
@@ -349,11 +385,11 @@ public class VillagerQuestMenu extends Screen {
         int bgW = getBgWidth(backgroundGui);
         int bgH = getBgHeight(backgroundGui);
 
-        int xPadding = 2;
-        int yPadding = 10;
+        int xPadding = 8;
+        int yPadding = 15;
         int textX = bgX + xPadding;
         int textY = yPadding;
-        int textWidth = bgW - xPadding * 2;
+        int textWidth = (bgW - xPadding * 2) - 30;
 
         String fullText = pages.get(currentPage);
         long now = System.currentTimeMillis();
@@ -362,24 +398,84 @@ public class VillagerQuestMenu extends Screen {
             lastTypeTime = now;
         }
 
-        if (visibleChars < fullText.length()) {
-            if (now - lastTypeTime >= TYPE_SPEED_MS) {
-                visibleChars++;
-                lastTypeTime = now;
-            }
+        if(currentSentenceStartDelay < SENTENCE_START_DELAY){
+            currentSentenceStartDelay++;
         }
+        else {
+            if (visibleChars < fullText.length()) {
+                // Check if we're in a pause after a period
+                if (isPausedAfterPeriod) {
+                    if (now - pauseStartTime >= PERIOD_PAUSE_MS) {
+                        // Pause is over, resume typing
+                        isPausedAfterPeriod = false;
+                        lastTypeTime = now;
+                    }
+                } else if (isPausedAfterComma) {
+                    if (now - pauseStartTime >= COMMA_PAUSE_MS) {
+                        // Pause is over, resume typing
+                        isPausedAfterComma = false;
+                        lastTypeTime = now;
+                    }
+                    else if (isPausedAfterExclamationMark) {
+                        if (now - pauseStartTime >= EXCLAMATION_PAUSE_MS) {
+                            // Pause is over, resume typing
+                            isPausedAfterExclamationMark = false;
+                            lastTypeTime = now;
+                        }
+                    }
+                    else if (isPausedAfterQuestionMark) {
+                        if (now - pauseStartTime >= QUESTION_MARK_PAUSE_MS) {
+                            // Pause is over, resume typing
+                            isPausedAfterQuestionMark = false;
+                            lastTypeTime = now;
+                        }
+                    }
+                } else {
+                    // Normal typing
+                    if (now - lastTypeTime >= TYPE_SPEED_MS) {
+                        visibleChars++;
+                        lastTypeTime = now;
 
-        String visibleText = buildSafeVisibleText(pages.get(currentPage), textWidth);
+                        // Check if the character we just revealed is a period
+                        if (visibleChars > 0 && visibleChars <= fullText.length()) {
+                            char lastChar = fullText.charAt(visibleChars - 1);
+                            if (lastChar == '.') {
+                                isPausedAfterPeriod = true;
+                                pauseStartTime = now;
+                            }
+                            if (lastChar == ',') {
+                                isPausedAfterComma = true;
+                                pauseStartTime = now;
+                            }
+                            if (lastChar == '!') {
+                                isPausedAfterExclamationMark = true;
+                                pauseStartTime = now;
+                            }
+                            if (lastChar == '?') {
+                                isPausedAfterQuestionMark = true;
+                                pauseStartTime = now;
+                            }
+                        }
+                    }
+                }
+            } else if (!hasSentenceCompleted) {
+                hasSentenceCompleted = true;
+                this.clearWidgets();
+                this.init();
+            }
 
-        gfx.drawWordWrap(
-                this.font,
-                Component.literal(visibleText),
-                textX,
-                textY,
-                textWidth,
-                0xFFFFFF
-        );
 
+            String visibleText = buildSafeVisibleText(pages.get(currentPage), textWidth);
+            pose.scale(scaleX / 1.2F, scaleY / 1.2F, 1f);
+            gfx.drawWordWrap(
+                    this.font,
+                    Component.literal(visibleText),
+                    textX,
+                    textY,
+                    textWidth,
+                    0xFFFFFF
+            );
+        }
         pose.popPose();
 
         if (villager != null) {
@@ -439,27 +535,31 @@ public class VillagerQuestMenu extends Screen {
             // Calculate how much of this word should be visible
             int wordCharsToShow = Math.min(word.length(), visibleChars - charCount);
 
-            // Test if adding this partial/full word would overflow the current line
-            String testString = builder.toString() + word.substring(0, wordCharsToShow);
-
-            // Check if the test string wraps properly within bounds
-            int heightBefore = this.font.wordWrapHeight(Component.literal(builder.toString()), maxWidth);
-            int heightAfter = this.font.wordWrapHeight(Component.literal(testString), maxWidth);
-
-            // If adding this text increases height AND we haven't finished the word, skip chars until word completes
-            if (heightAfter > heightBefore && wordCharsToShow < word.length()) {
-                // Don't show partial word at line end - wait until we have enough chars for the full word
-                charCount += wordCharsToShow; // Still count the chars (this "skips" them)
-                continue;
-            }
-
-            // Safe to add
-            builder.append(word.substring(0, wordCharsToShow));
-            charCount += wordCharsToShow;
-
+            // If we can't show the full word yet, check if showing partial would overflow
             if (wordCharsToShow < word.length()) {
+
+                // First word: always allow partial rendering
+                if (builder.length() == 0) {
+                    builder.append(word, 0, wordCharsToShow);
+                    break;
+                }
+
+                String testString = builder + word.substring(0, wordCharsToShow);
+
+                int heightBefore = this.font.wordWrapHeight(Component.literal(builder.toString()), maxWidth);
+                int heightAfter = this.font.wordWrapHeight(Component.literal(testString), maxWidth);
+
+                if (heightAfter > heightBefore) {
+                    break; // wait until full word fits
+                }
+
+                builder.append(word, 0, wordCharsToShow);
                 break;
             }
+
+            // Full word is visible, add it
+            builder.append(word);
+            charCount += word.length();
         }
 
         return builder.toString();

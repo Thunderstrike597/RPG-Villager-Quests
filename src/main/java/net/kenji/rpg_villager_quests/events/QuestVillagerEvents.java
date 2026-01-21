@@ -4,7 +4,9 @@ import net.kenji.rpg_villager_quests.RpgVillagerQuests;
 import net.kenji.rpg_villager_quests.client.menu.VillagerQuestMenu;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
+import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.entity.npc.Villager;
+import net.minecraft.world.entity.player.Player;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.event.entity.living.MobSpawnEvent;
 import net.minecraftforge.event.entity.player.PlayerInteractEvent;
@@ -36,19 +38,18 @@ public class QuestVillagerEvents {
         @SubscribeEvent
         public static void onVillagerInteract(PlayerInteractEvent.EntityInteract event) {
             if (!(event.getTarget() instanceof Villager villager)) return;
-
+            Player player = event.getEntity();
             if (!villager.getPersistentData()
                     .getBoolean(QuestVillagerEvents.QUEST_VILLAGER_TAG)) return;
 
-            villager.setTradingPlayer(event.getEntity());
-
+            villager.setTradingPlayer(player);
             event.setCanceled(true);
-
             Minecraft.getInstance().execute(() -> {
                 Minecraft.getInstance().setScreen(
                         new VillagerQuestMenu(Component.literal("Villager Quests"), villager)
                 );
             });
+
         }
     }
 
