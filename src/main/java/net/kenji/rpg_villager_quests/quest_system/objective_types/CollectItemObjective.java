@@ -3,6 +3,7 @@ package net.kenji.rpg_villager_quests.quest_system.objective_types;
 import net.kenji.rpg_villager_quests.quest_system.interfaces.QuestObjective;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.registries.ForgeRegistries;
 
 import java.util.Objects;
@@ -24,6 +25,19 @@ public class CollectItemObjective implements QuestObjective {
         return player.getInventory().countItem(
                 Objects.requireNonNull(ForgeRegistries.ITEMS.getValue(item))
         ) >= count;
+    }
+
+    @Override
+    public boolean canComplete(Player player) {
+       boolean canComplete = false;
+        for(ItemStack stack : player.getInventory().items){
+           if(stack.getItem() == ForgeRegistries.ITEMS.getValue(item)){
+               if(stack.getCount() >= this.count){
+                   canComplete = true;
+               }
+           }
+       }
+        return canComplete;
     }
 
     @Override

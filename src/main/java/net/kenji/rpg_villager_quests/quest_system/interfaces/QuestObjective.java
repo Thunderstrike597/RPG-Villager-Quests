@@ -4,5 +4,6 @@ import net.minecraft.world.entity.player.Player;
 
 public interface QuestObjective {
     boolean isComplete(Player player);
+    boolean canComplete(Player player);
     void onTurnIn(Player player);
 }

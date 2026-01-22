@@ -3,13 +3,14 @@ package net.kenji.rpg_villager_quests.quest_system.stage_types;
 import net.kenji.rpg_villager_quests.quest_system.QuestStage;
 import net.minecraft.world.entity.player.Player;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class DialogueStage extends QuestStage {
 
     private final String nextStage;
 
-    public DialogueStage(String id, List<String> pages, String nextStage) {
+    public DialogueStage(String id, List<Page> pages, String nextStage) {
         super(id, QuestStageTypes.valueOf("dialogue".toUpperCase()), pages);
         this.nextStage = nextStage;
     }
@@ -31,6 +32,16 @@ public class DialogueStage extends QuestStage {
 
     @Override
     public List<String> getDialogue() {
-        return pages;
+        List<String> textList = new ArrayList<>();
+
+        for(Page page : pages){
+            textList.add(page.text);
+        }
+        return textList;
+    }
+
+    @Override
+    public boolean canCompleteStage(Player player) {
+        return true;
     }
 }

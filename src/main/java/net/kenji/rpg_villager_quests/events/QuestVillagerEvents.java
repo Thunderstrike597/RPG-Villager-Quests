@@ -2,6 +2,7 @@ package net.kenji.rpg_villager_quests.events;
 
 import net.kenji.rpg_villager_quests.RpgVillagerQuests;
 import net.kenji.rpg_villager_quests.client.menu.VillagerQuestMenu;
+import net.kenji.rpg_villager_quests.manager.QuestMenuManager;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
 import net.minecraft.sounds.SoundEvents;
@@ -23,11 +24,14 @@ public class QuestVillagerEvents {
     @SubscribeEvent
     public static void onVillagerSpawn(MobSpawnEvent event){
         if(event.getEntity() instanceof Villager villager){
-            if(villager.getVillagerXp() > 0 || villager.getVillagerData().getLevel() > 0) return;
+            //if(villager.getVillagerXp() > 0 || villager.getVillagerData().getLevel() > 0) return;
 
             if(villager.getRandom().nextFloat() < 0.4F){
                 if(!villager.getPersistentData().getBoolean(QUEST_VILLAGER_TAG)){
                     villager.getPersistentData().putBoolean(QUEST_VILLAGER_TAG, true);
+                    if(QuestMenuManager.villagerQuestMap.get(villager.getUUID()) == null){
+                        QuestMenuManager.assignQuestToVillager(villager);
+                    }
                 }
             }
         }

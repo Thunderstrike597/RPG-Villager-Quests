@@ -9,6 +9,8 @@ import net.kenji.rpg_villager_quests.quest_system.QuestLoader;
 import net.kenji.rpg_villager_quests.quest_system.stage_types.ChoiceStage;
 import net.kenji.rpg_villager_quests.quest_system.stage_types.DialogueStage;
 import net.kenji.rpg_villager_quests.quest_system.stage_types.ObjectiveStage;
+import net.minecraft.util.Mth;
+import net.minecraft.world.entity.npc.Villager;
 import net.minecraftforge.fml.loading.FMLPaths;
 
 import java.io.IOException;
@@ -20,19 +22,29 @@ import java.util.stream.Stream;
 public class QuestMenuManager {
     public static final Map<String, String> rawJsonFiles = new HashMap<>();
 
-    public static List<String> getPages(String questName) {
-        String jsonFile = rawJsonFiles.get(questName);
+    public static Map<UUID, Quest> currentQuestMap = new HashMap<>();
+    public static Map<UUID, Quest> villagerQuestMap = new HashMap<>();
 
-        JsonObject root = JsonParser.parseString(jsonFile).getAsJsonObject();
+    public static Quest getVillagerQuest(Villager villager){
+        return villagerQuestMap.get(villager.getUUID());
+    }
 
+    public static void assignQuestToVillager(Villager villager) {
+
+        List<String> keys = new ArrayList<>(rawJsonFiles.keySet());
+
+        int questCount = keys.size();
+        int randomIndex = Mth.nextInt(villager.getRandom(), 0, questCount - 1);
+        String questKey = keys.get(randomIndex);
+
+        String jsonContents = rawJsonFiles.get(questKey);
+
+        JsonObject root = JsonParser.parseString(jsonContents).getAsJsonObject();
         Quest quest = QuestLoader.load(root);
 
-        List<String> pages;
-
-        pages = quest.getCurrentStage().getDialogue();
-
-        return pages;
+        villagerQuestMap.put(villager.getUUID(), quest);
     }
+
 
     public static class JsonHelper {
 

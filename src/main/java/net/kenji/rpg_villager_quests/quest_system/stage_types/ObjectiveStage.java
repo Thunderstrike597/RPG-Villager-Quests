@@ -4,6 +4,7 @@ import net.kenji.rpg_villager_quests.quest_system.QuestStage;
 import net.kenji.rpg_villager_quests.quest_system.interfaces.QuestObjective;
 import net.minecraft.world.entity.player.Player;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class ObjectiveStage extends QuestStage {
@@ -11,13 +12,13 @@ public class ObjectiveStage extends QuestStage {
     private final QuestObjective objective;
     private final String nextStage;
 
-    public ObjectiveStage(String id, QuestObjective objective, String nextStage, List<String> pages) {
+
+
+    public ObjectiveStage(String id, QuestObjective objective, String nextStage, List<Page> pages) {
         super(id, QuestStageTypes.valueOf("objective".toUpperCase()), pages);
         this.objective = objective;
         this.nextStage = nextStage;
-
     }
-
     @Override
     public void start(Player player) {}
 
@@ -37,6 +38,16 @@ public class ObjectiveStage extends QuestStage {
 
     @Override
     public List<String> getDialogue() {
-        return pages;
+        List<String> textList = new ArrayList<>();
+
+        for(Page page : pages){
+            textList.add(page.text);
+        }
+        return textList;
+    }
+
+    @Override
+    public boolean canCompleteStage(Player player) {
+        return this.objective.canComplete(player);
     }
 }

@@ -45,10 +45,18 @@ public class QuestLoader {
             throw new IllegalStateException("Dialogue stage missing pages: " + id);
         }
 
-        List<String> pages = new ArrayList<>();
+        List<QuestStage.Page> pages = new ArrayList<>();
         for (JsonElement pageElem : pagesArray) {
             JsonObject pageObj = pageElem.getAsJsonObject();
-            pages.add(pageObj.get("text").getAsString());
+            QuestStage.Page newPage = new QuestStage.Page();
+            newPage.text = pageObj.get("text").getAsString();
+            if(pageObj.has("button_1_text")){
+                newPage.button1Text = pageObj.get("button_1_text").getAsString();
+            }
+            if(pageObj.has("button_2_text")){
+                newPage.button2Text = pageObj.get("button_2_text").getAsString();
+            }
+            pages.add(newPage);
         }
 
         String nextStage = null;
@@ -73,22 +81,46 @@ public class QuestLoader {
             JsonArray choice1PagesArray = dialogue.getAsJsonArray("choice_1_pages");
             JsonArray choice2PagesArray = dialogue.getAsJsonArray("choice_2_pages");
 
-            List<String> pages = new ArrayList<>();
-            List<String> choice1Pages = new ArrayList<>();
-            List<String> choice2Pages = new ArrayList<>();
+            List<QuestStage.Page> pages = new ArrayList<>();
+            List<QuestStage.Page> choice1Pages = new ArrayList<>();
+            List<QuestStage.Page> choice2Pages = new ArrayList<>();
 
 
-            for(JsonElement pageElem : pagesArray){
+            for (JsonElement pageElem : pagesArray) {
                 JsonObject pageObj = pageElem.getAsJsonObject();
-                pages.add(pageObj.get("text").getAsString());
+                QuestStage.Page newPage = new QuestStage.Page();
+                newPage.text = pageObj.get("text").getAsString();
+                if(pageObj.has("button_1_text")){
+                    newPage.button1Text = pageObj.get("button_1_text").getAsString();
+                }
+                if(pageObj.has("button_2_text")){
+                    newPage.button2Text = pageObj.get("button_2_text").getAsString();
+                }
+                pages.add(newPage);
             }
-            for(JsonElement pageElem : choice1PagesArray){
+            for (JsonElement pageElem : choice1PagesArray) {
                 JsonObject pageObj = pageElem.getAsJsonObject();
-                choice1Pages.add(pageObj.get("text").getAsString());
+                QuestStage.Page newPage = new QuestStage.Page();
+                newPage.text = pageObj.get("text").getAsString();
+                if(pageObj.has("button_1_text")){
+                    newPage.button1Text = pageObj.get("button_1_text").getAsString();
+                }
+                if(pageObj.has("button_2_text")){
+                    newPage.button2Text = pageObj.get("button_2_text").getAsString();
+                }
+                choice1Pages.add(newPage);
             }
-            for(JsonElement pageElem : choice2PagesArray){
+            for (JsonElement pageElem : choice2PagesArray) {
                 JsonObject pageObj = pageElem.getAsJsonObject();
-                choice2Pages.add(pageObj.get("text").getAsString());
+                QuestStage.Page newPage = new QuestStage.Page();
+                newPage.text = pageObj.get("text").getAsString();
+                if(pageObj.has("button_1_text")){
+                    newPage.button1Text = pageObj.get("button_1_text").getAsString();
+                }
+                if(pageObj.has("button_2_text")){
+                    newPage.button2Text = pageObj.get("button_2_text").getAsString();
+                }
+                choice2Pages.add(newPage);
             }
 
             for (JsonElement elem : choicesArray) {
@@ -123,12 +155,19 @@ public class QuestLoader {
         QuestObjective objective;
         JsonArray inProgressDialogueArray = stage.getAsJsonArray("in_progress_dialogue");
 
-        List<String> inProgressDialogue = new ArrayList<>();
+        List<QuestStage.Page> inProgressDialogue = new ArrayList<>();
 
-        for(JsonElement elem : inProgressDialogueArray){
-            JsonObject choiceObj = elem.getAsJsonObject();
-            String text = choiceObj.get("text").getAsString();
-            inProgressDialogue.add(text);
+        for (JsonElement pageElem : inProgressDialogueArray) {
+            JsonObject pageObj = pageElem.getAsJsonObject();
+            QuestStage.Page newPage = new QuestStage.Page();
+            newPage.text = pageObj.get("text").getAsString();
+            if(pageObj.has("button_1_text")){
+                newPage.button1Text = pageObj.get("button_1_text").getAsString();
+            }
+            if(pageObj.has("button_2_text")){
+                newPage.button2Text = pageObj.get("button_2_text").getAsString();
+            }
+            inProgressDialogue.add(newPage);
         }
 
 
@@ -152,7 +191,7 @@ public class QuestLoader {
             );
         }
 
-        return new ObjectiveStage(id, objective, nextStage);
+        return new ObjectiveStage(id, objective, nextStage, inProgressDialogue);
     }
 
     private static QuestEffects parseEffects(JsonObject obj) {

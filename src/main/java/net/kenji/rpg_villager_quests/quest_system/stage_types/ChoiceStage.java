@@ -4,13 +4,14 @@ import net.kenji.rpg_villager_quests.quest_system.QuestChoice;
 import net.kenji.rpg_villager_quests.quest_system.QuestStage;
 import net.minecraft.world.entity.player.Player;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class ChoiceStage extends QuestStage {
 
     public final List<QuestChoice> choices;
-    public final List<String> choice1Pages;
-    public final List<String> choice2Pages;
+    public final List<Page> choice1Pages;
+    public final List<Page> choice2Pages;
 
     public ChoiceType chosenDialogueOption = ChoiceType.UNCHOSEN;
 
@@ -20,7 +21,7 @@ public class ChoiceStage extends QuestStage {
         OPTION_2
     }
 
-    public ChoiceStage(String id, List<QuestChoice> choices, List<String> pages, List<String> choice1Pages, List<String> choice2Pages) {
+    public ChoiceStage(String id, List<QuestChoice> choices, List<Page> pages, List<Page> choice1Pages, List<Page> choice2Pages) {
         super(id, QuestStageTypes.valueOf("dialogue_with_choice".toUpperCase()), pages);
         this.choices = choices;
         this.choice1Pages = choice1Pages;
@@ -28,7 +29,18 @@ public class ChoiceStage extends QuestStage {
     }
 
     public List<String> getDialogue(){
-       return chosenDialogueOption == ChoiceType.OPTION_1 ? choice1Pages : chosenDialogueOption == ChoiceType.OPTION_2 ? choice2Pages : pages;
+        List<Page> pageList = chosenDialogueOption == ChoiceType.OPTION_1 ? choice1Pages : chosenDialogueOption == ChoiceType.OPTION_2 ? choice2Pages : pages;
+        List<String> textList = new ArrayList<>();
+        for(Page page : pageList){
+            textList.add(page.text);
+        }
+
+       return textList;
+    }
+
+    @Override
+    public boolean canCompleteStage(Player player) {
+        return true;
     }
 
     public void setChosenDialogue(ChoiceType choiceType){
