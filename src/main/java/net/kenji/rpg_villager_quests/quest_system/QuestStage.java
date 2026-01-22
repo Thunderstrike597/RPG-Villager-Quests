@@ -9,6 +9,7 @@ public abstract class QuestStage {
     public final QuestStageTypes type;
     public final List<Page> pages;
 
+
     public static class Page{
         public String text;
         public String button1Text;

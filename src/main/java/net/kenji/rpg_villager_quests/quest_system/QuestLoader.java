@@ -20,7 +20,9 @@ import java.util.List;
 public class QuestLoader {
 
     public static Quest load(JsonObject json) {
-        String id = json.get("quest_display_name").getAsString();
+        String id = json.get("id").getAsString();
+
+        String displayName = json.get("quest_display_name").getAsString();
         String type = json.get("type").getAsString();
 
         List<QuestStage> stages = new ArrayList<>();
@@ -37,7 +39,7 @@ public class QuestLoader {
             }
         }
 
-        return new Quest(id, type, stages);
+        return new Quest(id, displayName, type, stages);
     }
     private static DialogueStage parseDialogue(String id, JsonObject stage) {
         JsonArray pagesArray = stage.getAsJsonArray("pages");

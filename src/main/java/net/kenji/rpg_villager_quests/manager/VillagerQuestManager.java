@@ -1,14 +1,10 @@
 package net.kenji.rpg_villager_quests.manager;
 
-import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import net.kenji.rpg_villager_quests.events.QuestVillagerEvents;
 import net.kenji.rpg_villager_quests.quest_system.Quest;
 import net.kenji.rpg_villager_quests.quest_system.QuestLoader;
-import net.kenji.rpg_villager_quests.quest_system.stage_types.ChoiceStage;
-import net.kenji.rpg_villager_quests.quest_system.stage_types.DialogueStage;
-import net.kenji.rpg_villager_quests.quest_system.stage_types.ObjectiveStage;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.npc.Villager;
 import net.minecraftforge.fml.loading.FMLPaths;
@@ -19,7 +15,7 @@ import java.nio.file.Path;
 import java.util.*;
 import java.util.stream.Stream;
 
-public class QuestMenuManager {
+public class VillagerQuestManager {
     public static final Map<String, String> rawJsonFiles = new HashMap<>();
 
     public static Map<UUID, Quest> currentQuestMap = new HashMap<>();
@@ -29,20 +25,25 @@ public class QuestMenuManager {
         return villagerQuestMap.get(villager.getUUID());
     }
 
-    public static void assignQuestToVillager(Villager villager) {
+    public static Quest getQuestByName(String questName){
+        String jsonContents = rawJsonFiles.get(questName);
+
+        JsonObject root = JsonParser.parseString(jsonContents).getAsJsonObject();
+        return QuestLoader.load(root);
+    }
+
+    public static void assignRandomQuestToVillager(Villager villager) {
 
         List<String> keys = new ArrayList<>(rawJsonFiles.keySet());
 
         int questCount = keys.size();
         int randomIndex = Mth.nextInt(villager.getRandom(), 0, questCount - 1);
-        String questKey = keys.get(randomIndex);
+        String questName = keys.get(randomIndex);
 
-        String jsonContents = rawJsonFiles.get(questKey);
-
-        JsonObject root = JsonParser.parseString(jsonContents).getAsJsonObject();
-        Quest quest = QuestLoader.load(root);
+       Quest quest = getQuestByName(questName);;
 
         villagerQuestMap.put(villager.getUUID(), quest);
+        villager.getPersistentData().putString(QuestVillagerEvents.QUEST_VILLAGER_TAG, questName);
     }
 
 
