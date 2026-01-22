@@ -1,6 +1,7 @@
 package net.kenji.rpg_villager_quests;
 
 import com.mojang.logging.LogUtils;
+import net.kenji.rpg_villager_quests.manager.QuestMenuManager;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.world.food.FoodProperties;
 import net.minecraft.world.item.BlockItem;
@@ -68,8 +69,7 @@ public class RpgVillagerQuests {
     }
 
     private void commonSetup(final FMLCommonSetupEvent event) {
-        // Some common setup code
-
+        QuestMenuManager.JsonHelper.init();
     }
 
     // Add the example block item to the building blocks tab

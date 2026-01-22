@@ -1,13 +1,12 @@
 package net.kenji.rpg_villager_quests.client.menu;
 
 import com.mojang.blaze3d.systems.RenderSystem;
-import com.mojang.blaze3d.vertex.BufferBuilder;
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.kenji.rpg_villager_quests.RpgVillagerQuests;
+import net.kenji.rpg_villager_quests.manager.QuestMenuManager;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
-import net.minecraft.client.gui.components.events.GuiEventListener;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.inventory.InventoryScreen;
 import net.minecraft.network.chat.Component;
@@ -17,7 +16,6 @@ import net.minecraft.world.entity.npc.Villager;
 import net.minecraft.world.entity.player.Player;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.fml.common.Mod;
-import org.jline.reader.Widget;
 
 import java.util.*;
 import java.util.regex.Pattern;
@@ -125,20 +123,9 @@ public class VillagerQuestMenu extends Screen {
         HEAD_DISPLAY
     }
 
-    private static final String RAW_QUEST_TEXT =
-            """
-            Brave traveler!
-         
-            The village has been plagued by monsters at night,
-             we need you to defeat 5 zombies lurking nearby.
-            
-            Return once the task is complete...
-            /--/
-            Will You Accept?
-            """;
     private Villager villager;
 
-    private static List<String> splitPages(String raw) {
+    private static List<String> getPages(String raw) {
         return Arrays.stream(raw.split(Pattern.quote(PAGE_DELIMITER)))
                 .map(String::trim)
                 .toList();
@@ -215,7 +202,7 @@ public class VillagerQuestMenu extends Screen {
         int xOffset = -100;
         int posYOffset = -10;
         int negYOffset = 15;
-        pages = splitPages(RAW_QUEST_TEXT);
+        pages = QuestMenuManager.getPages(0);
         words = Arrays.asList(pages.get(currentPage).split("(?<=\\s)"));
         currentSentenceStartDelay = 0;
 
