@@ -25,14 +25,15 @@ public class VillagerQuestManager {
         return villagerQuestMap.get(villager.getUUID());
     }
 
-    public static Quest getQuestByName(String questName){
+    public static Quest getQuestByName(String questName) throws Exception {
         String jsonContents = rawJsonFiles.get(questName);
 
         JsonObject root = JsonParser.parseString(jsonContents).getAsJsonObject();
+
         return QuestLoader.load(root);
     }
 
-    public static void assignRandomQuestToVillager(Villager villager) {
+    public static void assignRandomQuestToVillager(Villager villager) throws Exception {
 
         List<String> keys = new ArrayList<>(rawJsonFiles.keySet());
 

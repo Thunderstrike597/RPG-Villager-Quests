@@ -1,5 +1,6 @@
 package net.kenji.rpg_villager_quests.client.menu;
 
+import com.machinezoo.noexception.throwing.ThrowingRunnable;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.kenji.rpg_villager_quests.RpgVillagerQuests;
@@ -245,9 +246,7 @@ public class VillagerQuestMenu extends Screen {
         int pY = bgY + bgH - buttonHeight - padding;
         if (hasSentenceCompleted) {
             if (currentPageIndex == pages.size() - 1 && QuestData.get(player).getQuestInstance(villagerQuest.getQuestId()) == null) {
-                Log.info("CURRENT PAGE: " + currentPageIndex);
                 if (getCurrentPageIndex().button1Text == null || Objects.equals(getCurrentPageIndex().button1Text, "")) {
-
                     posButton = this.addRenderableWidget(
                             Button.builder(
                                     Component.literal("Accept Quest"),
@@ -276,10 +275,28 @@ public class VillagerQuestMenu extends Screen {
                 QuestInstance questInstance = QuestData.get(player).getQuestInstance(villagerQuest.getQuestId());
                 if((questInstance != null && questInstance.getCurrentStage().canCompleteStage(player)) || currentPageIndex < pages.size() - 1) {
                     if (getCurrentPageIndex().button1Text == null || Objects.equals(getCurrentPageIndex().button1Text, "")) {
+
                         posButton = this.addRenderableWidget(
                                 Button.builder(
                                         Component.literal("Next"),
-                                        btn -> onNextPage(player)
+                                        btn -> {
+                                            if(questInstance != null) {
+                                                int currentIndex = questInstance.getCurrentStageIndex();
+                                                int lastIndex = questInstance.getQuest().stages.size() - 1;
+
+                                                Log.info("Current Stage:" + questInstance.getCurrentStage().id);
+                                                Log.info("Can Complete" + questInstance.getCurrentStage().canCompleteStage(player));
+
+                                                if (currentIndex == lastIndex && questInstance.getCurrentStage().canCompleteStage(player)) {
+                                                    onCompleteQuest(player);
+                                                } else {
+                                                    onNextPage(player);
+                                                }
+                                            }
+                                            else{
+                                                onNextPage(player);
+                                            }
+                                        }
                                 ).bounds(
                                         pX + xOffset,
                                         pY + posYOffset,
@@ -291,7 +308,21 @@ public class VillagerQuestMenu extends Screen {
                         posButton = this.addRenderableWidget(
                                 Button.builder(
                                         Component.literal(getCurrentPageIndex().button1Text),
-                                        btn -> onNextPage(player)
+                                        btn -> {
+                                            if(questInstance != null) {
+                                                int currentIndex = questInstance.getCurrentStageIndex();
+                                                int lastIndex = questInstance.getQuest().stages.size() - 1;
+
+                                                if (currentIndex == lastIndex && questInstance.getCurrentStage().canCompleteStage(player)) {
+                                                    onCompleteQuest(player);
+                                                } else {
+                                                    onNextPage(player);
+                                                }
+                                            }
+                                            else{
+                                                onNextPage(player);
+                                            }
+                                        }
                                 ).bounds(
                                         pX + xOffset,
                                         pY + posYOffset,
@@ -342,8 +373,9 @@ public class VillagerQuestMenu extends Screen {
         onClose();
     }
     public void onNextPage(Player player) {
-        if (currentPageIndex < pages.size() - 1) {
-            currentPageIndex++;
+        if (currentPageIndex < pages.size()) {
+            if(currentPageIndex < pages.size() - 1)
+                currentPageIndex++;
             visibleChars = 0;
             lastTypeTime = 0;
             isPausedAfterPeriod = false;
@@ -355,6 +387,22 @@ public class VillagerQuestMenu extends Screen {
 
             this.clearWidgets();
             this.init();
+        }
+    }
+    public void onCompleteQuest(Player player) {
+        if (currentPageIndex < pages.size()) {
+            visibleChars = 0;
+            lastTypeTime = 0;
+            isPausedAfterPeriod = false;
+            pauseStartTime = 0;
+            words = Arrays.asList(pages.get(currentPageIndex).text.split("(?<=\\s)"));
+            currentSentenceStartDelay = 0;
+            hasSentenceCompleted = false;
+            player.playSound(SoundEvents.VILLAGER_TRADE);
+            Quest quest = VillagerQuestManager.getVillagerQuest(villager);
+            QuestInstance questInstance = quest.StartQuest(player);
+            questInstance.triggerQuestComplete(player);
+            onClose();
         }
     }
 

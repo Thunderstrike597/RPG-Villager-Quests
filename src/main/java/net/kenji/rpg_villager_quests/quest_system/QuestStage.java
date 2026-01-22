@@ -6,9 +6,12 @@ import java.util.List;
 
 public abstract class QuestStage {
     public final String id;
-    public final QuestStageTypes type;
+    public final QuestStageType type;
     public final List<Page> pages;
+    public final String belongingQuestId;
+    public final String nextStageId;
 
+    protected boolean isComplete;
 
     public static class Page{
         public String text;
@@ -17,19 +20,18 @@ public abstract class QuestStage {
 
     }
 
-    public enum QuestStageTypes{
-        DIALOGUE,
-        OBJECTIVE,
-        DIALOGUE_WITH_CHOICE
-    }
-    protected QuestStage(String id, QuestStageTypes type, List<Page> pages) {
+
+    protected QuestStage(String id, QuestStageType type, List<Page> pages, String belongingQuestId, String nextStageId) {
         this.id = id;
         this.type = type;
         this.pages = pages;
+        this.belongingQuestId = belongingQuestId;
+        this.nextStageId = nextStageId;
     }
     public abstract void start(Player player);
     public abstract boolean isComplete(Player player);
-    public abstract String getNextStageId();
+    public abstract QuestStage getNextStage(Player player);
+    public abstract void onComplete(Player player);
     public abstract List<String> getDialogue();
     public abstract boolean canCompleteStage(Player player);
 }

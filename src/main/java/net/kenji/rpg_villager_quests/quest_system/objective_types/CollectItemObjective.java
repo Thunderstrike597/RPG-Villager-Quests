@@ -1,47 +1,46 @@
 package net.kenji.rpg_villager_quests.quest_system.objective_types;
 
+import net.kenji.rpg_villager_quests.quest_system.Quest;
+import net.kenji.rpg_villager_quests.quest_system.QuestStage;
 import net.kenji.rpg_villager_quests.quest_system.interfaces.QuestObjective;
+import net.kenji.rpg_villager_quests.quest_system.quest_data.QuestData;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.registries.ForgeRegistries;
-
-import java.util.Objects;
 
 public class CollectItemObjective implements QuestObjective {
 
     private final ResourceLocation item;
     private final int count;
     private final boolean consume;
-
-    public CollectItemObjective(ResourceLocation item, int count, boolean consume) {
+    private final String belongingQuestId;
+    public CollectItemObjective(ResourceLocation item, int count, boolean consume, String belongingQuestId) {
         this.item = item;
         this.count = count;
         this.consume = consume;
-    }
-
-    @Override
-    public boolean isComplete(Player player) {
-        return player.getInventory().countItem(
-                Objects.requireNonNull(ForgeRegistries.ITEMS.getValue(item))
-        ) >= count;
+        this.belongingQuestId = belongingQuestId;
     }
 
     @Override
     public boolean canComplete(Player player) {
-       boolean canComplete = false;
-        for(ItemStack stack : player.getInventory().items){
-           if(stack.getItem() == ForgeRegistries.ITEMS.getValue(item)){
-               if(stack.getCount() >= this.count){
-                   canComplete = true;
-               }
-           }
-       }
-        return canComplete;
+        Item requiredItem = ForgeRegistries.ITEMS.getValue(item);
+        if (requiredItem == null) return false;
+
+        for (ItemStack stack : player.getInventory().items) {
+            if (stack.isEmpty()) continue;
+
+            if (stack.is(requiredItem) && stack.getCount() >= this.count) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     @Override
-    public void onTurnIn(Player player) {
+    public void onComplete(Player player) {
         if (!consume) return;
 
         var inv = player.getInventory();

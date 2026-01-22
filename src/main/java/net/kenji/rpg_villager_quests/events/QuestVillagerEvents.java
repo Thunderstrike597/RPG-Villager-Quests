@@ -23,7 +23,7 @@ public class QuestVillagerEvents {
 
 
     @SubscribeEvent
-    public static void onVillagerSpawn(MobSpawnEvent event) {
+    public static void onVillagerSpawn(MobSpawnEvent event) throws Exception {
         if (!(event.getEntity() instanceof Villager villager)) return;
 
         if (villager.getVillagerData().getLevel() > 1) return;
@@ -69,7 +69,6 @@ public class QuestVillagerEvents {
                         new VillagerQuestMenu(Component.literal("Villager Quests"), villager)
                 );
             });
-
         }
     }
 

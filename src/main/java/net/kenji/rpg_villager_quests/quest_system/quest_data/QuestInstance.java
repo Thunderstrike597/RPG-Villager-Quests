@@ -31,15 +31,27 @@ public class QuestInstance {
     public boolean isComplete() {
         return currentStageIndex >= questDefinition.stages.size() || completed;
     }
-    public void setCompleted(){
+    public void triggerQuestComplete(Player player){
         completed = true;
+        questDefinition.onQuestComplete(player);
     }
 
     public Quest getQuest() {
         return questDefinition;
     }
+    public void setCurrentStage(String id) {
+        questDefinition.setCurrentStageIndex(id);
+    }
 
     public QuestStage getCurrentStage() {
         return getQuest().stages.get(currentStageIndex);
+    }
+    public int getCurrentStageIndex() {
+       for(int i = 0; i < getQuest().stages.stream().count(); i++) {
+           if (getQuest().stages.get(i) == getCurrentStage()) {
+               return i;
+           }
+       }
+        return 0;
     }
 }
