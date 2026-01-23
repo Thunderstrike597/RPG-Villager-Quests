@@ -1,22 +1,22 @@
 package net.kenji.rpg_villager_quests.quest_system.stage_types;
 
-import net.kenji.rpg_villager_quests.quest_system.Page;
-import net.kenji.rpg_villager_quests.quest_system.Quest;
-import net.kenji.rpg_villager_quests.quest_system.QuestStage;
-import net.kenji.rpg_villager_quests.quest_system.QuestStageType;
+import net.kenji.rpg_villager_quests.quest_system.*;
 import net.kenji.rpg_villager_quests.quest_system.interfaces.QuestObjective;
+import net.kenji.rpg_villager_quests.quest_system.interfaces.QuestReward;
 import net.kenji.rpg_villager_quests.quest_system.quest_data.QuestInstance;
 import net.minecraft.world.entity.player.Player;
+import org.jline.utils.Log;
 
 import java.util.List;
+import java.util.logging.Logger;
 
 public class ObjectiveStage extends QuestStage {
 
     private final QuestObjective objective;
 
 
-    public ObjectiveStage(String id, QuestObjective objective, List<Page> pages, String belongingQuest, String nextStageId) {
-        super(id, QuestStageType.valueOf("objective".toUpperCase()), pages, belongingQuest, nextStageId);
+    public ObjectiveStage(String id, QuestObjective objective, List<Page> pages, String belongingQuest, String nextStageId, QuestEffects questEffects, List<QuestReward> questReward) {
+        super(id, QuestStageType.valueOf("objective".toUpperCase()), pages, belongingQuest, nextStageId, questReward);
         this.objective = objective;
     }
     @Override
@@ -55,16 +55,24 @@ public class ObjectiveStage extends QuestStage {
     }
 
     @Override
-    public void onComplete(Player player, QuestInstance questInstance) {
+    public void onComplete(QuestEffects completionEffects, Player player, QuestInstance questInstance) {
         isComplete = true;
         QuestStage nextStage = getNextStage(player, questInstance);
-        if(nextStage != null) {
+        if (completionEffects != null) {
+            if (completionEffects.giveReward) {
+                Log.info("LOGGING GIVE REWARD");
+                for (QuestReward reward : stageRewards) {
+                    reward.apply(player);
+                }
+            }
+        }
+        if (nextStage != null) {
             nextStage.start(player, questInstance);
-        }
-        else{
-            questInstance.triggerQuestComplete(player);
-        }
+        } else {
+            Log.info("LOGGING QUEST COMPLETE");
 
-        objective.onComplete(player);
+            questInstance.triggerQuestComplete(completionEffects, player);
+        }
+        objective.onComplete(completionEffects, player);
     }
 }

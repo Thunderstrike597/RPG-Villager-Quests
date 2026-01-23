@@ -1,10 +1,13 @@
 package net.kenji.rpg_villager_quests.quest_system.quest_data;
 
 import net.kenji.rpg_villager_quests.quest_system.Quest;
+import net.kenji.rpg_villager_quests.quest_system.QuestEffects;
 import net.kenji.rpg_villager_quests.quest_system.QuestStage;
 import net.kenji.rpg_villager_quests.quest_system.Reputation;
+import net.kenji.rpg_villager_quests.quest_system.interfaces.QuestReward;
 import net.minecraft.world.entity.player.Player;
 
+import java.util.List;
 import java.util.Objects;
 
 public class QuestInstance {
@@ -38,9 +41,9 @@ public class QuestInstance {
     public boolean isComplete() {
         return completed;
     }
-    public void triggerQuestComplete(Player player){
+    public void triggerQuestComplete(QuestEffects effects, Player player){
         completed = true;
-        questDefinition.onQuestComplete(player);
+        //questDefinition.onQuestComplete(this, effects, getCurrentStage(), player);
     }
     public Quest getQuest() {
         return questDefinition;

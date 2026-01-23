@@ -25,11 +25,4 @@ public class QuestChoice {
         this.effects = effects;
         this.rewards = rewards;
     }
-
-    public void apply(Player player) {
-        effects.apply(player);
-        if (rewards != null) {
-            rewards.forEach(r -> r.apply(player));
-        }
-    }
 }

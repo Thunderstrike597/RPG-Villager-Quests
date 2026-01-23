@@ -1,6 +1,7 @@
 package net.kenji.rpg_villager_quests.quest_system.objective_types;
 
 import net.kenji.rpg_villager_quests.quest_system.Quest;
+import net.kenji.rpg_villager_quests.quest_system.QuestEffects;
 import net.kenji.rpg_villager_quests.quest_system.QuestStage;
 import net.kenji.rpg_villager_quests.quest_system.interfaces.QuestObjective;
 import net.kenji.rpg_villager_quests.quest_system.quest_data.QuestData;
@@ -40,8 +41,8 @@ public class CollectItemObjective implements QuestObjective {
     }
 
     @Override
-    public void onComplete(Player player) {
-        if (!consume) return;
+    public void onComplete(QuestEffects effects, Player player) {
+        if (effects != null && !effects.removeItem) return;
 
         var inv = player.getInventory();
         var itemObj = ForgeRegistries.ITEMS.getValue(item);

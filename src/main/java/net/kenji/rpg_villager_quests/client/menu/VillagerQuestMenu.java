@@ -298,7 +298,7 @@ public class VillagerQuestMenu extends Screen {
                 QuestInstance questInstance = QuestData.get(player).getQuestInstance(villagerQuest.getQuestId());
                 if ((questInstance != null && questInstance.getCurrentStage().canCompleteStage(player)) || currentPageIndex < pages.size() - 1) {
                     if (!Objects.equals(getCurrentPage().button1Text, "NONE")) {
-                        if ((getCurrentPage().button1Text == null || Objects.equals(getCurrentPage().button1Text, "")) && getCurrentPage().dialogueType != DialogueStage.DialogueType.CHOICE) {
+                        if ((getButtonText(questInstance, ButtonType.POSITIVE) == null || getButtonText(questInstance, ButtonType.POSITIVE).isEmpty()) && getCurrentPage().dialogueType != DialogueStage.DialogueType.CHOICE) {
 
                             posButton = this.addRenderableWidget(
                                     Button.builder(
@@ -345,7 +345,7 @@ public class VillagerQuestMenu extends Screen {
             QuestInstance questInstance = QuestData.get(player).getQuestInstance(villagerQuest.getQuestId());
             if (!Objects.equals(getCurrentPage().button2Text, "NONE")) {
                 if (questInstance != null) {
-                    if (getCurrentPage().button2Text == null || Objects.equals(getCurrentPage().button2Text, "")) {
+                    if (getButtonText(questInstance, ButtonType.NEGATIVE) == null || getButtonText(questInstance, ButtonType.NEGATIVE).isEmpty()) {
                         this.addRenderableWidget(
                                 Button.builder(
                                         Component.literal("Close"),
@@ -442,11 +442,11 @@ public class VillagerQuestMenu extends Screen {
             }
             else{
                 if(questInstance.getCurrentStage().canCompleteStage(player)) {
-                    if(!pages.get(currentPageIndex).endQuest) {
-                        onCompleteStage(player, questInstance);
+                    if(pages.get(currentPageIndex).effects == null || !pages.get(currentPageIndex).effects.endQuest) {
+                        onCompleteStage(player, questInstance, pages.get(currentPageIndex));
                     }
-                    else if(pages.get(currentPageIndex).endQuest){
-                        onCompleteQuest(player,questInstance);
+                    else if(pages.get(currentPageIndex).effects != null && pages.get(currentPageIndex).effects.endQuest){
+                        onCompleteQuest(player, questInstance, pages.get(currentPageIndex));
                     }
 
                     if (!(questInstance.getCurrentStage() instanceof DialogueStage))
@@ -461,6 +461,8 @@ public class VillagerQuestMenu extends Screen {
         else{
             if(questInstance.getCurrentStage() instanceof DialogueStage dialogueStage) {
                 dialogueStage.setChosenDialogue(DialogueStage.ChoiceType.OPTION_1);
+                Page storedPage = pages.get(currentPageIndex);
+
                 currentPageIndex = 0;  // Reset to first page of new dialogue
                 visibleChars = 0;
                 lastTypeTime = 0;
@@ -471,13 +473,14 @@ public class VillagerQuestMenu extends Screen {
 
                 if(dialogueStage.choices.get(0)!= null){
                     if(dialogueStage.choices.get(0).endQuest){
-                        onCompleteQuest(player,questInstance);
+                        onCompleteQuest(player, questInstance, storedPage);
                         return;
                     }
                 }
-
-                if(pages.get(currentPageIndex).endQuest){
-                    onCompleteQuest(player,questInstance);
+                if(pages.get(currentPageIndex).effects != null) {
+                    if (pages.get(currentPageIndex).effects.endQuest) {
+                        onCompleteQuest(player, questInstance, storedPage);
+                    }
                 }
 
                 this.clearWidgets();
@@ -488,12 +491,12 @@ public class VillagerQuestMenu extends Screen {
     public void onNegativePress(Player player, QuestInstance questInstance){
         if(pages.get(currentPageIndex).dialogueType != DialogueStage.DialogueType.CHOICE) {
             if(questInstance.getCurrentStage().canCompleteStage(player)) {
-                if(!pages.get(currentPageIndex).endQuest) {
-                    onCompleteStage(player, questInstance);
+                if(pages.get(currentPageIndex).effects == null || !pages.get(currentPageIndex).effects.endQuest) {
+                    onCompleteStage(player, questInstance, pages.get(currentPageIndex));
                     this.onClose();
                 }
-                else if(pages.get(currentPageIndex).endQuest){
-                    onCompleteQuest(player,questInstance);
+                else if(pages.get(currentPageIndex).effects != null && pages.get(currentPageIndex).effects.endQuest){
+                    onCompleteQuest(player,questInstance, pages.get(currentPageIndex));
                 }
             }
 
@@ -501,6 +504,7 @@ public class VillagerQuestMenu extends Screen {
         else{
             if(questInstance.getCurrentStage() instanceof DialogueStage dialogueStage) {
                 dialogueStage.setChosenDialogue(DialogueStage.ChoiceType.OPTION_2);
+                Page storedPage = pages.get(currentPageIndex);
                 currentPageIndex = 0;  // Reset to first page of new dialogue
                 visibleChars = 0;
                 lastTypeTime = 0;
@@ -511,7 +515,7 @@ public class VillagerQuestMenu extends Screen {
 
                 if(dialogueStage.choices.get(1)!= null){
                     if(dialogueStage.choices.get(1).endQuest){
-                        onCompleteQuest(player,questInstance);
+                        onCompleteQuest(player, questInstance, storedPage);
                         return;
                     }
                 }
@@ -524,7 +528,7 @@ public class VillagerQuestMenu extends Screen {
         }
     }
 
-    public void onCompleteQuest(Player player, QuestInstance questInstance) {
+    public void onCompleteQuest(Player player, QuestInstance questInstance, Page currentPage) {
 
         visibleChars = 0;
         lastTypeTime = 0;
@@ -533,13 +537,12 @@ public class VillagerQuestMenu extends Screen {
         words = Arrays.asList(pages.get(currentPageIndex).text.split("(?<=\\s)"));
         currentSentenceStartDelay = 0;
         hasSentenceCompleted = false;
-
-        questInstance.triggerQuestComplete(player);
+        questInstance.getCurrentStage().onComplete(currentPage.effects, player, questInstance);
         player.playSound(SoundEvents.VILLAGER_YES);
 
         this.onClose();
     }
-    public void onCompleteStage(Player player, QuestInstance questInstance) {
+    public void onCompleteStage(Player player, QuestInstance questInstance, Page currentPage) {
         if (currentPageIndex < pages.size()) {
             visibleChars = 0;
             lastTypeTime = 0;
@@ -549,7 +552,7 @@ public class VillagerQuestMenu extends Screen {
             currentSentenceStartDelay = 0;
             hasSentenceCompleted = false;
 
-            questInstance.getCurrentStage().onComplete(player, questInstance);
+            questInstance.getCurrentStage().onComplete(currentPage.effects, player, questInstance);
             player.playSound(SoundEvents.VILLAGER_TRADE);
 
             this.clearWidgets();

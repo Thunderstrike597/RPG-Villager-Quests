@@ -120,7 +120,7 @@ public class QuestLoader {
         Dialogue dialogue = new Dialogue(outcome, altOutcome);
 
 
-        return new Quest(id, displayName, type, stages, questReward, dialogue);
+        return new Quest(id, displayName, type, stages, dialogue);
     }
     private static DialogueStage parseDialogue(String id, JsonObject stage, String questId) {
         if(!stage.has("dialogue"))
@@ -156,8 +156,20 @@ public class QuestLoader {
             if(pageObj.has("button_2_text")){
                 newPage.button2Text = pageObj.get("button_2_text").getAsString();
             }
-            if (pageObj.has("end_quest")) {
-                newPage.endQuest = pageObj.get("end_quest").getAsBoolean();
+            if (pageObj.has("effects")) {  // ← Check pageObj, not stage
+                QuestEffects completionEffects = new QuestEffects();
+                JsonObject completionEffectsObj = pageObj.getAsJsonObject("effects");  // ← Get from pageObj
+
+                if (completionEffectsObj.has("remove_item")) {
+                    completionEffects.removeItem = completionEffectsObj.get("remove_item").getAsBoolean();
+                }
+                if (completionEffectsObj.has("give_reward")) {
+                    completionEffects.giveReward = completionEffectsObj.get("give_reward").getAsBoolean();
+                }
+                if (completionEffectsObj.has("end_quest")) {
+                    completionEffects.endQuest = completionEffectsObj.get("end_quest").getAsBoolean();
+                }
+                newPage.effects = completionEffects;
             }
             pages.add(newPage);
         }
@@ -172,10 +184,21 @@ public class QuestLoader {
                 if (pageObj.has("button_2_text")) {
                     newPage.button2Text = pageObj.get("button_2_text").getAsString();
                 }
-                if (pageObj.has("end_quest")) {
-                    newPage.endQuest = pageObj.get("end_quest").getAsBoolean();
-                }
+                if (pageObj.has("effects")) {  // ← Check pageObj, not stage
+                    QuestEffects completionEffects = new QuestEffects();
+                    JsonObject completionEffectsObj = pageObj.getAsJsonObject("effects");  // ← Get from pageObj
 
+                    if (completionEffectsObj.has("remove_item")) {
+                        completionEffects.removeItem = completionEffectsObj.get("remove_item").getAsBoolean();
+                    }
+                    if (completionEffectsObj.has("give_reward")) {
+                        completionEffects.giveReward = completionEffectsObj.get("give_reward").getAsBoolean();
+                    }
+                    if (completionEffectsObj.has("end_quest")) {
+                        completionEffects.endQuest = completionEffectsObj.get("end_quest").getAsBoolean();
+                    }
+                    newPage.effects = completionEffects;
+                }
                 choice1Pages.add(newPage);
             }
             for (JsonElement pageElem : choice2PagesArray) {
@@ -188,8 +211,20 @@ public class QuestLoader {
                 if (pageObj.has("button_2_text")) {
                     newPage.button2Text = pageObj.get("button_2_text").getAsString();
                 }
-                if (pageObj.has("end_quest")) {
-                    newPage.endQuest = pageObj.get("end_quest").getAsBoolean();
+                if (pageObj.has("effects")) {  // ← Check pageObj, not stage
+                    QuestEffects completionEffects = new QuestEffects();
+                    JsonObject completionEffectsObj = pageObj.getAsJsonObject("effects");  // ← Get from pageObj
+
+                    if (completionEffectsObj.has("remove_item")) {
+                        completionEffects.removeItem = completionEffectsObj.get("remove_item").getAsBoolean();
+                    }
+                    if (completionEffectsObj.has("give_reward")) {
+                        completionEffects.giveReward = completionEffectsObj.get("give_reward").getAsBoolean();
+                    }
+                    if (completionEffectsObj.has("end_quest")) {
+                        completionEffects.endQuest = completionEffectsObj.get("end_quest").getAsBoolean();
+                    }
+                    newPage.effects = completionEffects;
                 }
                 choice2Pages.add(newPage);
             }
@@ -222,7 +257,8 @@ public class QuestLoader {
                 nextStage = onAcceptObject.get("goto").getAsString();
             }
         }
-        return new DialogueStage(id, pages, nextStage, questId, choices, choice1Pages, choice2Pages);
+
+        return new DialogueStage(id, pages, questId, nextStage, choices, choice1Pages, choice2Pages, parseRewards(stage));
     }
     private static ObjectiveStage parseObjective(String id, JsonObject stage, String questId) {
 
@@ -273,8 +309,20 @@ public class QuestLoader {
                     "Unknown objective_type: " + type
             );
         }
+        QuestEffects completionEffects = new QuestEffects();
+        if (stage.has("effects")) {
 
-        return new ObjectiveStage(id, objective, inProgressDialogue, questId, nextStage);
+            JsonObject completionEffectsObj = stage.getAsJsonObject("effects");
+
+            if (completionEffectsObj.has("remove_item")) {
+                completionEffects.removeItem = completionEffectsObj.get("remove_item").getAsBoolean();
+            }
+            if (completionEffectsObj.has("give_reward")) {
+                completionEffects.giveReward = completionEffectsObj.get("give_reward").getAsBoolean();
+            }
+        }
+
+        return new ObjectiveStage(id, objective, inProgressDialogue, questId, nextStage, completionEffects, parseRewards(stage));
     }
 
     private static QuestEffects parseEffects(JsonObject obj) {
@@ -283,7 +331,6 @@ public class QuestLoader {
         if (obj == null) return effects;
 
         effects.removeItem = obj.has("remove_item") && obj.get("remove_item").getAsBoolean();
-        effects.keepItem = obj.has("keep_item") && obj.get("keep_item").getAsBoolean();
         effects.giveReward = obj.has("give_reward") && obj.get("give_reward").getAsBoolean();
 
         return effects;

@@ -6,13 +6,9 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.ItemLike;
 
 public class QuestEffects {
-    public boolean removeItem;
-    public boolean keepItem;
-    public boolean giveReward;
-    public ResourceLocation itemReward;
+    public boolean removeItem = true;
+    public boolean giveReward = true;
+    public boolean endQuest = false;
     public int itemCount;
 
-    public void apply(Player player) {
-        player.getInventory().add(new ItemStack((ItemLike) itemReward, itemCount));
-    }
 }

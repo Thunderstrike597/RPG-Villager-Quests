@@ -1,8 +1,10 @@
 package net.kenji.rpg_villager_quests.quest_system.stage_types;
 
 import net.kenji.rpg_villager_quests.quest_system.*;
+import net.kenji.rpg_villager_quests.quest_system.interfaces.QuestReward;
 import net.kenji.rpg_villager_quests.quest_system.quest_data.QuestInstance;
 import net.minecraft.world.entity.player.Player;
+import org.jline.utils.Log;
 
 import java.util.List;
 
@@ -27,8 +29,8 @@ public class DialogueStage extends QuestStage {
         OPTION_1,
         OPTION_2
     }
-    public DialogueStage(String id, List<Page> pages, String belongingQuest, String nextStageId, List<QuestChoice> choices, List<Page> choice1Pages, List<Page> choice2Pages) {
-        super(id, QuestStageType.valueOf("dialogue".toUpperCase()), pages, belongingQuest, nextStageId);
+    public DialogueStage(String id, List<Page> pages, String belongingQuest, String nextStageId, List<QuestChoice> choices, List<Page> choice1Pages, List<Page> choice2Pages, List<QuestReward> questReward) {
+        super(id, QuestStageType.valueOf("dialogue".toUpperCase()), pages, belongingQuest, nextStageId, questReward);
         this.choice1Pages = choice1Pages;
         this.choice2Pages = choice2Pages;
         this.choices = choices;
@@ -50,14 +52,26 @@ public class DialogueStage extends QuestStage {
     }
 
     @Override
-    public void onComplete(Player player, QuestInstance questInstance) {
+    public void onComplete(QuestEffects completionEffects, Player player, QuestInstance questInstance) {
         isComplete = true;
-        QuestStage nextStage = questInstance.getCurrentStage().getNextStage(player, questInstance);
-        if(nextStage != null) {
-            nextStage.start(player, questInstance);
+        QuestStage nextStage = getNextStage(player, questInstance);
+        Log.info("Current Stage: " + questInstance.getCurrentStage().id);
+
+        if (completionEffects != null) {
+            if (completionEffects.giveReward) {
+                Log.info("LOGGING GIVE REWARD");
+
+                for (QuestReward reward : stageRewards) {
+                    reward.apply(player);
+                }
+            }
         }
-        else{
-            questInstance.triggerQuestComplete(player);
+        if (nextStage != null) {
+            nextStage.start(player, questInstance);
+        } else {
+            Log.info("LOGGING QUEST COMPLETE");
+
+            questInstance.triggerQuestComplete(completionEffects, player);
         }
     }
     public List<Page> getDialogue(QuestInstance questInstance){

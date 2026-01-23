@@ -14,16 +14,15 @@ public class Quest {
     public final String displayName;
     public final String type;
     public final List<QuestStage> stages;
-    public final QuestReward questReward;
 
     public final Dialogue completionDialogue;
 
-    public Quest(String id, String displayName, String type, List<QuestStage> stages, QuestReward questReward, Dialogue completionDialogue) {
+
+    public Quest(String id, String displayName, String type, List<QuestStage> stages, Dialogue completionDialogue) {
         this.id = id;
         this.displayName = displayName;
         this.type = type;
         this.stages = stages;
-        this.questReward = questReward;
         if(completionDialogue != null)
             this.completionDialogue = completionDialogue;
         else{
@@ -66,10 +65,8 @@ public class Quest {
     }
 
 
-    public void onQuestComplete(Player player){
-        if(questReward != null){
-            questReward.apply(player);
-        }
+    public void onQuestComplete(QuestInstance questInstance, QuestEffects completionEffects, QuestStage completionStage, Player player){
+
     }
 
 
