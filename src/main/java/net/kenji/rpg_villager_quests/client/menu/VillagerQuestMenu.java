@@ -405,9 +405,7 @@ public class VillagerQuestMenu extends Screen {
         if(questData.getActiveQuests() == null || !questData.getActiveQuests().contains(questInstance))
             return villagerQuest.stages.get(0).pages;
         else {
-            if(!questInstance.isComplete())
-                return questInstance.getCurrentStage().getDialogue();
-            return questInstance.getQuest().getCompletionDialogue(questInstance);
+            return questInstance.getCurrentStage().getDialogue(questInstance);
         }
     }
 
@@ -444,7 +442,12 @@ public class VillagerQuestMenu extends Screen {
             }
             else{
                 if(questInstance.getCurrentStage().canCompleteStage(player)) {
-                    onCompleteStage(player, questInstance);
+                    if(!pages.get(currentPageIndex).endQuest) {
+                        onCompleteStage(player, questInstance);
+                    }
+                    else if(pages.get(currentPageIndex).endQuest){
+                        onCompleteQuest(player,questInstance);
+                    }
 
                     if (!(questInstance.getCurrentStage() instanceof DialogueStage))
                         onClose();
@@ -466,6 +469,17 @@ public class VillagerQuestMenu extends Screen {
                 hasSentenceCompleted = false;
                 questInstance.setQuestReputation(Reputation.GOOD);
 
+                if(dialogueStage.choices.get(0)!= null){
+                    if(dialogueStage.choices.get(0).endQuest){
+                        onCompleteQuest(player,questInstance);
+                        return;
+                    }
+                }
+
+                if(pages.get(currentPageIndex).endQuest){
+                    onCompleteQuest(player,questInstance);
+                }
+
                 this.clearWidgets();
                 this.init();
             }
@@ -474,9 +488,15 @@ public class VillagerQuestMenu extends Screen {
     public void onNegativePress(Player player, QuestInstance questInstance){
         if(pages.get(currentPageIndex).dialogueType != DialogueStage.DialogueType.CHOICE) {
             if(questInstance.getCurrentStage().canCompleteStage(player)) {
-                onCompleteStage(player, questInstance);
-                this.onClose();
+                if(!pages.get(currentPageIndex).endQuest) {
+                    onCompleteStage(player, questInstance);
+                    this.onClose();
+                }
+                else if(pages.get(currentPageIndex).endQuest){
+                    onCompleteQuest(player,questInstance);
+                }
             }
+
         }
         else{
             if(questInstance.getCurrentStage() instanceof DialogueStage dialogueStage) {
@@ -489,10 +509,35 @@ public class VillagerQuestMenu extends Screen {
                 hasSentenceCompleted = false;
                 questInstance.setQuestReputation(Reputation.BAD);
 
+                if(dialogueStage.choices.get(1)!= null){
+                    if(dialogueStage.choices.get(1).endQuest){
+                        onCompleteQuest(player,questInstance);
+                        return;
+                    }
+                }
+
+
+
                 this.clearWidgets();
                 this.init();
             }
         }
+    }
+
+    public void onCompleteQuest(Player player, QuestInstance questInstance) {
+
+        visibleChars = 0;
+        lastTypeTime = 0;
+        isPausedAfterPeriod = false;
+        pauseStartTime = 0;
+        words = Arrays.asList(pages.get(currentPageIndex).text.split("(?<=\\s)"));
+        currentSentenceStartDelay = 0;
+        hasSentenceCompleted = false;
+
+        questInstance.triggerQuestComplete(player);
+        player.playSound(SoundEvents.VILLAGER_YES);
+
+        this.onClose();
     }
     public void onCompleteStage(Player player, QuestInstance questInstance) {
         if (currentPageIndex < pages.size()) {
@@ -509,8 +554,6 @@ public class VillagerQuestMenu extends Screen {
 
             this.clearWidgets();
             this.init();
-
-            Log.info("Current Stage: " + questInstance.getCurrentStage().id);
         }
     }
 

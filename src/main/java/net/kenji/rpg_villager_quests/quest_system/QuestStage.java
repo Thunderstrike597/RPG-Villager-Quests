@@ -26,7 +26,7 @@ public abstract class QuestStage {
     public abstract boolean isComplete(Player player);
     public abstract QuestStage getNextStage(Player player, QuestInstance questInstance);
     public abstract void onComplete(Player player, QuestInstance questInstance);
-    public abstract List<Page> getDialogue();
+    public abstract List<Page> getDialogue(QuestInstance questInstance);
     public abstract boolean canCompleteStage(Player player);
     public abstract boolean canCompleteStage(int currentPageIndex,Player player);
 

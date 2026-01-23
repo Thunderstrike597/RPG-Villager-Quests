@@ -5,12 +5,9 @@ import net.kenji.rpg_villager_quests.quest_system.Quest;
 import net.kenji.rpg_villager_quests.quest_system.QuestStage;
 import net.kenji.rpg_villager_quests.quest_system.QuestStageType;
 import net.kenji.rpg_villager_quests.quest_system.interfaces.QuestObjective;
-import net.kenji.rpg_villager_quests.quest_system.quest_data.QuestData;
 import net.kenji.rpg_villager_quests.quest_system.quest_data.QuestInstance;
 import net.minecraft.world.entity.player.Player;
-import org.jline.utils.Log;
 
-import java.util.ArrayList;
 import java.util.List;
 
 public class ObjectiveStage extends QuestStage {
@@ -39,8 +36,12 @@ public class ObjectiveStage extends QuestStage {
     }
 
     @Override
-    public List<Page> getDialogue() {
-        return pages;
+    public List<Page> getDialogue(QuestInstance questInstance) {
+        if(!questInstance.isComplete()) {
+            return pages;
+        }
+        return questInstance.getQuest().getCompletionDialogue(questInstance);
+
     }
 
     @Override

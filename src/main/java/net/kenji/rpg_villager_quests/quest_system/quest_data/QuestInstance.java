@@ -36,7 +36,7 @@ public class QuestInstance {
     }
 
     public boolean isComplete() {
-        return currentStageIndex >= questDefinition.stages.size() || completed;
+        return completed;
     }
     public void triggerQuestComplete(Player player){
         completed = true;

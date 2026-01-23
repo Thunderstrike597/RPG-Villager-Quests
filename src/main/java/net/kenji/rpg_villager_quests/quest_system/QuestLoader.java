@@ -156,6 +156,9 @@ public class QuestLoader {
             if(pageObj.has("button_2_text")){
                 newPage.button2Text = pageObj.get("button_2_text").getAsString();
             }
+            if (pageObj.has("end_quest")) {
+                newPage.endQuest = pageObj.get("end_quest").getAsBoolean();
+            }
             pages.add(newPage);
         }
         if(choice1PagesArray != null && choice2PagesArray != null && choicesArray != null) {
@@ -169,6 +172,10 @@ public class QuestLoader {
                 if (pageObj.has("button_2_text")) {
                     newPage.button2Text = pageObj.get("button_2_text").getAsString();
                 }
+                if (pageObj.has("end_quest")) {
+                    newPage.endQuest = pageObj.get("end_quest").getAsBoolean();
+                }
+
                 choice1Pages.add(newPage);
             }
             for (JsonElement pageElem : choice2PagesArray) {
@@ -181,6 +188,9 @@ public class QuestLoader {
                 if (pageObj.has("button_2_text")) {
                     newPage.button2Text = pageObj.get("button_2_text").getAsString();
                 }
+                if (pageObj.has("end_quest")) {
+                    newPage.endQuest = pageObj.get("end_quest").getAsBoolean();
+                }
                 choice2Pages.add(newPage);
             }
 
@@ -189,8 +199,11 @@ public class QuestLoader {
 
                 String choiceId = choiceObj.get("id").getAsString();
                 String text = choiceObj.get("text").getAsString();
-                boolean endQuest = choiceObj.get("end_quest").getAsBoolean();
 
+                boolean endQuest = false;
+                if(choiceObj.has("end_quest")) {
+                    endQuest = choiceObj.get("end_quest").getAsBoolean();
+                }
                 QuestEffects effects = parseEffects(choiceObj.getAsJsonObject("effects"));
                 List<QuestReward> rewards = parseRewards(choiceObj);
                 choices.add(new QuestChoice(choiceId, text, endQuest, effects, rewards));
