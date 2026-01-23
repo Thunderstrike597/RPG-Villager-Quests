@@ -5,6 +5,7 @@ import net.kenji.rpg_villager_quests.quest_system.quest_data.QuestData;
 import net.kenji.rpg_villager_quests.quest_system.quest_data.QuestInstance;
 import net.minecraft.world.entity.player.Player;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
@@ -15,22 +16,44 @@ public class Quest {
     public final List<QuestStage> stages;
     public final QuestReward questReward;
 
-    private int currentStageIndex = 0;
+    public final Dialogue completionDialogue;
 
-    public Quest(String id, String displayName, String type, List<QuestStage> stages, QuestReward questReward) {
+    public Quest(String id, String displayName, String type, List<QuestStage> stages, QuestReward questReward, Dialogue completionDialogue) {
         this.id = id;
         this.displayName = displayName;
         this.type = type;
         this.stages = stages;
         this.questReward = questReward;
+        if(completionDialogue != null)
+            this.completionDialogue = completionDialogue;
+        else{
+
+            Page defaultPage = new Page();
+            defaultPage.text = "That's all for now!";
+            defaultPage.button1Text = "NONE";
+            defaultPage.button2Text = "Ok";
+            List<Page> defaultPageList = new ArrayList<>();
+            defaultPageList.add(defaultPage);
+
+            Dialogue.Outcome defaultOutcome = new Dialogue.Outcome(defaultPageList);
+            this.completionDialogue = new Dialogue(defaultOutcome, null);
+        }
     }
 
     public String getQuestId(){
         return this.id;
     }
 
-    public QuestStage getCurrentStage(){
-        return stages.get(currentStageIndex);
+    public List<Page> getCompletionDialogue(QuestInstance questInstance){
+        if(questInstance.getQuestReputation() == Reputation.GOOD){
+            return completionDialogue.outcome.pages;
+        }
+        else if(questInstance.getQuestReputation() == Reputation.BAD){
+            if(completionDialogue.altOutcome == null)
+                return completionDialogue.outcome.pages;
+            return completionDialogue.altOutcome.pages;
+        }
+        return completionDialogue.outcome.pages;
     }
 
     public QuestStage getStageById(String id){
@@ -41,21 +64,15 @@ public class Quest {
         }
         return null;
     }
+
+
     public void onQuestComplete(Player player){
         if(questReward != null){
             questReward.apply(player);
         }
     }
 
-    public void setCurrentStageIndex(String id){
-        for(int i = 0; i < stages.size(); i++){
-            if(Objects.equals(stages.get(i).id, id)){
-                currentStageIndex = i;
-                break;
-            }
-        }
 
-    }
 
     public QuestInstance StartQuest(Player player){
         QuestData questData = QuestData.get(player);

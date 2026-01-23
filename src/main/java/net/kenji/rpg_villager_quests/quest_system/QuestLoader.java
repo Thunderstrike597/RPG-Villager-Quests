@@ -65,11 +65,62 @@ public class QuestLoader {
                     }
                 }
            }
-
-
+        }
+        Dialogue.Outcome outcome = null;
+        Dialogue.Outcome altOutcome = null;
+        if(json.has("completion_dialogue")) {
+            JsonObject completionDialogueObj = json.getAsJsonObject("completion_dialogue");
+            if (completionDialogueObj.has("outcome")) {
+                JsonObject outComeObj = completionDialogueObj.getAsJsonObject("outcome");
+                if (outComeObj.has("pages")) {
+                    JsonArray pagesArray = outComeObj.getAsJsonArray("pages");
+                    List<Page> pages = new ArrayList<>();
+                    for(JsonElement pageElem : pagesArray){
+                        JsonObject pageObj = pageElem.getAsJsonObject();
+                        Page page = new Page();
+                        if(pageObj.has("text")){
+                            page.text = pageObj.get("text").getAsString();
+                        }
+                        if(pageObj.has("button_1_text")){
+                            page.button1Text = pageObj.get("button_1_text").getAsString();
+                        }
+                        if(pageObj.has("button_2_text")){
+                            page.button2Text = pageObj.get("button_2_text").getAsString();
+                        }
+                        pages.add(page);
+                    }
+                    outcome = new Dialogue.Outcome(pages);
+                }
+            }
+            if (completionDialogueObj.has("alt_outcome")) {
+                JsonObject outComeObj = completionDialogueObj.getAsJsonObject("alt_outcome");
+                if (outComeObj.has("pages")) {
+                    JsonArray pagesArray = outComeObj.getAsJsonArray("pages");
+                    List<Page> pages = new ArrayList<>();
+                    for(JsonElement pageElem : pagesArray){
+                        JsonObject pageObj = pageElem.getAsJsonObject();
+                        Page page = new Page();
+                        if(pageObj.has("text")){
+                            page.text = pageObj.get("text").getAsString();
+                        }
+                        if(pageObj.has("button_1_text")){
+                            page.button1Text = pageObj.get("button_1_text").getAsString();
+                        }
+                        if(pageObj.has("button_2_text")){
+                            page.button2Text = pageObj.get("button_2_text").getAsString();
+                        }
+                        pages.add(page);
+                    }
+                    altOutcome = new Dialogue.Outcome(pages);
+                }
+            }
         }
 
-        return new Quest(id, displayName, type, stages, questReward);
+
+        Dialogue dialogue = new Dialogue(outcome, altOutcome);
+
+
+        return new Quest(id, displayName, type, stages, questReward, dialogue);
     }
     private static DialogueStage parseDialogue(String id, JsonObject stage, String questId) {
         if(!stage.has("dialogue"))
@@ -86,13 +137,18 @@ public class QuestLoader {
 
         JsonArray choicesArray = stage.getAsJsonArray("choices");
 
-        List<QuestStage.Page> pages = new ArrayList<>();
-        List<QuestStage.Page> choice1Pages = new ArrayList<>();
-        List<QuestStage.Page> choice2Pages = new ArrayList<>();
+        List<Page> pages = new ArrayList<>();
+        List<Page> choice1Pages = new ArrayList<>();
+        List<Page> choice2Pages = new ArrayList<>();
 
         for (JsonElement pageElem : pagesArray) {
             JsonObject pageObj = pageElem.getAsJsonObject();
-            QuestStage.Page newPage = new QuestStage.Page();
+            Page newPage = new Page();
+
+            if(pageObj.has("type")){
+                newPage.dialogueType = DialogueStage.DialogueType.valueOf(pageObj.get("type").getAsString().toUpperCase());
+            }
+
             newPage.text = pageObj.get("text").getAsString();
             if(pageObj.has("button_1_text")){
                 newPage.button1Text = pageObj.get("button_1_text").getAsString();
@@ -105,7 +161,7 @@ public class QuestLoader {
         if(choice1PagesArray != null && choice2PagesArray != null && choicesArray != null) {
             for (JsonElement pageElem : choice1PagesArray) {
                 JsonObject pageObj = pageElem.getAsJsonObject();
-                QuestStage.Page newPage = new QuestStage.Page();
+                Page newPage = new Page();
                 newPage.text = pageObj.get("text").getAsString();
                 if (pageObj.has("button_1_text")) {
                     newPage.button1Text = pageObj.get("button_1_text").getAsString();
@@ -117,7 +173,7 @@ public class QuestLoader {
             }
             for (JsonElement pageElem : choice2PagesArray) {
                 JsonObject pageObj = pageElem.getAsJsonObject();
-                QuestStage.Page newPage = new QuestStage.Page();
+                Page newPage = new Page();
                 newPage.text = pageObj.get("text").getAsString();
                 if (pageObj.has("button_1_text")) {
                     newPage.button1Text = pageObj.get("button_1_text").getAsString();
@@ -169,11 +225,11 @@ public class QuestLoader {
         QuestObjective objective;
         JsonArray inProgressDialogueArray = stage.getAsJsonArray("in_progress_dialogue");
 
-        List<QuestStage.Page> inProgressDialogue = new ArrayList<>();
+        List<Page> inProgressDialogue = new ArrayList<>();
 
         for (JsonElement pageElem : inProgressDialogueArray) {
             JsonObject pageObj = pageElem.getAsJsonObject();
-            QuestStage.Page newPage = new QuestStage.Page();
+            Page newPage = new Page();
             newPage.text = pageObj.get("text").getAsString();
             if(pageObj.has("button_1_text")){
                 newPage.button1Text = pageObj.get("button_1_text").getAsString();

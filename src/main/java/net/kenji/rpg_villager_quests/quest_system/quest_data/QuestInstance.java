@@ -2,12 +2,16 @@ package net.kenji.rpg_villager_quests.quest_system.quest_data;
 
 import net.kenji.rpg_villager_quests.quest_system.Quest;
 import net.kenji.rpg_villager_quests.quest_system.QuestStage;
+import net.kenji.rpg_villager_quests.quest_system.Reputation;
 import net.minecraft.world.entity.player.Player;
+
+import java.util.Objects;
 
 public class QuestInstance {
     private final Quest questDefinition;
     private int currentStageIndex;
     private boolean completed;
+    private Reputation questReputation;
 
     public QuestInstance(Quest quest) {
         this.questDefinition = quest;
@@ -19,12 +23,15 @@ public class QuestInstance {
         QuestData questData = QuestData.get(player);
         QuestInstance questInstance = questData.getQuestInstance(questDefinition.getQuestId());
         if(questInstance != null) {
-            for (int i = 0; i < questDefinition.stages.size(); i++) {
-                if (questDefinition.stages.get(i) == questInstance.getCurrentStage() && i + 1 < questDefinition.stages.size()) {
-                    currentStageIndex = i + 1;
-                    return;
+            if(getCurrentStage().getNextStage(player, this) == null) {
+                for (int i = 0; i < questDefinition.stages.size(); i++) {
+                    if (questDefinition.stages.get(i) == questInstance.getCurrentStage() && i + 1 < questDefinition.stages.size()) {
+                        currentStageIndex = i + 1;
+                        return;
+                    }
                 }
             }
+            setCurrentStage(getCurrentStage().nextStageId);
         }
     }
 
@@ -35,12 +42,19 @@ public class QuestInstance {
         completed = true;
         questDefinition.onQuestComplete(player);
     }
-
     public Quest getQuest() {
         return questDefinition;
     }
+    public void setCurrentStageIndexByName(String id){
+        for(int i = 0; i < questDefinition.stages.size(); i++){
+            if(Objects.equals(questDefinition.stages.get(i).id, id)){
+                currentStageIndex = i;
+                break;
+            }
+        }
+    }
     public void setCurrentStage(String id) {
-        questDefinition.setCurrentStageIndex(id);
+        setCurrentStageIndexByName(id);
     }
 
     public QuestStage getCurrentStage() {
@@ -53,5 +67,13 @@ public class QuestInstance {
            }
        }
         return 0;
+    }
+
+    public void setQuestReputation(Reputation questReputation) {
+        this.questReputation = questReputation;
+    }
+
+    public Reputation getQuestReputation() {
+        return questReputation;
     }
 }

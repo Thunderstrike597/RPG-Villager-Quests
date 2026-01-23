@@ -1,12 +1,10 @@
 package net.kenji.rpg_villager_quests.quest_system.stage_types;
 
-import net.kenji.rpg_villager_quests.quest_system.Quest;
-import net.kenji.rpg_villager_quests.quest_system.QuestChoice;
-import net.kenji.rpg_villager_quests.quest_system.QuestStage;
-import net.kenji.rpg_villager_quests.quest_system.QuestStageType;
+import net.kenji.rpg_villager_quests.quest_system.*;
 import net.kenji.rpg_villager_quests.quest_system.quest_data.QuestData;
 import net.kenji.rpg_villager_quests.quest_system.quest_data.QuestInstance;
 import net.minecraft.world.entity.player.Player;
+import org.jline.utils.Log;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -14,12 +12,18 @@ import java.util.List;
 public class DialogueStage extends QuestStage {
 
     public final List<QuestChoice> choices;
-
     public final List<Page> choice1Pages;
     public final List<Page> choice2Pages;
 
     public ChoiceType chosenDialogueOption = ChoiceType.UNCHOSEN;
 
+    public List<Page> currentDialoguePages = pages;
+
+
+    public enum DialogueType{
+        REGULAR,
+        CHOICE
+    }
 
     public enum ChoiceType {
         UNCHOSEN,
@@ -33,8 +37,8 @@ public class DialogueStage extends QuestStage {
         this.choices = choices;
     }
     @Override
-    public void start(Player player) {
-        // UI opens here, pages are displayed
+    public void start(Player player, QuestInstance questInstance) {
+        questInstance.setCurrentStage(this.id);
     }
 
     @Override
@@ -43,46 +47,48 @@ public class DialogueStage extends QuestStage {
     }
 
     @Override
-    public QuestStage getNextStage(Player player) {
-        Quest quest =  QuestData.get(player).getQuestInstance(belongingQuestId).getQuest();
+    public QuestStage getNextStage(Player player, QuestInstance questInstance) {
+        Quest quest =  questInstance.getQuest();
         return quest.getStageById(nextStageId);
     }
 
     @Override
-    public void onComplete(Player player) {
+    public void onComplete(Player player, QuestInstance questInstance) {
         isComplete = true;
-        QuestInstance questInstance = QuestData.get(player).getQuestInstance(belongingQuestId);
-        QuestStage nextStage = questInstance.getCurrentStage().getNextStage(player);
+        QuestStage nextStage = questInstance.getCurrentStage().getNextStage(player, questInstance);
         if(nextStage != null) {
-            nextStage.start(player);
+            nextStage.start(player, questInstance);
         }
         else{
             questInstance.triggerQuestComplete(player);
         }
     }
-    public List<String> getDialogue(){
+    public List<Page> getDialogue(){
         List<Page> pageList;
         if(choices != null){
             pageList = chosenDialogueOption == ChoiceType.OPTION_1 ? choice1Pages : chosenDialogueOption == ChoiceType.OPTION_2 ? choice2Pages : pages;
         }
         else pageList = pages;
 
-
-        List<String> textList = new ArrayList<>();
-        for(Page page : pageList){
-            textList.add(page.text);
-        }
-
-        return textList;
-    }
-
-    public void setChosenDialogue(ChoiceType choiceType){
-        chosenDialogueOption = choiceType;
+        return pageList;
     }
 
     @Override
     public boolean canCompleteStage(Player player) {
         return true;
+    }
+
+    public void setChosenDialogue(ChoiceType choiceType){
+        chosenDialogueOption = choiceType;
+        if(chosenDialogueOption == ChoiceType.OPTION_1 && choice1Pages != null)
+            currentDialoguePages = choice1Pages;
+        if(chosenDialogueOption == ChoiceType.OPTION_2 && choice2Pages != null)
+            currentDialoguePages = choice2Pages;
+    }
+
+    @Override
+    public boolean canCompleteStage(int currentPageIndex, Player player) {
+        return currentPageIndex >= currentDialoguePages.size() - 1;
     }
 
 }

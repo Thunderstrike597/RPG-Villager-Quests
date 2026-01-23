@@ -1,5 +1,6 @@
 package net.kenji.rpg_villager_quests.quest_system;
 
+import net.kenji.rpg_villager_quests.quest_system.quest_data.QuestInstance;
 import net.minecraft.world.entity.player.Player;
 
 import java.util.List;
@@ -13,13 +14,6 @@ public abstract class QuestStage {
 
     protected boolean isComplete;
 
-    public static class Page{
-        public String text;
-        public String button1Text;
-        public String button2Text;
-
-    }
-
 
     protected QuestStage(String id, QuestStageType type, List<Page> pages, String belongingQuestId, String nextStageId) {
         this.id = id;
@@ -28,11 +22,14 @@ public abstract class QuestStage {
         this.belongingQuestId = belongingQuestId;
         this.nextStageId = nextStageId;
     }
-    public abstract void start(Player player);
+    public abstract void start(Player player, QuestInstance questInstance);
     public abstract boolean isComplete(Player player);
-    public abstract QuestStage getNextStage(Player player);
-    public abstract void onComplete(Player player);
-    public abstract List<String> getDialogue();
+    public abstract QuestStage getNextStage(Player player, QuestInstance questInstance);
+    public abstract void onComplete(Player player, QuestInstance questInstance);
+    public abstract List<Page> getDialogue();
     public abstract boolean canCompleteStage(Player player);
+    public abstract boolean canCompleteStage(int currentPageIndex,Player player);
+
+
 }
 

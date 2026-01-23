@@ -1,5 +1,6 @@
 package net.kenji.rpg_villager_quests.quest_system.stage_types;
 
+import net.kenji.rpg_villager_quests.quest_system.Page;
 import net.kenji.rpg_villager_quests.quest_system.Quest;
 import net.kenji.rpg_villager_quests.quest_system.QuestStage;
 import net.kenji.rpg_villager_quests.quest_system.QuestStageType;
@@ -7,6 +8,7 @@ import net.kenji.rpg_villager_quests.quest_system.interfaces.QuestObjective;
 import net.kenji.rpg_villager_quests.quest_system.quest_data.QuestData;
 import net.kenji.rpg_villager_quests.quest_system.quest_data.QuestInstance;
 import net.minecraft.world.entity.player.Player;
+import org.jline.utils.Log;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -21,9 +23,8 @@ public class ObjectiveStage extends QuestStage {
         this.objective = objective;
     }
     @Override
-    public void start(Player player) {
-        QuestInstance questInstance =  QuestData.get(player).getQuestInstance(belongingQuestId);
-        questInstance.setCurrentStage(getNextStage(player).id);
+    public void start(Player player, QuestInstance questInstance) {
+        questInstance.setCurrentStage(this.id);
     }
 
     @Override
@@ -32,19 +33,14 @@ public class ObjectiveStage extends QuestStage {
     }
 
     @Override
-    public QuestStage getNextStage(Player player) {
-        Quest quest =  QuestData.get(player).getQuestInstance(belongingQuestId).getQuest();
+    public QuestStage getNextStage(Player player, QuestInstance questInstance) {
+        Quest quest =  questInstance.getQuest();
         return quest.getStageById(nextStageId);
     }
 
     @Override
-    public List<String> getDialogue() {
-        List<String> textList = new ArrayList<>();
-
-        for(Page page : pages){
-            textList.add(page.text);
-        }
-        return textList;
+    public List<Page> getDialogue() {
+        return pages;
     }
 
     @Override
@@ -53,12 +49,16 @@ public class ObjectiveStage extends QuestStage {
     }
 
     @Override
-    public void onComplete(Player player) {
+    public boolean canCompleteStage(int currentPageIndex, Player player) {
+        return currentPageIndex >= pages.size() - 1;
+    }
+
+    @Override
+    public void onComplete(Player player, QuestInstance questInstance) {
         isComplete = true;
-        QuestInstance questInstance = QuestData.get(player).getQuestInstance(belongingQuestId);
-        QuestStage nextStage = questInstance.getCurrentStage().getNextStage(player);
+        QuestStage nextStage = getNextStage(player, questInstance);
         if(nextStage != null) {
-            nextStage.start(player);
+            nextStage.start(player, questInstance);
         }
         else{
             questInstance.triggerQuestComplete(player);
