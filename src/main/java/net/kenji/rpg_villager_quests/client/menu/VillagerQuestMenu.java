@@ -262,20 +262,35 @@ public class VillagerQuestMenu extends Screen {
     }
 
     public void addButtons(Player player) {
-        int bgX = getX(backgroundGui);
-        int bgY = getY(backgroundGui);
-        int bgW = getBgWidth(backgroundGui);
-        int bgH = getBgHeight(backgroundGui);
+        // Recalculate the same values as in render()
+        int DISPLAY_WIDTH = GetTextureSize(DisplayType.BACKGROUND_DISPLAY).x + 20;
+        int DISPLAY_HEIGHT = GetTextureSize(DisplayType.BACKGROUND_DISPLAY).y + 10;
 
-        int buttonWidth = 90;
-        int buttonHeight = 20;
-        int padding = 8;
+        int x = GetUVCoords().x - 15;
+        int y = GetUVCoords().y;
 
-        int xOffset = -100;
-        int posYOffset = -10;
-        int negYOffset = 15;
-        int pX = bgX + padding;
-        int pY = bgY + bgH - buttonHeight - padding;
+        float scaleX = (float) DISPLAY_WIDTH / TEXTURE_WIDTH;
+        float scaleY = (float) DISPLAY_HEIGHT / TEXTURE_HEIGHT;
+
+        // Calculate where the background ACTUALLY is on screen
+        int actualBgX = x + (int)(backgroundGui.offsetX * scaleX);
+        int actualBgY = y + (int)(backgroundGui.offsetY * scaleY);
+        int actualBgW = (int)(backgroundGui.TEXTURE_WIDTH * scaleX);
+        int actualBgH = (int)(backgroundGui.TEXTURE_HEIGHT * scaleY);
+
+        // Scale all button dimensions and offsets
+        int buttonWidth = (int)(45 * scaleX);
+        int buttonHeight = (int)(15 * scaleY);
+        int padding = (int)(8 * scaleX);
+
+        int xOffset = (int)(-55 * scaleX);
+        int posYOffset = (int)(-60 * scaleY);
+        int negYOffset = (int)(-35 * scaleY);
+
+        // Use ACTUAL background position
+        int pX = actualBgX + padding;
+        int pY = actualBgY + actualBgH - buttonHeight - padding;
+
         if (hasSentenceCompleted) {
             if (currentPageIndex == pages.size() - 1 && QuestData.get(player.getUUID()).getQuestInstance(villagerQuest.getQuestId()) == null) {
                 if (getCurrentPage().button1Text == null || Objects.equals(getCurrentPage().button1Text, "")) {
@@ -739,16 +754,21 @@ public class VillagerQuestMenu extends Screen {
         );
         RenderSystem.setShaderColor(1f, 1f, 1f, 1f);
 
-        int bgX = getX(backgroundGui);
-        int bgY = getY(backgroundGui);
-        int bgW = getBgWidth(backgroundGui);
-        int bgH = getBgHeight(backgroundGui);
+        pose.popPose();
 
-        int xPadding = 8;
-        int yPadding = 15;
-        int textX = bgX + xPadding;
-        int textY = yPadding;
-        int textWidth = (bgW - xPadding * 2) - 30;
+// Calculate where the background ACTUALLY is on screen
+        int actualBgX = x + (int)(backgroundGui.offsetX * scaleX);
+        int actualBgY = y + (int)(backgroundGui.offsetY * scaleY);
+        int actualBgW = (int)(backgroundGui.TEXTURE_WIDTH * scaleX);
+        int actualBgH = (int)(backgroundGui.TEXTURE_HEIGHT * scaleY);
+
+        int xPadding = (int)(15 * scaleX);
+        int yPadding = (int)(15 * scaleY);
+
+// Text position based on ACTUAL background position
+        int textX = actualBgX + xPadding;
+        int textY = actualBgY + yPadding;
+        int textWidth = actualBgW - (xPadding * 2) - (int)(30 * scaleX);
 
         String fullText = pages.get(currentPageIndex).text;
         long now = System.currentTimeMillis();
@@ -822,20 +842,30 @@ public class VillagerQuestMenu extends Screen {
                 skipDialogue = false;
                 addButtons(getMinecraft().player);
             }
-
-
             String visibleText = buildSafeVisibleText(pages.get(currentPageIndex).text, textWidth);
-            pose.scale(scaleX / 1.2F, scaleY / 1.2F, 1f);
+
+        // Create a new pose stack for text scaling
+            pose.pushPose();
+
+        // Move to text position
+            pose.translate(textX, textY, 0);
+
+        // Scale the text 1.2x
+            pose.scale(1.2F, 1.2F, 1.0F);
+
+        // Draw at origin (0, 0) since we already translated
             gfx.drawWordWrap(
                     this.font,
                     Component.literal(visibleText),
-                    textX,
-                    textY,
-                    textWidth,
+                    0,  // Draw at 0,0 because we translated the pose
+                    0,
+                    (int)(textWidth / 1.2F),  // Adjust width for the scale
                     0xFFFFFF
             );
+
+            pose.popPose();
         }
-        pose.popPose();
+
 
         if (villager != null) {
             int headWidth  = 48;
