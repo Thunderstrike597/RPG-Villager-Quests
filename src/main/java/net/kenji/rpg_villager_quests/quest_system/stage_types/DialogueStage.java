@@ -1,10 +1,11 @@
 package net.kenji.rpg_villager_quests.quest_system.stage_types;
 
+import net.kenji.rpg_villager_quests.network.ModPacketHandler;
+import net.kenji.rpg_villager_quests.network.StageCompletionPacket;
 import net.kenji.rpg_villager_quests.quest_system.*;
 import net.kenji.rpg_villager_quests.quest_system.interfaces.QuestReward;
 import net.kenji.rpg_villager_quests.quest_system.quest_data.QuestInstance;
 import net.minecraft.world.entity.player.Player;
-import org.jline.utils.Log;
 
 import java.util.List;
 
@@ -55,21 +56,20 @@ public class DialogueStage extends QuestStage {
     public void onComplete(QuestEffects completionEffects, Player player, QuestInstance questInstance) {
         isComplete = true;
         QuestStage nextStage = getNextStage(player, questInstance);
-        Log.info("Current Stage: " + questInstance.getCurrentStage().id);
 
         if (completionEffects != null) {
             if (completionEffects.giveReward) {
-                Log.info("LOGGING GIVE REWARD");
-
-                for (QuestReward reward : stageRewards) {
-                    reward.apply(player);
+                if(stageRewards != null) {
+                    for (QuestReward reward : stageRewards){
+                        reward.apply(player);
+                    }
                 }
             }
+            completionEffects.apply(player);
         }
         if (nextStage != null) {
             nextStage.start(player, questInstance);
         } else {
-            Log.info("LOGGING QUEST COMPLETE");
 
             questInstance.triggerQuestComplete(completionEffects, player);
         }
@@ -105,16 +105,21 @@ public class DialogueStage extends QuestStage {
            ChoiceType option = chosenDialogueOption ;
            if(option == ChoiceType.OPTION_1){
                if(choices.get(0) != null) {
-                   if (choices.get(0).endQuest) {
-                       return true;
+                   if(choices.get(0).effects != null) {
+                       if (choices.get(0).effects.endQuest) {
+                           return true;
+                       }
                    }
                }
 
            }
             if(option == ChoiceType.OPTION_2){
                 if(choices.get(1) != null) {
-                    if (choices.get(1).endQuest) {
-                        return true;
+                    if(choices.get(0).effects != null) {
+
+                        if (choices.get(1).effects.endQuest) {
+                            return true;
+                        }
                     }
                 }
             }

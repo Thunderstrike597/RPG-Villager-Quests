@@ -19,6 +19,7 @@ public class ItemReward implements QuestReward {
 
     @Override
     public void apply(Player player) {
+
         player.getInventory().add(new ItemStack(Objects.requireNonNull(ForgeRegistries.ITEMS.getValue(item)), count));
     }
 }

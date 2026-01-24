@@ -9,4 +9,6 @@ public class Page{
     public String button1Text;
     public String button2Text;
 
+    public String tag;
+
 }

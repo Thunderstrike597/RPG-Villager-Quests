@@ -42,7 +42,7 @@ public class CollectItemObjective implements QuestObjective {
 
     @Override
     public void onComplete(QuestEffects effects, Player player) {
-        if (effects != null && !effects.removeItem) return;
+        if(!consume) return;
 
         var inv = player.getInventory();
         var itemObj = ForgeRegistries.ITEMS.getValue(item);

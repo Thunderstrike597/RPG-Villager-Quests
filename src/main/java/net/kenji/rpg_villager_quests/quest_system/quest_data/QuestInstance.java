@@ -23,7 +23,7 @@ public class QuestInstance {
     }
 
     public void advanceFromCurrentStage(Player player) {
-        QuestData questData = QuestData.get(player);
+        QuestData questData = QuestData.get(player.getUUID());
         QuestInstance questInstance = questData.getQuestInstance(questDefinition.getQuestId());
         if(questInstance != null) {
             if(getCurrentStage().getNextStage(player, this) == null) {

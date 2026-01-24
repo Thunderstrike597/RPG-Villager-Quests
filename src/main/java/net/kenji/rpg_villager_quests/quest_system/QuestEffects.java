@@ -6,9 +6,14 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.ItemLike;
 
 public class QuestEffects {
-    public boolean removeItem = true;
     public boolean giveReward = true;
     public boolean endQuest = false;
     public int itemCount;
+    public ItemStack removeItem;
 
+    public void apply(Player player){
+        if(removeItem != null && !removeItem.isEmpty()){
+            player.getInventory().removeItem(removeItem);
+        }
+    }
 }

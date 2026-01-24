@@ -11,9 +11,12 @@ import net.kenji.rpg_villager_quests.quest_system.reward_types.XpReward;
 import net.kenji.rpg_villager_quests.quest_system.stage_types.DialogueStage;
 import net.kenji.rpg_villager_quests.quest_system.stage_types.ObjectiveStage;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.item.ItemStack;
+import net.minecraftforge.registries.ForgeRegistries;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 public class QuestLoader {
 
@@ -150,6 +153,9 @@ public class QuestLoader {
             }
 
             newPage.text = pageObj.get("text").getAsString();
+            if (pageObj.has("tag")) {
+                newPage.tag = pageObj.get("tag").getAsString();
+            }
             if(pageObj.has("button_1_text")){
                 newPage.button1Text = pageObj.get("button_1_text").getAsString();
             }
@@ -159,16 +165,25 @@ public class QuestLoader {
             if (pageObj.has("effects")) {  // ← Check pageObj, not stage
                 QuestEffects completionEffects = new QuestEffects();
                 JsonObject completionEffectsObj = pageObj.getAsJsonObject("effects");  // ← Get from pageObj
-
-                if (completionEffectsObj.has("remove_item")) {
-                    completionEffects.removeItem = completionEffectsObj.get("remove_item").getAsBoolean();
-                }
                 if (completionEffectsObj.has("give_reward")) {
                     completionEffects.giveReward = completionEffectsObj.get("give_reward").getAsBoolean();
                 }
                 if (completionEffectsObj.has("end_quest")) {
                     completionEffects.endQuest = completionEffectsObj.get("end_quest").getAsBoolean();
                 }
+                if(completionEffectsObj.has("remove_item")) {
+                    ItemStack removeItem;
+                    JsonObject removeItemObj = pageObj.getAsJsonObject("remove_item");  // ← Get from pageObj
+
+                    ResourceLocation item = new ResourceLocation(removeItemObj.get("item").getAsString());
+                    int count = 1;
+                    if(removeItemObj.has("count")){
+                        count = removeItemObj.get("count").getAsInt();
+                    }
+                    removeItem = new ItemStack(Objects.requireNonNull(ForgeRegistries.ITEMS.getValue(item)), count);
+                    completionEffects.removeItem = removeItem;
+                }
+
                 newPage.effects = completionEffects;
             }
             pages.add(newPage);
@@ -187,16 +202,26 @@ public class QuestLoader {
                 if (pageObj.has("effects")) {  // ← Check pageObj, not stage
                     QuestEffects completionEffects = new QuestEffects();
                     JsonObject completionEffectsObj = pageObj.getAsJsonObject("effects");  // ← Get from pageObj
-
-                    if (completionEffectsObj.has("remove_item")) {
-                        completionEffects.removeItem = completionEffectsObj.get("remove_item").getAsBoolean();
-                    }
                     if (completionEffectsObj.has("give_reward")) {
                         completionEffects.giveReward = completionEffectsObj.get("give_reward").getAsBoolean();
                     }
                     if (completionEffectsObj.has("end_quest")) {
                         completionEffects.endQuest = completionEffectsObj.get("end_quest").getAsBoolean();
                     }
+                    if(completionEffectsObj.has("remove_item")) {
+                        ItemStack removeItem;
+                        JsonObject removeItemObj = pageObj.getAsJsonObject("remove_item");  // ← Get from pageObj
+                        if(removeItemObj != null) {
+                            ResourceLocation item = new ResourceLocation(removeItemObj.get("item").getAsString());
+                            int count = 1;
+                            if (removeItemObj.has("count")) {
+                                count = removeItemObj.get("count").getAsInt();
+                            }
+                            removeItem = new ItemStack(Objects.requireNonNull(ForgeRegistries.ITEMS.getValue(item)), count);
+                            completionEffects.removeItem = removeItem;
+                        }
+                    }
+
                     newPage.effects = completionEffects;
                 }
                 choice1Pages.add(newPage);
@@ -214,16 +239,25 @@ public class QuestLoader {
                 if (pageObj.has("effects")) {  // ← Check pageObj, not stage
                     QuestEffects completionEffects = new QuestEffects();
                     JsonObject completionEffectsObj = pageObj.getAsJsonObject("effects");  // ← Get from pageObj
-
-                    if (completionEffectsObj.has("remove_item")) {
-                        completionEffects.removeItem = completionEffectsObj.get("remove_item").getAsBoolean();
-                    }
                     if (completionEffectsObj.has("give_reward")) {
                         completionEffects.giveReward = completionEffectsObj.get("give_reward").getAsBoolean();
                     }
                     if (completionEffectsObj.has("end_quest")) {
                         completionEffects.endQuest = completionEffectsObj.get("end_quest").getAsBoolean();
                     }
+                    if(completionEffectsObj.has("remove_item")) {
+                        ItemStack removeItem;
+                        JsonObject removeItemObj = pageObj.getAsJsonObject("remove_item");  // ← Get from pageObj
+
+                        ResourceLocation item = new ResourceLocation(removeItemObj.get("item").getAsString());
+                        int count = 1;
+                        if(removeItemObj.has("count")){
+                            count = removeItemObj.get("count").getAsInt();
+                        }
+                        removeItem = new ItemStack(Objects.requireNonNull(ForgeRegistries.ITEMS.getValue(item)), count);
+                        completionEffects.removeItem = removeItem;
+                    }
+
                     newPage.effects = completionEffects;
                 }
                 choice2Pages.add(newPage);
@@ -235,13 +269,32 @@ public class QuestLoader {
                 String choiceId = choiceObj.get("id").getAsString();
                 String text = choiceObj.get("text").getAsString();
 
-                boolean endQuest = false;
-                if(choiceObj.has("end_quest")) {
-                    endQuest = choiceObj.get("end_quest").getAsBoolean();
+                QuestEffects effects = new QuestEffects();
+                if (choiceObj.has("effects")) {  // ← Check pageObj, not stage
+                    QuestEffects completionEffects = new QuestEffects();
+                    JsonObject completionEffectsObj = choiceObj.getAsJsonObject("effects");  // ← Get from pageObj
+                    if (completionEffectsObj.has("give_reward")) {
+                        completionEffects.giveReward = completionEffectsObj.get("give_reward").getAsBoolean();
+                    }
+                    if (completionEffectsObj.has("end_quest")) {
+                        completionEffects.endQuest = completionEffectsObj.get("end_quest").getAsBoolean();
+                    }
+                    if(completionEffectsObj.has("remove_item")) {
+                        JsonObject removeItemObj = completionEffectsObj.getAsJsonObject("remove_item");
+
+                        ResourceLocation item = new ResourceLocation(removeItemObj.get("item").getAsString());
+                        int count = 1;
+                        if (removeItemObj.has("count")) {
+                            count = removeItemObj.get("count").getAsInt();
+                        }
+                        ItemStack removeItem = new ItemStack(Objects.requireNonNull(ForgeRegistries.ITEMS.getValue(item)), count);
+                        completionEffects.removeItem = removeItem;
+                    }
+                    effects = completionEffects;
                 }
-                QuestEffects effects = parseEffects(choiceObj.getAsJsonObject("effects"));
+
                 List<QuestReward> rewards = parseRewards(choiceObj);
-                choices.add(new QuestChoice(choiceId, text, endQuest, effects, rewards));
+                choices.add(new QuestChoice(choiceId, text, effects, rewards));
             }
         }
         String nextStage = null;
@@ -310,17 +363,6 @@ public class QuestLoader {
             );
         }
         QuestEffects completionEffects = new QuestEffects();
-        if (stage.has("effects")) {
-
-            JsonObject completionEffectsObj = stage.getAsJsonObject("effects");
-
-            if (completionEffectsObj.has("remove_item")) {
-                completionEffects.removeItem = completionEffectsObj.get("remove_item").getAsBoolean();
-            }
-            if (completionEffectsObj.has("give_reward")) {
-                completionEffects.giveReward = completionEffectsObj.get("give_reward").getAsBoolean();
-            }
-        }
 
         return new ObjectiveStage(id, objective, inProgressDialogue, questId, nextStage, completionEffects, parseRewards(stage));
     }
@@ -330,9 +372,26 @@ public class QuestLoader {
 
         if (obj == null) return effects;
 
-        effects.removeItem = obj.has("remove_item") && obj.get("remove_item").getAsBoolean();
-        effects.giveReward = obj.has("give_reward") && obj.get("give_reward").getAsBoolean();
 
+        JsonObject completionEffectsObj = obj.getAsJsonObject("effects");  // ← Get from pageObj
+            if (completionEffectsObj.has("give_reward")) {
+                effects.giveReward = completionEffectsObj.get("give_reward").getAsBoolean();
+            }
+            if (completionEffectsObj.has("end_quest")) {
+                effects.endQuest = completionEffectsObj.get("end_quest").getAsBoolean();
+            }
+            if(completionEffectsObj.has("remove_item")) {
+                ItemStack removeItem;
+                JsonObject removeItemObj = obj.getAsJsonObject("remove_item");  // ← Get from pageObj
+
+                ResourceLocation item = new ResourceLocation(removeItemObj.get("item").getAsString());
+                int count = 1;
+                if (removeItemObj.has("count")) {
+                    count = removeItemObj.get("count").getAsInt();
+                }
+                removeItem = new ItemStack(Objects.requireNonNull(ForgeRegistries.ITEMS.getValue(item)), count);
+                effects.removeItem = removeItem;
+            }
         return effects;
     }
     private static List<QuestReward> parseRewards(JsonObject choiceObj) {

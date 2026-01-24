@@ -1,6 +1,7 @@
 package net.kenji.rpg_villager_quests.quest_system;
 
-import net.kenji.rpg_villager_quests.quest_system.interfaces.QuestReward;
+import net.kenji.rpg_villager_quests.network.AddQuestPacket;
+import net.kenji.rpg_villager_quests.network.ModPacketHandler;
 import net.kenji.rpg_villager_quests.quest_system.quest_data.QuestData;
 import net.kenji.rpg_villager_quests.quest_system.quest_data.QuestInstance;
 import net.minecraft.world.entity.player.Player;
@@ -69,11 +70,10 @@ public class Quest {
 
     }
 
-
-
     public QuestInstance StartQuest(Player player){
-        QuestData questData = QuestData.get(player);
-        return questData.addQuest(this);
+        QuestData questData = QuestData.get(player.getUUID());
+        questData.startQuestServer(this.getQuestId());
+        return questData.startQuestClient(this);
     }
 
 }

@@ -5,10 +5,8 @@ import net.kenji.rpg_villager_quests.quest_system.interfaces.QuestObjective;
 import net.kenji.rpg_villager_quests.quest_system.interfaces.QuestReward;
 import net.kenji.rpg_villager_quests.quest_system.quest_data.QuestInstance;
 import net.minecraft.world.entity.player.Player;
-import org.jline.utils.Log;
 
 import java.util.List;
-import java.util.logging.Logger;
 
 public class ObjectiveStage extends QuestStage {
 
@@ -58,21 +56,23 @@ public class ObjectiveStage extends QuestStage {
     public void onComplete(QuestEffects completionEffects, Player player, QuestInstance questInstance) {
         isComplete = true;
         QuestStage nextStage = getNextStage(player, questInstance);
+
         if (completionEffects != null) {
             if (completionEffects.giveReward) {
-                Log.info("LOGGING GIVE REWARD");
-                for (QuestReward reward : stageRewards) {
-                    reward.apply(player);
+                if(stageRewards != null) {
+                    for (QuestReward reward : stageRewards){
+                        reward.apply(player);
+                    }
                 }
             }
+            completionEffects.apply(player);
         }
         if (nextStage != null) {
             nextStage.start(player, questInstance);
         } else {
-            Log.info("LOGGING QUEST COMPLETE");
-
             questInstance.triggerQuestComplete(completionEffects, player);
         }
         objective.onComplete(completionEffects, player);
     }
+
 }
