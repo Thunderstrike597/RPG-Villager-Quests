@@ -50,7 +50,6 @@ public class ChoicePacket {
 
                 if(questStage instanceof DialogueStage dialogueStage){
                     if(dialogueStage.choices != null){
-                        Log.info("APPLYING REWARDS IN PACKET");
 
                         if(packet.choiceIndex < dialogueStage.choices.size()) {
                             dialogueStage.choices.get(packet.choiceIndex).applyRewards(player);

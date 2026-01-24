@@ -3,6 +3,7 @@ package net.kenji.rpg_villager_quests.client.menu;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.kenji.rpg_villager_quests.RpgVillagerQuests;
+import net.kenji.rpg_villager_quests.keybinds.ModKeybinds;
 import net.kenji.rpg_villager_quests.manager.VillagerQuestManager;
 import net.kenji.rpg_villager_quests.network.ChoicePacket;
 import net.kenji.rpg_villager_quests.network.ModPacketHandler;
@@ -26,7 +27,10 @@ import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.entity.npc.Villager;
 import net.minecraft.world.entity.player.Player;
 import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.client.event.InputEvent;
+import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
+import org.jline.utils.Log;
 
 import java.util.*;
 import java.util.regex.Pattern;
@@ -113,6 +117,7 @@ public class VillagerQuestMenu extends Screen {
     private List<String> words;
     private int currentSentenceStartDelay = 0;
     private static final int TYPE_SPEED_MS = 35;
+    private static final int TYPE_SPEED_SKIP_MS = 10;
     private static final int PERIOD_PAUSE_MS = 600; // Pause after periods
     private static final int COMMA_PAUSE_MS = 400; // Pause after periods
     private static final int EXCLAMATION_PAUSE_MS = 900; // Pause after periods
@@ -128,8 +133,8 @@ public class VillagerQuestMenu extends Screen {
     private static boolean hasSentenceCompleted;
     public Button posButton;
     public Quest villagerQuest;
-    private boolean pendingReinit = false;
-    private int reinitDelay = 0;
+    private boolean skipDialogue;
+
 
     private boolean pendingInit = false;
     private enum DisplayType{
@@ -436,115 +441,126 @@ public class VillagerQuestMenu extends Screen {
             player.playSound(SoundEvents.VILLAGER_TRADE);
 
             this.clearWidgets();
+            if(posButton != null)
+                posButton.active = false;
             this.init();
         }
     }
     public void onPositivePress(Player player, QuestInstance questInstance){
-        if(pages.get(currentPageIndex).dialogueType != DialogueStage.DialogueType.CHOICE){
+        if(questInstance != null && !questInstance.isComplete()) {
+            if (pages.get(currentPageIndex).dialogueType != DialogueStage.DialogueType.CHOICE) {
+                if (currentPageIndex < pages.size() - 1) {
+                    onNextPage(player);
+                } else {
+                    if (questInstance.getCurrentStage().canCompleteStage(player)) {
+                        if (pages.get(currentPageIndex).effects == null || !pages.get(currentPageIndex).effects.endQuest) {
+                            onCompleteStage(player, questInstance, pages.get(currentPageIndex));
+                        } else if (pages.get(currentPageIndex).effects != null && pages.get(currentPageIndex).effects.endQuest) {
+                            onCompleteQuest(player, questInstance, pages.get(currentPageIndex));
+                        }
+
+                        if (!(questInstance.getCurrentStage() instanceof DialogueStage))
+                            onClose();
+                    } else {
+                        if (!(questInstance.getCurrentStage().getNextStage(player, questInstance) instanceof DialogueStage))
+                            onClose();
+                    }
+                }
+            } else {
+                if (questInstance.getCurrentStage() instanceof DialogueStage dialogueStage) {
+                    dialogueStage.setChosenDialogue(DialogueStage.ChoiceType.OPTION_1);
+                    Page storedPage = pages.get(currentPageIndex);
+
+                    currentPageIndex = 0;  // Reset to first page of new dialogue
+                    visibleChars = 0;
+                    lastTypeTime = 0;
+                    words = Arrays.asList(pages.get(currentPageIndex).text.split("(?<=\\s)"));
+                    currentSentenceStartDelay = 0;
+                    hasSentenceCompleted = false;
+                    questInstance.setQuestReputation(Reputation.GOOD);
+
+                    if (dialogueStage.choices.get(0) != null) {
+                        QuestChoice choice = dialogueStage.choices.get(1);
+                        if (choice.effects != null) {
+                            if (dialogueStage.choices.get(0).effects.endQuest) {
+                                onCompleteQuest(player, questInstance, storedPage);
+                                return;
+                            }
+                            choice.effects.apply(player);
+                            choice.applyRewards(player);
+                            ModPacketHandler.sendToServer(new ChoicePacket(questInstance.getQuest().getQuestId(), questInstance.getCurrentStage().id, 0));
+                        }
+                    }
+                    if (pages.get(currentPageIndex).effects != null) {
+                        if (pages.get(currentPageIndex).effects.endQuest) {
+                            onCompleteQuest(player, questInstance, storedPage);
+                        }
+                    }
+
+                    this.clearWidgets();
+                    this.init();
+                }
+            }
+        }
+        else{
             if(currentPageIndex < pages.size() - 1){
                 onNextPage(player);
             }
             else{
-                if(questInstance.getCurrentStage().canCompleteStage(player)) {
-                    if(pages.get(currentPageIndex).effects == null || !pages.get(currentPageIndex).effects.endQuest) {
-                        onCompleteStage(player, questInstance, pages.get(currentPageIndex));
-                    }
-                    else if(pages.get(currentPageIndex).effects != null && pages.get(currentPageIndex).effects.endQuest){
-                        onCompleteQuest(player, questInstance, pages.get(currentPageIndex));
-                    }
-
-                    if (!(questInstance.getCurrentStage() instanceof DialogueStage))
-                        onClose();
-                }
-                else{
-                    if (!(questInstance.getCurrentStage().getNextStage(player, questInstance) instanceof DialogueStage))
-                        onClose();
-                }
-            }
-        }
-        else{
-            if(questInstance.getCurrentStage() instanceof DialogueStage dialogueStage) {
-                dialogueStage.setChosenDialogue(DialogueStage.ChoiceType.OPTION_1);
-                Page storedPage = pages.get(currentPageIndex);
-
-                currentPageIndex = 0;  // Reset to first page of new dialogue
-                visibleChars = 0;
-                lastTypeTime = 0;
-                words = Arrays.asList(pages.get(currentPageIndex).text.split("(?<=\\s)"));
-                currentSentenceStartDelay = 0;
-                hasSentenceCompleted = false;
-                questInstance.setQuestReputation(Reputation.GOOD);
-
-                if(dialogueStage.choices.get(0)!= null){
-                    QuestChoice choice = dialogueStage.choices.get(1);
-                    if(choice.effects != null) {
-                        if (dialogueStage.choices.get(0).effects.endQuest) {
-                            onCompleteQuest(player, questInstance, storedPage);
-                            return;
-                        }
-                        choice.effects.apply(player);
-                        ModPacketHandler.sendToServer(new ChoicePacket(questInstance.getQuest().getQuestId(), questInstance.getCurrentStage().id, 0));
-                    }
-                }
-                if(pages.get(currentPageIndex).effects != null) {
-                    if (pages.get(currentPageIndex).effects.endQuest) {
-                        onCompleteQuest(player, questInstance, storedPage);
-                    }
-                }
-
-                this.clearWidgets();
-                this.init();
+                onAcceptQuest(player);
             }
         }
     }
     public void onNegativePress(Player player, QuestInstance questInstance){
-        if(pages.get(currentPageIndex).dialogueType != DialogueStage.DialogueType.CHOICE) {
-            if(questInstance.getCurrentStage().canCompleteStage(player)) {
-                int currentStageIndex = questInstance.getCurrentStageIndex();
-                boolean isLastStage = currentStageIndex == questInstance.getQuest().stages.size() - 1;
+        if(questInstance != null && !questInstance.isComplete()) {
 
-                if(isLastStage) {
-                    if (pages.get(currentPageIndex).effects == null || !pages.get(currentPageIndex).effects.endQuest) {
-                        onCompleteStage(player, questInstance, pages.get(currentPageIndex));
-                        this.onClose();
-                    } else if (pages.get(currentPageIndex).effects != null && pages.get(currentPageIndex).effects.endQuest) {
-                        onCompleteQuest(player, questInstance, pages.get(currentPageIndex));
-                    }
-                }
-                else{
-                    this.onClose();
-                }
-            }
-        }
-        else{
-            if(questInstance.getCurrentStage() instanceof DialogueStage dialogueStage) {
-                dialogueStage.setChosenDialogue(DialogueStage.ChoiceType.OPTION_2);
-                Page storedPage = pages.get(currentPageIndex);
-                currentPageIndex = 0;  // Reset to first page of new dialogue
-                visibleChars = 0;
-                lastTypeTime = 0;
-                words = Arrays.asList(pages.get(currentPageIndex).text.split("(?<=\\s)"));
-                currentSentenceStartDelay = 0;
-                hasSentenceCompleted = false;
-                questInstance.setQuestReputation(Reputation.BAD);
+            if (pages.get(currentPageIndex).dialogueType != DialogueStage.DialogueType.CHOICE) {
+                if (questInstance.getCurrentStage().canCompleteStage(player)) {
+                    int currentStageIndex = questInstance.getCurrentStageIndex();
+                    boolean isLastStage = currentStageIndex == questInstance.getQuest().stages.size() - 1;
 
-                if(dialogueStage.choices.get(1)!= null){
-                    QuestChoice choice = dialogueStage.choices.get(1);
-                    if(choice.effects != null) {
-                        if (dialogueStage.choices.get(1).effects.endQuest) {
-                            onCompleteQuest(player, questInstance, storedPage);
-                            return;
+                    if (isLastStage) {
+                        if (pages.get(currentPageIndex).effects == null || !pages.get(currentPageIndex).effects.endQuest) {
+                            onCompleteStage(player, questInstance, pages.get(currentPageIndex));
+                            this.onClose();
+                        } else if (pages.get(currentPageIndex).effects != null && pages.get(currentPageIndex).effects.endQuest) {
+                            onCompleteQuest(player, questInstance, pages.get(currentPageIndex));
                         }
-                        choice.effects.apply(player);
-                        ModPacketHandler.sendToServer(new ChoicePacket(questInstance.getQuest().getQuestId(), questInstance.getCurrentStage().id, 1));
+                    } else {
+                        this.onClose();
                     }
                 }
+            } else {
+                if (questInstance.getCurrentStage() instanceof DialogueStage dialogueStage) {
+                    dialogueStage.setChosenDialogue(DialogueStage.ChoiceType.OPTION_2);
+                    Page storedPage = pages.get(currentPageIndex);
+                    currentPageIndex = 0;  // Reset to first page of new dialogue
+                    visibleChars = 0;
+                    lastTypeTime = 0;
+                    words = Arrays.asList(pages.get(currentPageIndex).text.split("(?<=\\s)"));
+                    currentSentenceStartDelay = 0;
+                    hasSentenceCompleted = false;
+                    questInstance.setQuestReputation(Reputation.BAD);
+
+                    if (dialogueStage.choices.get(1) != null) {
+                        QuestChoice choice = dialogueStage.choices.get(1);
+                        if (choice.effects != null) {
+                            if (dialogueStage.choices.get(1).effects.endQuest) {
+                                onCompleteQuest(player, questInstance, storedPage);
+                                return;
+                            }
+                            choice.effects.apply(player);
+                            ModPacketHandler.sendToServer(new ChoicePacket(questInstance.getQuest().getQuestId(), questInstance.getCurrentStage().id, 1));
+                        }
+                    }
 
 
-
-                this.clearWidgets();
-                this.init();
+                    this.clearWidgets();
+                    this.init();
+                }
             }
+        } else{
+           onClose();
         }
     }
 
@@ -561,7 +577,6 @@ public class VillagerQuestMenu extends Screen {
         questInstance.getCurrentStage().onComplete(currentPage.effects, player,questInstance);
 
         player.playSound(SoundEvents.VILLAGER_YES);
-
         this.onClose();
     }
     public void onCompleteStage(Player player, QuestInstance questInstance, Page currentPage) {
@@ -580,6 +595,7 @@ public class VillagerQuestMenu extends Screen {
             player.playSound(SoundEvents.VILLAGER_TRADE);
 
             this.clearWidgets();
+            posButton.active = false;
             this.init();
         }
     }
@@ -602,6 +618,8 @@ public class VillagerQuestMenu extends Screen {
         didAcceptQuest = false;
         hasSentenceCompleted = false;
         currentSentenceStartDelay = 0;
+        if(posButton != null)
+            posButton.active = false;
         super.onClose();
     }
 
@@ -646,6 +664,40 @@ public class VillagerQuestMenu extends Screen {
 
         return uvCoords;
     }
+
+    @Override
+    public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+        // Check if our custom keybind was pressed
+        if (ModKeybinds.NEXT_PAGE_KEY.matches(keyCode, scanCode)) {
+            Player player = getMinecraft().player;
+            if(player != null) {
+                if (!hasSentenceCompleted) {
+                    skipDialogue = true;
+
+                    // Force-end any active pause
+                    isPausedAfterPeriod = false;
+                    isPausedAfterComma = false;
+                    isPausedAfterExclamationMark = false;
+                    isPausedAfterQuestionMark = false;
+
+                    lastTypeTime = System.currentTimeMillis();
+                    return true; // Consume the event
+                } else {
+                    QuestInstance questInstance = QuestData.get(player.getUUID()).getQuestInstance(villagerQuest.getQuestId());
+                    if(posButton != null)
+                        onPositivePress(player, questInstance);
+                    else onNegativePress(player, questInstance);
+                    return true;
+                }
+            }
+        }
+
+        // Let parent handle other keys (like ESC to close)
+        return super.keyPressed(keyCode, scanCode, modifiers);
+    }
+
+
+
     @Override
     public void render(GuiGraphics gfx, int mouseX, int mouseY, float partialTick) {
         if(VillagerQuestManager.getVillagerQuest(villager) == null)
@@ -710,63 +762,64 @@ public class VillagerQuestMenu extends Screen {
         }
         else {
             if (visibleChars < fullText.length()) {
-                // Check if we're in a pause after a period
-                if (isPausedAfterPeriod) {
-                    if (now - pauseStartTime >= PERIOD_PAUSE_MS) {
-                        // Pause is over, resume typing
-                        isPausedAfterPeriod = false;
-                        lastTypeTime = now;
-                    }
-                } else if (isPausedAfterComma) {
-                    if (now - pauseStartTime >= COMMA_PAUSE_MS) {
-                        // Pause is over, resume typing
-                        isPausedAfterComma = false;
-                        lastTypeTime = now;
-                    }
-                }
-                    else if (isPausedAfterExclamationMark) {
+                    if (isPausedAfterPeriod && !skipDialogue) {
+                        if (now - pauseStartTime >= PERIOD_PAUSE_MS) {
+                            // Pause is over, resume typing
+                            isPausedAfterPeriod = false;
+                            lastTypeTime = now;
+                        }
+                    } else if (isPausedAfterComma && !skipDialogue) {
+                        if (now - pauseStartTime >= COMMA_PAUSE_MS) {
+                            // Pause is over, resume typing
+                            isPausedAfterComma = false;
+                            lastTypeTime = now;
+                        }
+                    } else if (isPausedAfterExclamationMark && !skipDialogue) {
                         if (now - pauseStartTime >= EXCLAMATION_PAUSE_MS) {
                             // Pause is over, resume typing
                             isPausedAfterExclamationMark = false;
                             lastTypeTime = now;
                         }
-                    }
-                    else if (isPausedAfterQuestionMark) {
-                    if (now - pauseStartTime >= QUESTION_MARK_PAUSE_MS) {
-                        // Pause is over, resume typing
-                        isPausedAfterQuestionMark = false;
-                        lastTypeTime = now;
-                    }
-                } else {
-                    // Normal typing
-                    if (now - lastTypeTime >= TYPE_SPEED_MS) {
-                        visibleChars++;
-                        lastTypeTime = now;
+                    } else if (isPausedAfterQuestionMark && !skipDialogue) {
+                        if (now - pauseStartTime >= QUESTION_MARK_PAUSE_MS) {
+                            // Pause is over, resume typing
+                            isPausedAfterQuestionMark = false;
+                            lastTypeTime = now;
+                        }
+                    } else {
+                        int typeSpeed = skipDialogue ? TYPE_SPEED_SKIP_MS : TYPE_SPEED_MS;
 
-                        // Check if the character we just revealed is a period
-                        if (visibleChars > 0 && visibleChars <= fullText.length()) {
-                            char lastChar = fullText.charAt(visibleChars - 1);
-                            if (lastChar == '.') {
-                                isPausedAfterPeriod = true;
-                                pauseStartTime = now;
-                            }
-                            if (lastChar == ',') {
-                                isPausedAfterComma = true;
-                                pauseStartTime = now;
-                            }
-                            if (lastChar == '!') {
-                                isPausedAfterExclamationMark = true;
-                                pauseStartTime = now;
-                            }
-                            if (lastChar == '?') {
-                                isPausedAfterQuestionMark = true;
-                                pauseStartTime = now;
+                        if (now - lastTypeTime >= typeSpeed) {
+                            visibleChars++;
+                            lastTypeTime = now;
+
+                            // Check if the character we just revealed is a period
+                            if (visibleChars > 0 && visibleChars <= fullText.length()) {
+                                char lastChar = fullText.charAt(visibleChars - 1);
+                                if (!skipDialogue) {
+                                    if (lastChar == '.') {
+                                        isPausedAfterPeriod = true;
+                                        pauseStartTime = now;
+                                    }
+                                    if (lastChar == ',') {
+                                        isPausedAfterComma = true;
+                                        pauseStartTime = now;
+                                    }
+                                    if (lastChar == '!') {
+                                        isPausedAfterExclamationMark = true;
+                                        pauseStartTime = now;
+                                    }
+                                    if (lastChar == '?') {
+                                        isPausedAfterQuestionMark = true;
+                                        pauseStartTime = now;
+                                    }
+                                }
                             }
                         }
                     }
-                }
-            }else if (!hasSentenceCompleted) {
+            }else if (!hasSentenceCompleted){
                 hasSentenceCompleted = true;
+                skipDialogue = false;
                 addButtons(getMinecraft().player);
             }
 

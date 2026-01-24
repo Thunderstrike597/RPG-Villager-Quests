@@ -40,8 +40,8 @@ public class QuestChoice {
 
             var inv = player.getInventory();
             var itemObj = effects.removeItem.getItem();
-
-            int remaining = effects.itemCount;
+            Log.info("IS LOGGING ITEM COUNT: " + effects.removeItem.getCount());
+            int remaining = effects.removeItem.getCount();
             for (int i = 0; i < inv.getContainerSize() && remaining > 0; i++) {
                 var stack = inv.getItem(i);
                 if (stack.is(itemObj)) {
