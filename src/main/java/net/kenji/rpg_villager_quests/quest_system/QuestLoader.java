@@ -6,6 +6,7 @@ import com.google.gson.JsonObject;
 import net.kenji.rpg_villager_quests.quest_system.interfaces.QuestObjective;
 import net.kenji.rpg_villager_quests.quest_system.interfaces.QuestReward;
 import net.kenji.rpg_villager_quests.quest_system.objective_types.CollectItemObjective;
+import net.kenji.rpg_villager_quests.quest_system.objective_types.KillEntityObjective;
 import net.kenji.rpg_villager_quests.quest_system.reward_types.ItemReward;
 import net.kenji.rpg_villager_quests.quest_system.reward_types.XpReward;
 import net.kenji.rpg_villager_quests.quest_system.stage_types.DialogueStage;
@@ -143,6 +144,10 @@ public class QuestLoader {
         List<Page> pages = new ArrayList<>();
         List<Page> choice1Pages = new ArrayList<>();
         List<Page> choice2Pages = new ArrayList<>();
+        String stageTag = null;
+        if(stage.has("tag")) {
+            stageTag = stage.get("tag").getAsString();
+        }
 
         for (JsonElement pageElem : pagesArray) {
             JsonObject pageObj = pageElem.getAsJsonObject();
@@ -311,7 +316,7 @@ public class QuestLoader {
             }
         }
 
-        return new DialogueStage(id, pages, questId, nextStage, choices, choice1Pages, choice2Pages, parseRewards(stage));
+        return new DialogueStage(id, pages, questId, nextStage, choices, choice1Pages, choice2Pages, parseRewards(stage), stageTag);
     }
     private static ObjectiveStage parseObjective(String id, JsonObject stage, String questId) {
 
@@ -328,6 +333,11 @@ public class QuestLoader {
         JsonArray inProgressDialogueArray = stage.getAsJsonArray("in_progress_dialogue");
 
         List<Page> inProgressDialogue = new ArrayList<>();
+
+        String stageTag = null;
+        if(stage.has("tag")) {
+            stageTag = stage.get("tag").getAsString();
+        }
 
         for (JsonElement pageElem : inProgressDialogueArray) {
             JsonObject pageObj = pageElem.getAsJsonObject();
@@ -355,7 +365,10 @@ public class QuestLoader {
 
             // future-proofing
             case "kill_entity" -> {
-                throw new UnsupportedOperationException("kill_entity not implemented yet");
+                ResourceLocation entityType = new ResourceLocation(obj.get("entity_type").getAsString());
+                int count = obj.get("count").getAsInt();
+
+                objective = new KillEntityObjective(entityType, count, questId);
             }
 
             default -> throw new IllegalArgumentException(
@@ -364,7 +377,7 @@ public class QuestLoader {
         }
         QuestEffects completionEffects = new QuestEffects();
 
-        return new ObjectiveStage(id, objective, inProgressDialogue, questId, nextStage, completionEffects, parseRewards(stage));
+        return new ObjectiveStage(id, objective, inProgressDialogue, questId, nextStage, completionEffects, parseRewards(stage), stageTag);
     }
 
     private static QuestEffects parseEffects(JsonObject obj) {

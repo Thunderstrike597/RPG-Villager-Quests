@@ -4,16 +4,25 @@ import net.kenji.rpg_villager_quests.RpgVillagerQuests;
 import net.kenji.rpg_villager_quests.client.menu.VillagerQuestMenu;
 import net.kenji.rpg_villager_quests.manager.VillagerQuestManager;
 import net.kenji.rpg_villager_quests.quest_system.Quest;
+import net.kenji.rpg_villager_quests.quest_system.quest_data.QuestData;
 import net.minecraft.client.Minecraft;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.npc.Villager;
 import net.minecraft.world.entity.player.Player;
 import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.client.event.ClientPlayerNetworkEvent;
+import net.minecraftforge.event.TickEvent;
+import net.minecraftforge.event.entity.EntityJoinLevelEvent;
 import net.minecraftforge.event.entity.living.MobSpawnEvent;
 import net.minecraftforge.event.entity.player.PlayerInteractEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
+
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
 
 @Mod.EventBusSubscriber(modid = RpgVillagerQuests.MODID, bus = Mod.EventBusSubscriber.Bus.FORGE)
 public class QuestVillagerEvents {
@@ -21,6 +30,15 @@ public class QuestVillagerEvents {
     public static String QUEST_VILLAGER_TAG = "quest_villager";
     public static String IS_QUEST_VILLAGER_TAG = "is_quest_villager";
 
+    @SubscribeEvent
+    public static void onVillagerJoin(EntityJoinLevelEvent event){
+      if(event.getEntity() instanceof Villager villager) {
+          if (!villager.getPersistentData().contains(QUEST_VILLAGER_TAG)) return;
+          if (!villager.getPersistentData().getBoolean(IS_QUEST_VILLAGER_TAG)) return;
+
+          villager.setGlowingTag(false);
+      }
+    }
 
     @SubscribeEvent
     public static void onVillagerSpawn(MobSpawnEvent event) throws Exception {
@@ -45,16 +63,15 @@ public class QuestVillagerEvents {
         }
 
         // First-time roll
-        boolean roll = villager.getRandom().nextFloat() < 0.12F;
+        boolean roll = villager.getRandom().nextFloat() < 0.25F;
         data.putBoolean(IS_QUEST_VILLAGER_TAG, roll);
 
         if (!roll) return;
-
         VillagerQuestManager.assignRandomQuestToVillager(villager);
     }
+
     @Mod.EventBusSubscriber(modid = RpgVillagerQuests.MODID, bus = Mod.EventBusSubscriber.Bus.FORGE, value = Dist.CLIENT)
     public static class VillagerClientEvents {
-
         @SubscribeEvent
         public static void onVillagerInteract(PlayerInteractEvent.EntityInteract event) {
             if (!(event.getTarget() instanceof Villager villager)) return;

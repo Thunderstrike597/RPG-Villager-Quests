@@ -1,4 +1,4 @@
-package net.kenji.rpg_villager_quests.network;
+package net.kenji.rpg_villager_quests.network.packets;
 
 import net.kenji.rpg_villager_quests.quest_system.QuestEffects;
 import net.kenji.rpg_villager_quests.quest_system.QuestStage;

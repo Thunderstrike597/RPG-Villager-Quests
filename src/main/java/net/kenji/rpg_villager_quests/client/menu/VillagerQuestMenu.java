@@ -5,14 +5,13 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import net.kenji.rpg_villager_quests.RpgVillagerQuests;
 import net.kenji.rpg_villager_quests.keybinds.ModKeybinds;
 import net.kenji.rpg_villager_quests.manager.VillagerQuestManager;
-import net.kenji.rpg_villager_quests.network.ChoicePacket;
+import net.kenji.rpg_villager_quests.network.packets.ChoicePacket;
 import net.kenji.rpg_villager_quests.network.ModPacketHandler;
-import net.kenji.rpg_villager_quests.network.StageCompletionPacket;
+import net.kenji.rpg_villager_quests.network.packets.StageCompletionPacket;
 import net.kenji.rpg_villager_quests.quest_system.Page;
 import net.kenji.rpg_villager_quests.quest_system.Quest;
 import net.kenji.rpg_villager_quests.quest_system.QuestChoice;
 import net.kenji.rpg_villager_quests.quest_system.Reputation;
-import net.kenji.rpg_villager_quests.quest_system.interfaces.QuestReward;
 import net.kenji.rpg_villager_quests.quest_system.quest_data.QuestData;
 import net.kenji.rpg_villager_quests.quest_system.quest_data.QuestInstance;
 import net.kenji.rpg_villager_quests.quest_system.stage_types.DialogueStage;
@@ -27,10 +26,7 @@ import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.entity.npc.Villager;
 import net.minecraft.world.entity.player.Player;
 import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.client.event.InputEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
-import org.jline.utils.Log;
 
 import java.util.*;
 import java.util.regex.Pattern;
@@ -101,15 +97,15 @@ public class VillagerQuestMenu extends Screen {
         }
     }
 
-    public static ResourceLocation MENU_BACKGROUND = new ResourceLocation(RpgVillagerQuests.MODID, "textures/gui/villager_quest_menu.png");
-    public static ResourceLocation HEAD_DISPLAY = new ResourceLocation(RpgVillagerQuests.MODID, "textures/gui/villager_quest_head_display.png");
-    public static ResourceLocation HEAD_DISPLAY_OVERLAY = new ResourceLocation(RpgVillagerQuests.MODID, "textures/gui/villager_quest_head_display_overlay.png");
+    public static ResourceLocation MENU_BACKGROUND = ResourceLocation.fromNamespaceAndPath(RpgVillagerQuests.MODID, "textures/gui/villager_quest_menu.png");
+    public static ResourceLocation HEAD_DISPLAY = ResourceLocation.fromNamespaceAndPath(RpgVillagerQuests.MODID, "textures/gui/villager_quest_head_display.png");
+    public static ResourceLocation HEAD_DISPLAY_OVERLAY = ResourceLocation.fromNamespaceAndPath(RpgVillagerQuests.MODID, "textures/gui/villager_quest_head_display_overlay.png");
 
     public static GuiDisplay backgroundGui;
     public static GuiDisplay headDisplayGui;
     private static final String PAGE_DELIMITER = "/--/";
 
-    public static boolean didAcceptQuest;
+    public static boolean didPositiveInteraction;
     private int currentPageIndex = 0;
     private List<Page> pages;
     private int visibleChars = 0;
@@ -435,10 +431,10 @@ public class VillagerQuestMenu extends Screen {
 
     public void onAcceptQuest(Player player){
         player.playSound(SoundEvents.VILLAGER_YES);
-        didAcceptQuest = true;
+        didPositiveInteraction = true;
         hasSentenceCompleted = false;
         Quest quest = VillagerQuestManager.getVillagerQuest(villager);
-        QuestInstance questInstance = quest.StartQuest(player);
+        QuestInstance questInstance = quest.StartQuestClient(player, villager);
         questInstance.advanceFromCurrentStage(player);
         onClose();
     }
@@ -545,6 +541,9 @@ public class VillagerQuestMenu extends Screen {
                         this.onClose();
                     }
                 }
+                else{
+                    this.onClose();
+                }
             } else {
                 if (questInstance.getCurrentStage() instanceof DialogueStage dialogueStage) {
                     dialogueStage.setChosenDialogue(DialogueStage.ChoiceType.OPTION_2);
@@ -580,7 +579,6 @@ public class VillagerQuestMenu extends Screen {
     }
 
     public void onCompleteQuest(Player player, QuestInstance questInstance, Page currentPage) {
-
         visibleChars = 0;
         lastTypeTime = 0;
         isPausedAfterPeriod = false;
@@ -590,8 +588,9 @@ public class VillagerQuestMenu extends Screen {
         hasSentenceCompleted = false;
         ModPacketHandler.sendToServer(new StageCompletionPacket(questInstance.getQuest().getQuestId(), questInstance.getCurrentStage().id, currentPage.effects));
         questInstance.getCurrentStage().onComplete(currentPage.effects, player,questInstance);
-
+        villager.setGlowingTag(false);
         player.playSound(SoundEvents.VILLAGER_YES);
+        didPositiveInteraction = true;
         this.onClose();
     }
     public void onCompleteStage(Player player, QuestInstance questInstance, Page currentPage) {
@@ -627,10 +626,10 @@ public class VillagerQuestMenu extends Screen {
             villager.setTradingPlayer(null);
             villager = null;
         }
-        if(player != null && !didAcceptQuest)
+        if(player != null && !didPositiveInteraction)
             player.playSound(SoundEvents.VILLAGER_NO);
 
-        didAcceptQuest = false;
+        didPositiveInteraction = false;
         hasSentenceCompleted = false;
         currentSentenceStartDelay = 0;
         if(posButton != null)

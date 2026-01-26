@@ -11,12 +11,21 @@ import java.util.List;
 public class ObjectiveStage extends QuestStage {
 
     private final QuestObjective objective;
+    private final QuestEffects effects;
 
-
-    public ObjectiveStage(String id, QuestObjective objective, List<Page> pages, String belongingQuest, String nextStageId, QuestEffects questEffects, List<QuestReward> questReward) {
-        super(id, QuestStageType.valueOf("objective".toUpperCase()), pages, belongingQuest, nextStageId, questReward);
+    public ObjectiveStage(String id, QuestObjective objective, List<Page> pages, String belongingQuest, String nextStageId, QuestEffects stageEffects, List<QuestReward> questReward, String tag) {
+        super(id, QuestStageType.valueOf("objective".toUpperCase()), pages, belongingQuest, nextStageId, questReward, tag);
         this.objective = objective;
+        this.effects = stageEffects;
     }
+
+    public QuestEffects getStageEffects(){
+        return effects;
+    }
+    public QuestObjective getObjective(){
+        return this.objective;
+    }
+
     @Override
     public void start(Player player, QuestInstance questInstance) {
         questInstance.setCurrentStage(this.id);

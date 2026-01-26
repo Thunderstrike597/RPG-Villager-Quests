@@ -41,7 +41,7 @@ public class VillagerQuestManager {
         int randomIndex = Mth.nextInt(villager.getRandom(), 0, questCount - 1);
         String questName = keys.get(randomIndex);
 
-       Quest quest = getQuestByName(questName);;
+       Quest quest = getQuestByName(questName);
 
         villagerQuestMap.put(villager.getUUID(), quest);
         villager.getPersistentData().putString(QuestVillagerEvents.QUEST_VILLAGER_TAG, questName);

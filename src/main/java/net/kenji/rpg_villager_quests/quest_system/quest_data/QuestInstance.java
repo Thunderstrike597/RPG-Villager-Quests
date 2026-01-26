@@ -5,6 +5,7 @@ import net.kenji.rpg_villager_quests.quest_system.QuestEffects;
 import net.kenji.rpg_villager_quests.quest_system.QuestStage;
 import net.kenji.rpg_villager_quests.quest_system.Reputation;
 import net.kenji.rpg_villager_quests.quest_system.interfaces.QuestReward;
+import net.minecraft.world.entity.npc.Villager;
 import net.minecraft.world.entity.player.Player;
 
 import java.util.List;
@@ -15,11 +16,17 @@ public class QuestInstance {
     private int currentStageIndex;
     private boolean completed;
     private Reputation questReputation;
+    private Villager questVillager;
 
-    public QuestInstance(Quest quest) {
+    public QuestInstance(Quest quest, Villager villager) {
         this.questDefinition = quest;
         this.currentStageIndex = 0;
         this.completed = false;
+        this.questVillager = villager;
+    }
+
+    public Villager getQuestVillager(){
+        return questVillager;
     }
 
     public void advanceFromCurrentStage(Player player) {
@@ -43,7 +50,11 @@ public class QuestInstance {
     }
     public void triggerQuestComplete(QuestEffects effects, Player player){
         completed = true;
-        //questDefinition.onQuestComplete(this, effects, getCurrentStage(), player);
+        if(QuestData.get(player.getUUID()) != null) {
+            QuestInstance questInstance = QuestData.get(player.getUUID()).getQuestInstance(questDefinition.getQuestId());
+            QuestData.get(player.getUUID()).removeActiveQuest(questDefinition.getQuestId());
+            QuestData.get(player.getUUID()).addCompetedQuest(questDefinition.getQuestId(), questInstance);
+        }
     }
     public Quest getQuest() {
         return questDefinition;

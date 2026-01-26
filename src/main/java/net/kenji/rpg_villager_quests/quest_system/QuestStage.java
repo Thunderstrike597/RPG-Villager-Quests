@@ -14,15 +14,17 @@ public abstract class QuestStage {
     public final String nextStageId;
     public final List<QuestReward> stageRewards;
     protected boolean isComplete;
+    public final String tag;
 
 
-    protected QuestStage(String id, QuestStageType type, List<Page> pages, String belongingQuestId, String nextStageId, List<QuestReward> questReward) {
+    protected QuestStage(String id, QuestStageType type, List<Page> pages, String belongingQuestId, String nextStageId, List<QuestReward> questReward, String tag) {
         this.id = id;
         this.type = type;
         this.pages = pages;
         this.belongingQuestId = belongingQuestId;
         this.nextStageId = nextStageId;
         this.stageRewards = questReward;
+        this.tag = tag;
     }
     public abstract void start(Player player, QuestInstance questInstance);
     public abstract boolean isComplete(Player player);

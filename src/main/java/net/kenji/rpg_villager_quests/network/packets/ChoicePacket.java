@@ -1,4 +1,4 @@
-package net.kenji.rpg_villager_quests.network;
+package net.kenji.rpg_villager_quests.network.packets;
 
 import net.kenji.rpg_villager_quests.quest_system.QuestEffects;
 import net.kenji.rpg_villager_quests.quest_system.QuestStage;
@@ -7,9 +7,7 @@ import net.kenji.rpg_villager_quests.quest_system.quest_data.QuestInstance;
 import net.kenji.rpg_villager_quests.quest_system.stage_types.DialogueStage;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.network.NetworkEvent;
-import org.jline.utils.Log;
 
 import java.util.function.Supplier;
 

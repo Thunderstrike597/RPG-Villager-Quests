@@ -1,34 +1,40 @@
-package net.kenji.rpg_villager_quests.network;
+package net.kenji.rpg_villager_quests.network.packets;
 
 import net.kenji.rpg_villager_quests.manager.VillagerQuestManager;
 import net.kenji.rpg_villager_quests.quest_system.Quest;
-import net.kenji.rpg_villager_quests.quest_system.QuestStage;
-import net.kenji.rpg_villager_quests.quest_system.interfaces.QuestReward;
 import net.kenji.rpg_villager_quests.quest_system.quest_data.QuestData;
-import net.kenji.rpg_villager_quests.quest_system.quest_data.QuestInstance;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.effect.MobEffectInstance;
+import net.minecraft.world.effect.MobEffects;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.npc.Villager;
 import net.minecraftforge.network.NetworkEvent;
 
+import java.util.UUID;
 import java.util.function.Supplier;
 
 public class AddQuestPacket {
     private final String questId;
+    private final UUID villagerUuid;
 
-    public AddQuestPacket(String questId) {
+    public AddQuestPacket(String questId, UUID villagerUuid) {
         this.questId = questId;
+        this.villagerUuid = villagerUuid;
     }
 
     // Encode: Write data to buffer
     public static void encode(AddQuestPacket packet, FriendlyByteBuf buf) {
         buf.writeUtf(packet.questId);
+        buf.writeUUID(packet.villagerUuid);
     }
 
     // Decode: Read data from buffer
     public static AddQuestPacket decode(FriendlyByteBuf buf) {
         String questId = buf.readUtf();
-        return new AddQuestPacket(questId);
+        UUID villagerUuid = buf.readUUID();
+        return new AddQuestPacket(questId, villagerUuid);
     }
 
     // Handle: Process the packet on the receiving side
@@ -44,11 +50,16 @@ public class AddQuestPacket {
                 throw new RuntimeException(e);
             }
 
-            QuestData questData = QuestData.get(player.getUUID());
+            Entity entity = player.serverLevel().getEntity(packet.villagerUuid);
 
-            if (questData.getQuestInstance(packet.questId) != null) return;
+            if(entity instanceof Villager villager) {
 
-            questData.putQuest(quest);
+                QuestData questData = QuestData.get(player.getUUID());
+
+                if (questData.getQuestInstance(packet.questId) != null) return;
+
+                questData.putQuest(quest, villager);
+            }
 
         });
         ctx.get().setPacketHandled(true);
