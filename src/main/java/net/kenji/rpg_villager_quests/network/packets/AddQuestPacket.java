@@ -2,7 +2,9 @@ package net.kenji.rpg_villager_quests.network.packets;
 
 import net.kenji.rpg_villager_quests.manager.VillagerQuestManager;
 import net.kenji.rpg_villager_quests.quest_system.Quest;
+import net.kenji.rpg_villager_quests.quest_system.QuestStage;
 import net.kenji.rpg_villager_quests.quest_system.quest_data.QuestData;
+import net.kenji.rpg_villager_quests.quest_system.quest_data.QuestInstance;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.effect.MobEffectInstance;
@@ -52,13 +54,19 @@ public class AddQuestPacket {
 
             Entity entity = player.serverLevel().getEntity(packet.villagerUuid);
 
-            if(entity instanceof Villager villager) {
+            if (entity instanceof Villager villager) {
 
                 QuestData questData = QuestData.get(player.getUUID());
-
                 if (questData.getQuestInstance(packet.questId) != null) return;
 
                 questData.putQuest(quest, villager);
+
+                QuestInstance questInstance = questData.getQuestInstance(packet.questId);
+
+                QuestStage questStage = questInstance.getCurrentStage().getNextStage(player, questInstance);
+                if (questStage != null) {
+                    questStage.start(player, questInstance);
+                }
             }
 
         });

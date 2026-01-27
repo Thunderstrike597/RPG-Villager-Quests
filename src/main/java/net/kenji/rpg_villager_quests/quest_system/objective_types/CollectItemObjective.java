@@ -25,6 +25,16 @@ public class CollectItemObjective implements QuestObjective {
     }
 
     @Override
+    public void onStartObjective(Player player) {
+
+    }
+
+    @Override
+    public void onRestartObjective(Player player) {
+
+    }
+
+    @Override
     public boolean canComplete(Player player) {
         Item requiredItem = ForgeRegistries.ITEMS.getValue(item);
         if (requiredItem == null) return false;
@@ -56,5 +66,10 @@ public class CollectItemObjective implements QuestObjective {
                 remaining -= removed;
             }
         }
+    }
+
+    @Override
+    public boolean shouldRestartObjective(Player player) {
+        return false;
     }
 }

@@ -434,8 +434,7 @@ public class VillagerQuestMenu extends Screen {
         didPositiveInteraction = true;
         hasSentenceCompleted = false;
         Quest quest = VillagerQuestManager.getVillagerQuest(villager);
-        QuestInstance questInstance = quest.StartQuestClient(player, villager);
-        questInstance.advanceFromCurrentStage(player);
+        quest.StartQuestClient(player, villager);
         onClose();
     }
     public void onNextPage(Player player) {

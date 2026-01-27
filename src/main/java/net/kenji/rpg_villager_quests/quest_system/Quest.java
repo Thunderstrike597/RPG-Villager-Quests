@@ -73,7 +73,7 @@ public class Quest {
 
         QuestData questData = QuestData.get(player.getUUID());
         questData.startQuestServer(this.getQuestId(),villager);
-        return questData.startQuestClient(this, villager);
+        return questData.startQuestClient(this, villager, player);
     }
 
 }

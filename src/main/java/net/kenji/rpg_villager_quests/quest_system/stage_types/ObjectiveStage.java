@@ -1,5 +1,7 @@
 package net.kenji.rpg_villager_quests.quest_system.stage_types;
 
+import net.kenji.rpg_villager_quests.network.ModPacketHandler;
+import net.kenji.rpg_villager_quests.network.packets.ObjectiveStartPacket;
 import net.kenji.rpg_villager_quests.quest_system.*;
 import net.kenji.rpg_villager_quests.quest_system.interfaces.QuestObjective;
 import net.kenji.rpg_villager_quests.quest_system.interfaces.QuestReward;
@@ -28,7 +30,16 @@ public class ObjectiveStage extends QuestStage {
 
     @Override
     public void start(Player player, QuestInstance questInstance) {
-        questInstance.setCurrentStage(this.id);
+        questInstance.setCurrentStage(id);
+        objective.onStartObjective(player);
+        ModPacketHandler.sendToServer(new ObjectiveStartPacket(belongingQuestId, this.id));
+    }
+
+    public void restartStage(Player player, QuestInstance questInstance) {
+        if(objective.shouldRestartObjective(player)){
+            questInstance.setCurrentStage(this.id);
+            objective.onRestartObjective(player);
+        };
     }
 
     @Override
@@ -38,8 +49,30 @@ public class ObjectiveStage extends QuestStage {
 
     @Override
     public QuestStage getNextStage(Player player, QuestInstance questInstance) {
-        Quest quest =  questInstance.getQuest();
-        return quest.getStageById(nextStageId);
+        Quest quest = questInstance.getQuest();
+
+        // 1️⃣ Explicit override
+        if (nextStageId != null) {
+            return quest.getStageById(nextStageId);
+        }
+
+        // 2️⃣ Fallback: advance by index
+        List<QuestStage> stages = quest.stages;
+        QuestStage current = questInstance.getCurrentStage();
+
+        int index = stages.indexOf(current);
+
+        if (index == -1) {
+            return null; // stage not found → fail safely
+        }
+
+        int nextIndex = index + 1;
+
+        if (nextIndex >= stages.size()) {
+            return null; // no more stages → quest complete
+        }
+
+        return stages.get(nextIndex);
     }
 
     @Override
@@ -77,7 +110,7 @@ public class ObjectiveStage extends QuestStage {
             completionEffects.apply(player);
         }
         if (nextStage != null) {
-            nextStage.start(player, questInstance);
+            questInstance.advanceFromCurrentStage(player);
         } else {
             questInstance.triggerQuestComplete(completionEffects, player);
         }

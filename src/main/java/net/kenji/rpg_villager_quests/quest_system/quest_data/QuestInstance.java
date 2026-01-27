@@ -31,18 +31,7 @@ public class QuestInstance {
 
     public void advanceFromCurrentStage(Player player) {
         QuestData questData = QuestData.get(player.getUUID());
-        QuestInstance questInstance = questData.getQuestInstance(questDefinition.getQuestId());
-        if(questInstance != null) {
-            if(getCurrentStage().getNextStage(player, this) == null) {
-                for (int i = 0; i < questDefinition.stages.size(); i++) {
-                    if (questDefinition.stages.get(i) == questInstance.getCurrentStage() && i + 1 < questDefinition.stages.size()) {
-                        currentStageIndex = i + 1;
-                        return;
-                    }
-                }
-            }
-            setCurrentStage(getCurrentStage().nextStageId);
-        }
+        getCurrentStage().getNextStage(player, this).start(player, this);
     }
 
     public boolean isComplete() {

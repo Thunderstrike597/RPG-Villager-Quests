@@ -73,6 +73,16 @@ public class KillEntityObjective implements QuestObjective {
     }
 
     @Override
+    public void onStartObjective(Player player) {
+
+    }
+
+    @Override
+    public void onRestartObjective(Player player) {
+
+    }
+
+    @Override
     public boolean canComplete(Player player) {
         if(this.entitiesKilled >= this.count) {
             return true;
@@ -83,5 +93,10 @@ public class KillEntityObjective implements QuestObjective {
     @Override
     public void onComplete(QuestEffects effects, Player player) {
 
+    }
+
+    @Override
+    public boolean shouldRestartObjective(Player player) {
+        return false;
     }
 }

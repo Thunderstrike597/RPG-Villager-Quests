@@ -4,7 +4,7 @@ import net.kenji.rpg_villager_quests.RpgVillagerQuests;
 import net.kenji.rpg_villager_quests.network.packets.AddQuestPacket;
 import net.kenji.rpg_villager_quests.network.packets.ChoicePacket;
 import net.kenji.rpg_villager_quests.network.packets.StageCompletionPacket;
-import net.kenji.rpg_villager_quests.network.packets.QuestGlowPacket;
+import net.kenji.rpg_villager_quests.network.packets.ObjectiveStartPacket;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraftforge.network.NetworkDirection;
@@ -39,10 +39,10 @@ public class ModPacketHandler {
                 .encoder(AddQuestPacket::encode)
                 .consumerMainThread(AddQuestPacket::handle)
                 .add();
-        INSTANCE.messageBuilder(QuestGlowPacket.class, id(), NetworkDirection.PLAY_TO_SERVER)
-                .decoder(QuestGlowPacket::decode)
-                .encoder(QuestGlowPacket::encode)
-                .consumerMainThread(QuestGlowPacket::handle)
+        INSTANCE.messageBuilder(ObjectiveStartPacket.class, id(), NetworkDirection.PLAY_TO_SERVER)
+                .decoder(ObjectiveStartPacket::decode)
+                .encoder(ObjectiveStartPacket::encode)
+                .consumerMainThread(ObjectiveStartPacket::handle)
                 .add();
         INSTANCE.messageBuilder(ChoicePacket.class, id(), NetworkDirection.PLAY_TO_SERVER)
                 .decoder(ChoicePacket::decode)

@@ -7,11 +7,14 @@ import net.kenji.rpg_villager_quests.quest_system.interfaces.QuestObjective;
 import net.kenji.rpg_villager_quests.quest_system.interfaces.QuestReward;
 import net.kenji.rpg_villager_quests.quest_system.objective_types.CollectItemObjective;
 import net.kenji.rpg_villager_quests.quest_system.objective_types.KillEntityObjective;
+import net.kenji.rpg_villager_quests.quest_system.objective_types.PackageDeliverObjective;
 import net.kenji.rpg_villager_quests.quest_system.reward_types.ItemReward;
 import net.kenji.rpg_villager_quests.quest_system.reward_types.XpReward;
 import net.kenji.rpg_villager_quests.quest_system.stage_types.DialogueStage;
 import net.kenji.rpg_villager_quests.quest_system.stage_types.ObjectiveStage;
+import net.minecraft.client.Minecraft;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.registries.ForgeRegistries;
 
@@ -356,21 +359,75 @@ public class QuestLoader {
         switch (type) {
 
             case "collect_item" -> {
-                ResourceLocation item = new ResourceLocation(obj.get("item").getAsString());
-                int count = obj.get("count").getAsInt();
-                boolean consume = obj.get("consume_on_turn_in").getAsBoolean();
+                ResourceLocation item = null;
+                if(obj.has("item")){
+                    item = new ResourceLocation(obj.get("item").getAsString());
+                }else{
+                    throw new RuntimeException("Missing Item Type in Objective: " + type);
+                }
+
+                int count = 1;
+                if(stage.has("count")) {
+                    count = obj.get("count").getAsInt();
+                }
+                boolean consume = true;
+                if(obj.has("consume_on_turn_in")) {
+                    consume = obj.get("consume_on_turn_in").getAsBoolean();
+                }
 
                 objective = new CollectItemObjective(item, count, consume, questId);
             }
 
             // future-proofing
             case "kill_entity" -> {
-                ResourceLocation entityType = new ResourceLocation(obj.get("entity_type").getAsString());
+                ResourceLocation entityType = null;
+                if(obj.has("entity_type")) {
+                    entityType = new ResourceLocation(obj.get("entity_type").getAsString());
+                }
+                else{
+                    throw new RuntimeException("Missing \"entity_type\" Type in Objective: " + type);
+                }
                 int count = obj.get("count").getAsInt();
 
                 objective = new KillEntityObjective(entityType, count, questId);
             }
+            case "deliver_package" -> {
+                ResourceLocation entityType = new ResourceLocation("minecraft","villager");
+                if(stage.has("entity_type")) {
+                    entityType = new ResourceLocation(obj.get("entity_type").getAsString());
+                }
+                ResourceLocation item = null;
+                if(obj.has("item")){
+                    item = new ResourceLocation(obj.get("item").getAsString());
+                }else{
+                    throw new RuntimeException("Missing \"item\" Type in Objective: " + type);
+                }
+                int count = 1;
+                if(stage.has("count")) {
+                    count = obj.get("count").getAsInt();
+                }
+                boolean consume = true;
+                if(obj.has("consume_on_deliver")) {
+                    consume = obj.get("consume_on_deliver").getAsBoolean();
+                }
+                int minDist = 1;
+                if(obj.has("minDist")) {
+                    minDist = obj.get("minDist").getAsInt();
+                }
+                int maxDist = 0;
+                if(obj.has("maxDist")) {
+                    minDist = obj.get("maxDist").getAsInt();
+                }
+                else{
+                    throw new RuntimeException("Missing \"maxDist\" in Objective: " + type);
+                }
+                String structure = null;
+                if(obj.has("structure")){
+                    structure = obj.get("structure").getAsString();
+                }
 
+                objective = new PackageDeliverObjective(item, entityType, consume, questId, minDist, maxDist, structure);
+            }
             default -> throw new IllegalArgumentException(
                     "Unknown objective_type: " + type
             );

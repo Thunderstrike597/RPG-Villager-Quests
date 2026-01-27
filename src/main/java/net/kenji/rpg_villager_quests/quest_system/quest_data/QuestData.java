@@ -4,6 +4,7 @@ import net.kenji.rpg_villager_quests.network.packets.AddQuestPacket;
 import net.kenji.rpg_villager_quests.network.ModPacketHandler;
 import net.kenji.rpg_villager_quests.quest_system.Quest;
 import net.minecraft.world.entity.npc.Villager;
+import net.minecraft.world.entity.player.Player;
 
 import java.util.*;
 
@@ -34,14 +35,19 @@ public class QuestData {
     public QuestInstance getQuestInstance(String questId) {
         return activeQuests.get(questId);
     }
+
     public void putQuest(Quest quest, Villager villager){
         QuestInstance instance = new QuestInstance(quest, villager);
         activeQuests.put(quest.getQuestId(), instance);
     }
 
-    public QuestInstance startQuestClient(Quest quest, Villager villager) {
+    public QuestInstance startQuestClient(Quest quest, Villager villager, Player player) {
         QuestInstance instance = new QuestInstance(quest, villager);
         activeQuests.put(quest.getQuestId(), instance);
+        QuestInstance questInstance = getQuestInstance(quest.getQuestId());
+        if(questInstance != null){
+            questInstance.advanceFromCurrentStage(player);
+        }
         villager.setGlowingTag(true);
         return instance;
     }
