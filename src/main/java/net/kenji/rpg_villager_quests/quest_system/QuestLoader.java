@@ -39,7 +39,7 @@ public class QuestLoader {
 
             switch (stageType) {
                 case "dialogue" -> stages.add(parseDialogue(stageId, stage, id));
-                case "objective" -> stages.add(parseObjective(stageId, stage, id));
+                case "objective" -> stages.add(parseObjective(stageId, stage, id, stageId));
             }
         }
 
@@ -321,7 +321,7 @@ public class QuestLoader {
 
         return new DialogueStage(id, pages, questId, nextStage, choices, choice1Pages, choice2Pages, parseRewards(stage), stageTag);
     }
-    private static ObjectiveStage parseObjective(String id, JsonObject stage, String questId) {
+    private static ObjectiveStage parseObjective(String id, JsonObject stage, String questId, String stageId) {
 
         JsonObject obj = stage.getAsJsonObject("objective");
         if (obj == null) {
@@ -333,26 +333,58 @@ public class QuestLoader {
 
 
         QuestObjective objective;
-        JsonArray inProgressDialogueArray = stage.getAsJsonArray("in_progress_dialogue");
+        JsonArray mainInProgressDialogueArray = null;
+        JsonArray secondaryInProgressDialogueArray = null;
 
-        List<Page> inProgressDialogue = new ArrayList<>();
+        if(stage.has("in_progress_dialogue")) {
+            JsonObject inProgressDialogue = stage.get("in_progress_dialogue").getAsJsonObject();
+            if(inProgressDialogue.has("main")) {
+                mainInProgressDialogueArray = inProgressDialogue.getAsJsonArray("main");
+            }
+            else{
+                throw new RuntimeException("Missing \"main\" In Progress Dialogue Type");
+            }
+            if(inProgressDialogue.has("secondary")) {
+                secondaryInProgressDialogueArray = inProgressDialogue.getAsJsonArray("secondary");
+            }
+        }
+
+
+        List<Page> mainInProgressDialogue = new ArrayList<>();
+        List<Page> secondaryInProgressDialogue = new ArrayList<>();
 
         String stageTag = null;
         if(stage.has("tag")) {
             stageTag = stage.get("tag").getAsString();
         }
 
-        for (JsonElement pageElem : inProgressDialogueArray) {
-            JsonObject pageObj = pageElem.getAsJsonObject();
-            Page newPage = new Page();
-            newPage.text = pageObj.get("text").getAsString();
-            if(pageObj.has("button_1_text")){
-                newPage.button1Text = pageObj.get("button_1_text").getAsString();
+        if(mainInProgressDialogueArray != null) {
+            for (JsonElement pageElem : mainInProgressDialogueArray) {
+                JsonObject pageObj = pageElem.getAsJsonObject();
+                Page newPage = new Page();
+                newPage.text = pageObj.get("text").getAsString();
+                if (pageObj.has("button_1_text")) {
+                    newPage.button1Text = pageObj.get("button_1_text").getAsString();
+                }
+                if (pageObj.has("button_2_text")) {
+                    newPage.button2Text = pageObj.get("button_2_text").getAsString();
+                }
+                mainInProgressDialogue.add(newPage);
             }
-            if(pageObj.has("button_2_text")){
-                newPage.button2Text = pageObj.get("button_2_text").getAsString();
+        }
+        if(secondaryInProgressDialogueArray != null) {
+            for (JsonElement pageElem : secondaryInProgressDialogueArray) {
+                JsonObject pageObj = pageElem.getAsJsonObject();
+                Page newPage = new Page();
+                newPage.text = pageObj.get("text").getAsString();
+                if (pageObj.has("button_1_text")) {
+                    newPage.button1Text = pageObj.get("button_1_text").getAsString();
+                }
+                if (pageObj.has("button_2_text")) {
+                    newPage.button2Text = pageObj.get("button_2_text").getAsString();
+                }
+                secondaryInProgressDialogue.add(newPage);
             }
-            inProgressDialogue.add(newPage);
         }
 
 
@@ -425,8 +457,11 @@ public class QuestLoader {
                 if(obj.has("structure")){
                     structure = obj.get("structure").getAsString();
                 }
+                if(secondaryInProgressDialogue.isEmpty()){
+                    throw new RuntimeException("\"secondary\" Dialogue is Empty Or Missing!!");
+                }
 
-                objective = new PackageDeliverObjective(item, entityType, consume, questId, minDist, maxDist, structure);
+                objective = new PackageDeliverObjective(item, entityType, consume, questId, stageId, minDist, maxDist, structure, secondaryInProgressDialogue);
             }
             default -> throw new IllegalArgumentException(
                     "Unknown objective_type: " + type
@@ -434,7 +469,7 @@ public class QuestLoader {
         }
         QuestEffects completionEffects = new QuestEffects();
 
-        return new ObjectiveStage(id, objective, inProgressDialogue, questId, nextStage, completionEffects, parseRewards(stage), stageTag);
+        return new ObjectiveStage(id, objective, mainInProgressDialogue, questId, nextStage, completionEffects, parseRewards(stage), stageTag);
     }
 
     private static QuestEffects parseEffects(JsonObject obj) {

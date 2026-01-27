@@ -12,7 +12,8 @@ import net.kenji.rpg_villager_quests.quest_system.Page;
 import net.kenji.rpg_villager_quests.quest_system.Quest;
 import net.kenji.rpg_villager_quests.quest_system.QuestChoice;
 import net.kenji.rpg_villager_quests.quest_system.Reputation;
-import net.kenji.rpg_villager_quests.quest_system.quest_data.QuestData;
+import net.kenji.rpg_villager_quests.quest_system.capability.QuestCapabilities;
+import net.kenji.rpg_villager_quests.quest_system.quest_data.PlayerQuestData;
 import net.kenji.rpg_villager_quests.quest_system.quest_data.QuestInstance;
 import net.kenji.rpg_villager_quests.quest_system.stage_types.DialogueStage;
 import net.minecraft.client.Minecraft;
@@ -29,6 +30,7 @@ import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.fml.common.Mod;
 
 import java.util.*;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Pattern;
 
 @Mod.EventBusSubscriber(modid = RpgVillagerQuests.MODID, bus = Mod.EventBusSubscriber.Bus.FORGE, value = Dist.CLIENT)
@@ -144,6 +146,7 @@ public class VillagerQuestMenu extends Screen {
 
 
     private Villager villager;
+    private Villager secondaryVillager;
 
     private static List<String> getPages(String raw) {
         return Arrays.stream(raw.split(Pattern.quote(PAGE_DELIMITER)))
@@ -178,9 +181,10 @@ public class VillagerQuestMenu extends Screen {
         return pages.get(pages.size() - 1).text;
     }
 
-    public VillagerQuestMenu(Component pTitle, Villager questVillager) {
+    public VillagerQuestMenu(Component pTitle, Villager questVillager, Villager secondaryVillager) {
         super(pTitle);
         villager = questVillager;
+        this.secondaryVillager = secondaryVillager;
         villagerQuest = VillagerQuestManager.getVillagerQuest(villager);
     }
     private int getBgWidth(GuiDisplay ui) {
@@ -246,7 +250,9 @@ public class VillagerQuestMenu extends Screen {
         int posYOffset = -10;
         int negYOffset = 15;
 
-        QuestData questData = QuestData.get(player.getUUID());
+        player.getCapability(QuestCapabilities.PLAYER_QUESTS).ifPresent((questData) -> {
+
+
         QuestInstance questInstance = questData.getQuestInstance(villagerQuest.id);
 
         pages = getQuestDialoge(questData, questInstance);
@@ -255,9 +261,10 @@ public class VillagerQuestMenu extends Screen {
 
         int pX = bgX + padding;
         int pY = bgY + bgH - buttonHeight - padding;
+        });
     }
 
-    public void addButtons(Player player) {
+    public void addButtons(Player player, PlayerQuestData questData) {
         // Recalculate the same values as in render()
         int DISPLAY_WIDTH = GetTextureSize(DisplayType.BACKGROUND_DISPLAY).x + 20;
         int DISPLAY_HEIGHT = GetTextureSize(DisplayType.BACKGROUND_DISPLAY).y + 10;
@@ -288,12 +295,12 @@ public class VillagerQuestMenu extends Screen {
         int pY = actualBgY + actualBgH - buttonHeight - padding;
 
         if (hasSentenceCompleted) {
-            if (currentPageIndex == pages.size() - 1 && QuestData.get(player.getUUID()).getQuestInstance(villagerQuest.getQuestId()) == null) {
+            if (currentPageIndex == pages.size() - 1 && questData.getQuestInstance(villagerQuest.getQuestId()) == null) {
                 if (getCurrentPage().button1Text == null || Objects.equals(getCurrentPage().button1Text, "")) {
                     posButton = this.addRenderableWidget(
                             Button.builder(
                                     Component.literal("Accept Quest"),
-                                    btn -> onAcceptQuest(player)
+                                    btn -> onAcceptQuest(player, questData)
                             ).bounds(
                                     pX + xOffset,
                                     pY + posYOffset,
@@ -305,7 +312,7 @@ public class VillagerQuestMenu extends Screen {
                     posButton = this.addRenderableWidget(
                             Button.builder(
                                     Component.literal(getCurrentPage().button1Text),
-                                    btn -> onAcceptQuest(player)
+                                    btn -> onAcceptQuest(player, questData)
                             ).bounds(
                                     pX + xOffset,
                                     pY + posYOffset,
@@ -315,7 +322,7 @@ public class VillagerQuestMenu extends Screen {
                     );
                 }
             } else {
-                QuestInstance questInstance = QuestData.get(player.getUUID()).getQuestInstance(villagerQuest.getQuestId());
+                QuestInstance questInstance = questData.getQuestInstance(villagerQuest.getQuestId());
                 if ((questInstance != null && questInstance.getCurrentStage().canCompleteStage(player)) || currentPageIndex < pages.size() - 1) {
                     if (!Objects.equals(getCurrentPage().button1Text, "NONE")) {
                         if ((getButtonText(questInstance, ButtonType.POSITIVE) == null || getButtonText(questInstance, ButtonType.POSITIVE).isEmpty()) && getCurrentPage().dialogueType != DialogueStage.DialogueType.CHOICE) {
@@ -326,7 +333,7 @@ public class VillagerQuestMenu extends Screen {
                                             btn -> {
                                                 if (questInstance != null) {
 
-                                                    onPositivePress(player, questInstance);
+                                                    onPositivePress(player, questInstance, questData);
                                                 } else {
                                                     onNextPage(player);
                                                 }
@@ -346,7 +353,7 @@ public class VillagerQuestMenu extends Screen {
                                             btn -> {
                                                 if (questInstance != null) {
 
-                                                    onPositivePress(player, questInstance);
+                                                    onPositivePress(player, questInstance, questData);
                                                 } else {
                                                     onNextPage(player);
                                                 }
@@ -362,7 +369,7 @@ public class VillagerQuestMenu extends Screen {
                     }
                 }
             }
-            QuestInstance questInstance = QuestData.get(player.getUUID()).getQuestInstance(villagerQuest.getQuestId());
+            QuestInstance questInstance = questData.getQuestInstance(villagerQuest.getQuestId());
             if (!Objects.equals(getCurrentPage().button2Text, "NONE")) {
                 if (questInstance != null) {
                     if (getButtonText(questInstance, ButtonType.NEGATIVE) == null || getButtonText(questInstance, ButtonType.NEGATIVE).isEmpty()) {
@@ -421,20 +428,20 @@ public class VillagerQuestMenu extends Screen {
         }
     }
 
-    private List<Page> getQuestDialoge(QuestData questData, QuestInstance questInstance){
+    private List<Page> getQuestDialoge(PlayerQuestData questData, QuestInstance questInstance){
         if(questData.getActiveQuests() == null || !questData.getActiveQuests().contains(questInstance))
             return villagerQuest.stages.get(0).pages;
         else {
-            return questInstance.getCurrentStage().getDialogue(questInstance);
+            return questInstance.getCurrentStage().getDialogue(questInstance, secondaryVillager);
         }
     }
 
-    public void onAcceptQuest(Player player){
+    public void onAcceptQuest(Player player, PlayerQuestData questData){
         player.playSound(SoundEvents.VILLAGER_YES);
         didPositiveInteraction = true;
         hasSentenceCompleted = false;
         Quest quest = VillagerQuestManager.getVillagerQuest(villager);
-        quest.StartQuestClient(player, villager);
+        quest.StartQuestClient(questData, player, villager);
         onClose();
     }
     public void onNextPage(Player player) {
@@ -456,7 +463,7 @@ public class VillagerQuestMenu extends Screen {
             this.init();
         }
     }
-    public void onPositivePress(Player player, QuestInstance questInstance){
+    public void onPositivePress(Player player, QuestInstance questInstance, PlayerQuestData questData){
         if(questInstance != null && !questInstance.isComplete()) {
             if (pages.get(currentPageIndex).dialogueType != DialogueStage.DialogueType.CHOICE) {
                 if (currentPageIndex < pages.size() - 1) {
@@ -517,7 +524,7 @@ public class VillagerQuestMenu extends Screen {
                 onNextPage(player);
             }
             else{
-                onAcceptQuest(player);
+                onAcceptQuest(player, questData);
             }
         }
     }
@@ -683,25 +690,29 @@ public class VillagerQuestMenu extends Screen {
         // Check if our custom keybind was pressed
         if (ModKeybinds.NEXT_PAGE_KEY.matches(keyCode, scanCode)) {
             Player player = getMinecraft().player;
-            if(player != null) {
-                if (!hasSentenceCompleted) {
-                    skipDialogue = true;
+            if (player != null) {
+              AtomicReference<PlayerQuestData> questData = new AtomicReference<>();
+                player.getCapability(QuestCapabilities.PLAYER_QUESTS).ifPresent(questData::set);
 
-                    // Force-end any active pause
-                    isPausedAfterPeriod = false;
-                    isPausedAfterComma = false;
-                    isPausedAfterExclamationMark = false;
-                    isPausedAfterQuestionMark = false;
+                    if (!hasSentenceCompleted) {
+                        skipDialogue = true;
 
-                    lastTypeTime = System.currentTimeMillis();
-                    return true; // Consume the event
-                } else {
-                    QuestInstance questInstance = QuestData.get(player.getUUID()).getQuestInstance(villagerQuest.getQuestId());
-                    if(posButton != null)
-                        onPositivePress(player, questInstance);
-                    else onNegativePress(player, questInstance);
-                    return true;
-                }
+                        // Force-end any active pause
+                        isPausedAfterPeriod = false;
+                        isPausedAfterComma = false;
+                        isPausedAfterExclamationMark = false;
+                        isPausedAfterQuestionMark = false;
+
+                        lastTypeTime = System.currentTimeMillis();
+                        return true; // Consume the event
+                    } else {
+                        QuestInstance questInstance = questData.get().getQuestInstance(villagerQuest.getQuestId());
+                        if (posButton != null)
+                            onPositivePress(player, questInstance, questData.get());
+                        else onNegativePress(player, questInstance);
+                        return true;
+                    }
+
             }
         }
 
@@ -713,73 +724,76 @@ public class VillagerQuestMenu extends Screen {
 
     @Override
     public void render(GuiGraphics gfx, int mouseX, int mouseY, float partialTick) {
-        if(VillagerQuestManager.getVillagerQuest(villager) == null)
+        if(villagerQuest == null)
             return;
+
         this.renderBackground(gfx);
         villager.ambientSoundTime = 0;
+        Player player = Minecraft.getInstance().player;
+        if(player == null) return;
+        player.getCapability(QuestCapabilities.PLAYER_QUESTS).ifPresent((questData) -> {
 
-        int DISPLAY_WIDTH = GetTextureSize(DisplayType.BACKGROUND_DISPLAY).x + 20;
-        int DISPLAY_HEIGHT = GetTextureSize(DisplayType.BACKGROUND_DISPLAY).y + 10;
+            int DISPLAY_WIDTH = GetTextureSize(DisplayType.BACKGROUND_DISPLAY).x + 20;
+            int DISPLAY_HEIGHT = GetTextureSize(DisplayType.BACKGROUND_DISPLAY).y + 10;
 
-        int x = GetUVCoords().x - 15;
-        int y = GetUVCoords().y;
+            int x = GetUVCoords().x - 15;
+            int y = GetUVCoords().y;
 
-        float scaleX = (float) DISPLAY_WIDTH / TEXTURE_WIDTH;
-        float scaleY = (float) DISPLAY_HEIGHT / TEXTURE_HEIGHT;
+            float scaleX = (float) DISPLAY_WIDTH / TEXTURE_WIDTH;
+            float scaleY = (float) DISPLAY_HEIGHT / TEXTURE_HEIGHT;
 
-        PoseStack pose = gfx.pose();
-        pose.pushPose();
-        pose.translate(x, y, 0);
-        pose.scale(scaleX, scaleY, 1f);
+            PoseStack pose = gfx.pose();
+            pose.pushPose();
+            pose.translate(x, y, 0);
+            pose.scale(scaleX, scaleY, 1f);
 
-        RenderSystem.enableBlend();
-        RenderSystem.defaultBlendFunc();
-        RenderSystem.setShaderColor(1f, 1f, 1f, 0.8f);
+            RenderSystem.enableBlend();
+            RenderSystem.defaultBlendFunc();
+            RenderSystem.setShaderColor(1f, 1f, 1f, 0.8f);
 
-        gfx.blit(
-                backgroundGui.getTexture(),
-                backgroundGui.offsetX, backgroundGui.offsetY,
-                0, 0,
-                backgroundGui.TEXTURE_WIDTH, backgroundGui.TEXTURE_HEIGHT,
-                backgroundGui.TEXTURE_WIDTH, backgroundGui.TEXTURE_HEIGHT
-        );
-        gfx.blit(
-                headDisplayGui.getTexture(),
-                headDisplayGui.offsetX, headDisplayGui.offsetY,
-                0, 0,
-                headDisplayGui.TEXTURE_WIDTH, headDisplayGui.TEXTURE_HEIGHT,
-                headDisplayGui.TEXTURE_WIDTH, headDisplayGui.TEXTURE_HEIGHT
-        );
-        RenderSystem.setShaderColor(1f, 1f, 1f, 1f);
+            gfx.blit(
+                    backgroundGui.getTexture(),
+                    backgroundGui.offsetX, backgroundGui.offsetY,
+                    0, 0,
+                    backgroundGui.TEXTURE_WIDTH, backgroundGui.TEXTURE_HEIGHT,
+                    backgroundGui.TEXTURE_WIDTH, backgroundGui.TEXTURE_HEIGHT
+            );
+            gfx.blit(
+                    headDisplayGui.getTexture(),
+                    headDisplayGui.offsetX, headDisplayGui.offsetY,
+                    0, 0,
+                    headDisplayGui.TEXTURE_WIDTH, headDisplayGui.TEXTURE_HEIGHT,
+                    headDisplayGui.TEXTURE_WIDTH, headDisplayGui.TEXTURE_HEIGHT
+            );
+            RenderSystem.setShaderColor(1f, 1f, 1f, 1f);
 
-        pose.popPose();
+            pose.popPose();
 
 // Calculate where the background ACTUALLY is on screen
-        int actualBgX = x + (int)(backgroundGui.offsetX * scaleX);
-        int actualBgY = y + (int)(backgroundGui.offsetY * scaleY);
-        int actualBgW = (int)(backgroundGui.TEXTURE_WIDTH * scaleX);
-        int actualBgH = (int)(backgroundGui.TEXTURE_HEIGHT * scaleY);
+            int actualBgX = x + (int) (backgroundGui.offsetX * scaleX);
+            int actualBgY = y + (int) (backgroundGui.offsetY * scaleY);
+            int actualBgW = (int) (backgroundGui.TEXTURE_WIDTH * scaleX);
+            int actualBgH = (int) (backgroundGui.TEXTURE_HEIGHT * scaleY);
 
-        int xPadding = (int)(15 * scaleX);
-        int yPadding = (int)(15 * scaleY);
+            int xPadding = (int) (15 * scaleX);
+            int yPadding = (int) (15 * scaleY);
 
 // Text position based on ACTUAL background position
-        int textX = actualBgX + xPadding;
-        int textY = actualBgY + yPadding;
-        int textWidth = actualBgW - (xPadding * 2) - (int)(30 * scaleX);
+            int textX = actualBgX + xPadding;
+            int textY = actualBgY + yPadding;
+            int textWidth = actualBgW - (xPadding * 2) - (int) (30 * scaleX);
 
-        String fullText = pages.get(currentPageIndex).text;
-        long now = System.currentTimeMillis();
+            String fullText = pages.get(currentPageIndex).text;
+            long now = System.currentTimeMillis();
 
-        if (lastTypeTime == 0) {
-            lastTypeTime = now;
-        }
+            if (lastTypeTime == 0) {
+                lastTypeTime = now;
+            }
 
-        if(currentSentenceStartDelay < SENTENCE_START_DELAY){
-            currentSentenceStartDelay++;
-        }
-        else {
-            if (visibleChars < fullText.length()) {
+            if (currentSentenceStartDelay < SENTENCE_START_DELAY) {
+                currentSentenceStartDelay++;
+            } else {
+                if (visibleChars < fullText.length()) {
                     if (isPausedAfterPeriod && !skipDialogue) {
                         if (now - pauseStartTime >= PERIOD_PAUSE_MS) {
                             // Pause is over, resume typing
@@ -835,75 +849,75 @@ public class VillagerQuestMenu extends Screen {
                             }
                         }
                     }
-            }else if (!hasSentenceCompleted){
-                hasSentenceCompleted = true;
-                skipDialogue = false;
-                addButtons(getMinecraft().player);
+                } else if (!hasSentenceCompleted) {
+                    hasSentenceCompleted = true;
+                    skipDialogue = false;
+                    addButtons(player, questData);
+                }
+                String visibleText = buildSafeVisibleText(pages.get(currentPageIndex).text, textWidth);
+
+                // Create a new pose stack for text scaling
+                pose.pushPose();
+
+                // Move to text position
+                pose.translate(textX, textY, 0);
+
+                // Scale the text 1.2x
+                pose.scale(1.2F, 1.2F, 1.0F);
+
+                // Draw at origin (0, 0) since we already translated
+                gfx.drawWordWrap(
+                        this.font,
+                        Component.literal(visibleText),
+                        0,  // Draw at 0,0 because we translated the pose
+                        0,
+                        (int) (textWidth / 1.2F),  // Adjust width for the scale
+                        0xFFFFFF
+                );
+
+                pose.popPose();
             }
-            String visibleText = buildSafeVisibleText(pages.get(currentPageIndex).text, textWidth);
-
-        // Create a new pose stack for text scaling
-            pose.pushPose();
-
-        // Move to text position
-            pose.translate(textX, textY, 0);
-
-        // Scale the text 1.2x
-            pose.scale(1.2F, 1.2F, 1.0F);
-
-        // Draw at origin (0, 0) since we already translated
-            gfx.drawWordWrap(
-                    this.font,
-                    Component.literal(visibleText),
-                    0,  // Draw at 0,0 because we translated the pose
-                    0,
-                    (int)(textWidth / 1.2F),  // Adjust width for the scale
-                    0xFFFFFF
-            );
-
-            pose.popPose();
-        }
 
 
-        if (villager != null) {
-            int headWidth  = 48;
-            int headHeight = 60;
-            int headYOffset = -65;
+            if (villager != null) {
+                int headWidth = 48;
+                int headHeight = 60;
+                int headYOffset = -65;
 
-            // Calculate the actual screen position of the head display
-            // It's rendered at headDisplayGui.offsetX/Y, but transformed by the pose stack
-            int actualHeadDisplayX = x + (int)(headDisplayGui.offsetX * scaleX);
-            int actualHeadDisplayY = y + (int)(headDisplayGui.offsetY * scaleY);
-            int actualHeadDisplayWidth = (int)(headDisplayGui.TEXTURE_WIDTH * scaleX);
-            int actualHeadDisplayHeight = (int)(headDisplayGui.TEXTURE_HEIGHT * scaleY);
+                // Calculate the actual screen position of the head display
+                // It's rendered at headDisplayGui.offsetX/Y, but transformed by the pose stack
+                int actualHeadDisplayX = x + (int) (headDisplayGui.offsetX * scaleX);
+                int actualHeadDisplayY = y + (int) (headDisplayGui.offsetY * scaleY);
+                int actualHeadDisplayWidth = (int) (headDisplayGui.TEXTURE_WIDTH * scaleX);
+                int actualHeadDisplayHeight = (int) (headDisplayGui.TEXTURE_HEIGHT * scaleY);
 
-            int entityX = actualHeadDisplayX + actualHeadDisplayWidth / 2;
-            int entityY = actualHeadDisplayY + actualHeadDisplayHeight + 60;
-            int scale = 55;
+                int entityX = actualHeadDisplayX + actualHeadDisplayWidth / 2;
+                int entityY = actualHeadDisplayY + actualHeadDisplayHeight + 60;
+                int scale = 55;
 
-            int clipX = entityX - headWidth / 2;
-            int clipY = entityY - headHeight + headYOffset;
+                int clipX = entityX - headWidth / 2;
+                int clipY = entityY - headHeight + headYOffset;
 
-            gfx.enableScissor(
-                    clipX,
-                    clipY,
-                    clipX + headWidth,
-                    clipY + headHeight
-            );
+                gfx.enableScissor(
+                        clipX,
+                        clipY,
+                        clipX + headWidth,
+                        clipY + headHeight
+                );
 
-            InventoryScreen.renderEntityInInventoryFollowsMouse(
-                    gfx,
-                    entityX,
-                    entityY,
-                    scale,
-                    entityX - mouseX,
-                    entityY - (mouseY + 40),
-                    villager
-            );
+                InventoryScreen.renderEntityInInventoryFollowsMouse(
+                        gfx,
+                        entityX,
+                        entityY,
+                        scale,
+                        entityX - mouseX,
+                        entityY - (mouseY + 40),
+                        villager
+                );
 
-            gfx.disableScissor();
-        }
-
+                gfx.disableScissor();
+            }
+        });
         super.render(gfx, mouseX, mouseY, partialTick);
     }
 
