@@ -1,7 +1,6 @@
 package net.kenji.rpg_villager_quests.quest_system;
 
-import net.kenji.rpg_villager_quests.quest_system.capability.QuestCapabilities;
-import net.kenji.rpg_villager_quests.quest_system.quest_data.PlayerQuestData;
+import net.kenji.rpg_villager_quests.quest_system.quest_data.QuestData;
 import net.kenji.rpg_villager_quests.quest_system.quest_data.QuestInstance;
 import net.minecraft.world.entity.npc.Villager;
 import net.minecraft.world.entity.player.Player;
@@ -9,7 +8,7 @@ import net.minecraft.world.entity.player.Player;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
-import java.util.concurrent.atomic.AtomicReference;
+import java.util.UUID;
 
 public class Quest {
     public final String id;
@@ -71,11 +70,11 @@ public class Quest {
 
     }
 
-    public QuestInstance StartQuestClient(PlayerQuestData questData,Player player, Villager villager){
+    public QuestInstance StartQuestClient(Player player, UUID villager){
 
+        QuestData questData = QuestData.get(player.getUUID());
         questData.startQuestServer(this.getQuestId(),villager);
         return questData.startQuestClient(this, villager, player);
-
     }
 
 }

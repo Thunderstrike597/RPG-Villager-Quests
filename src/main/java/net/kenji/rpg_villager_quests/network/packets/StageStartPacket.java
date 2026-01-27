@@ -1,7 +1,7 @@
 package net.kenji.rpg_villager_quests.network.packets;
 
 import net.kenji.rpg_villager_quests.quest_system.QuestStage;
-import net.kenji.rpg_villager_quests.quest_system.capability.QuestCapabilities;
+import net.kenji.rpg_villager_quests.quest_system.quest_data.QuestData;
 import net.kenji.rpg_villager_quests.quest_system.quest_data.QuestInstance;
 import net.kenji.rpg_villager_quests.quest_system.stage_types.ObjectiveStage;
 import net.minecraft.network.FriendlyByteBuf;
@@ -37,17 +37,16 @@ public class StageStartPacket {
         ctx.get().enqueueWork(() -> {
             Player player = ctx.get().getSender();
             if(player != null) {
-                player.getCapability(QuestCapabilities.PLAYER_QUESTS).ifPresent((questData) -> {
-                    QuestInstance questInstance = questData.getQuestInstance(packet.questId);
-                    QuestStage questStage = questInstance.getQuest().getStageById(packet.stageId);
-                    questInstance.setCurrentStage(packet.stageId);
+                QuestData questData = QuestData.get(player.getUUID());
+                QuestInstance questInstance = questData.getQuestInstance(packet.questId);
+                QuestStage questStage = questInstance.getQuest().getStageById(packet.stageId);
+                questInstance.setCurrentStage(packet.stageId);
 
-                    if (questStage instanceof ObjectiveStage objectiveStage) {
-                        if (objectiveStage.getObjective() != null) {
-                            objectiveStage.getObjective().onStartObjective(player, questInstance);
-                        }
+                if(questStage instanceof ObjectiveStage objectiveStage){
+                    if(objectiveStage.getObjective() != null){
+                        objectiveStage.getObjective().onStartObjective(player, questInstance);
                     }
-                });
+                }
             }
         });
         ctx.get().setPacketHandled(true);

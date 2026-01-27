@@ -3,7 +3,7 @@ package net.kenji.rpg_villager_quests.network.packets;
 import net.kenji.rpg_villager_quests.manager.VillagerQuestManager;
 import net.kenji.rpg_villager_quests.quest_system.Quest;
 import net.kenji.rpg_villager_quests.quest_system.QuestStage;
-import net.kenji.rpg_villager_quests.quest_system.capability.QuestCapabilities;
+import net.kenji.rpg_villager_quests.quest_system.quest_data.QuestData;
 import net.kenji.rpg_villager_quests.quest_system.quest_data.QuestInstance;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
@@ -54,22 +54,20 @@ public class AddQuestPacket {
 
             Entity entity = player.serverLevel().getEntity(packet.villagerUuid);
 
-            if (entity instanceof Villager villager) {
-                Quest finalQuest = quest;
-                player.getCapability(QuestCapabilities.PLAYER_QUESTS).ifPresent((questData) -> {
-                    if (questData.getQuestInstance(packet.questId) != null) return;
+            if(entity != null) {
 
-                    questData.putQuest(finalQuest, villager);
+                QuestData questData = QuestData.get(player.getUUID());
+                if (questData.getQuestInstance(packet.questId) != null) return;
 
-                    QuestInstance questInstance = questData.getQuestInstance(packet.questId);
+                questData.putQuest(quest, entity.getUUID());
 
-                    QuestStage questStage = questInstance.getCurrentStage().getNextStage(player, questInstance);
-                    if (questStage != null) {
-                        questStage.start(player, questInstance);
-                    }
-                });
+                QuestInstance questInstance = questData.getQuestInstance(packet.questId);
+
+                QuestStage questStage = questInstance.getCurrentStage().getNextStage(player, questInstance);
+                if (questStage != null) {
+                    questStage.start(player, questInstance);
+                }
             }
-
         });
         ctx.get().setPacketHandled(true);
     }

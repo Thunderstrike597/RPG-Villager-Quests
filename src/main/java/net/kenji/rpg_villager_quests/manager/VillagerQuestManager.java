@@ -21,8 +21,8 @@ public class VillagerQuestManager {
     public static Map<UUID, Quest> currentQuestMap = new HashMap<>();
     public static Map<UUID, Quest> villagerQuestMap = new HashMap<>();
 
-    public static Quest getVillagerQuest(Villager villager){
-        return villagerQuestMap.get(villager.getUUID());
+    public static Quest getVillagerQuest(UUID villager){
+        return villagerQuestMap.get(villager);
     }
 
     public static Quest getQuestByName(String questName) throws Exception {

@@ -1,7 +1,10 @@
 package net.kenji.rpg_villager_quests.quest_system.objective_types;
 
+import net.kenji.rpg_villager_quests.quest_system.Quest;
 import net.kenji.rpg_villager_quests.quest_system.QuestEffects;
+import net.kenji.rpg_villager_quests.quest_system.QuestStage;
 import net.kenji.rpg_villager_quests.quest_system.interfaces.QuestObjective;
+import net.kenji.rpg_villager_quests.quest_system.quest_data.QuestData;
 import net.kenji.rpg_villager_quests.quest_system.quest_data.QuestInstance;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Player;

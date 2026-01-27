@@ -6,6 +6,7 @@ import net.minecraft.world.entity.npc.Villager;
 import net.minecraft.world.entity.player.Player;
 
 import java.util.List;
+import java.util.UUID;
 
 public abstract class QuestStage {
     public final String id;
@@ -32,7 +33,7 @@ public abstract class QuestStage {
     public abstract QuestStage getNextStage(Player player, QuestInstance questInstance);
     public abstract void onComplete(QuestEffects completionEffects, Player player, QuestInstance questInstance);
 
-    public abstract List<Page> getDialogue(QuestInstance questInstance, Villager interactVillager);
+    public abstract List<Page> getDialogue(QuestInstance questInstance, UUID interactVillager);
     public abstract boolean canCompleteStage(Player player);
     public abstract boolean canCompleteStage(int currentPageIndex,Player player);
 

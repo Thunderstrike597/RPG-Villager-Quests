@@ -3,6 +3,8 @@ package net.kenji.rpg_villager_quests.quest_system.quest_data;
 import net.kenji.rpg_villager_quests.network.packets.AddQuestPacket;
 import net.kenji.rpg_villager_quests.network.ModPacketHandler;
 import net.kenji.rpg_villager_quests.quest_system.Quest;
+import net.minecraft.client.Minecraft;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.npc.Villager;
 import net.minecraft.world.entity.player.Player;
 
@@ -36,23 +38,29 @@ public class QuestData {
         return activeQuests.get(questId);
     }
 
-    public void putQuest(Quest quest, Villager villager){
+    public void putQuest(Quest quest, UUID villager){
         QuestInstance instance = new QuestInstance(quest, villager);
         activeQuests.put(quest.getQuestId(), instance);
     }
 
-    public QuestInstance startQuestClient(Quest quest, Villager villager, Player player) {
+    public QuestInstance startQuestClient(Quest quest, UUID villager, Player player) {
         QuestInstance instance = new QuestInstance(quest, villager);
         activeQuests.put(quest.getQuestId(), instance);
         QuestInstance questInstance = getQuestInstance(quest.getQuestId());
         if(questInstance != null){
             questInstance.advanceFromCurrentStage(player);
         }
-        villager.setGlowingTag(true);
+
+        for(Entity entity : Minecraft.getInstance().level.entitiesForRendering()) {
+          if(entity.getUUID() == villager) {
+              entity.setGlowingTag(true);
+              break;
+          }
+        }
         return instance;
     }
-    public void startQuestServer(String questId, Villager villager) {
-        ModPacketHandler.sendToServer(new AddQuestPacket(questId, villager.getUUID()));
+    public void startQuestServer(String questId, UUID villager) {
+        ModPacketHandler.sendToServer(new AddQuestPacket(questId, villager));
     }
 }
 

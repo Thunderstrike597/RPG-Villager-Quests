@@ -1,8 +1,8 @@
 package net.kenji.rpg_villager_quests.network.packets;
 
 import net.kenji.rpg_villager_quests.quest_system.QuestStage;
-import net.kenji.rpg_villager_quests.quest_system.capability.QuestCapabilities;
 import net.kenji.rpg_villager_quests.quest_system.objective_types.PackageDeliverObjective;
+import net.kenji.rpg_villager_quests.quest_system.quest_data.QuestData;
 import net.kenji.rpg_villager_quests.quest_system.quest_data.QuestInstance;
 import net.kenji.rpg_villager_quests.quest_system.stage_types.ObjectiveStage;
 import net.minecraft.client.Minecraft;
@@ -11,6 +11,7 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.npc.Villager;
 import net.minecraft.world.entity.player.Player;
 import net.minecraftforge.network.NetworkEvent;
+import org.jline.utils.Log;
 
 import java.util.UUID;
 import java.util.function.Supplier;
@@ -51,29 +52,18 @@ public class SyncVillagerDeliverPacket {
             if(ctx.get().getDirection().getReceptionSide().isClient()) {
                 Player player = Minecraft.getInstance().player;
                 if (player != null) {
-                    player.getCapability(QuestCapabilities.PLAYER_QUESTS).ifPresent((questData) -> {
-                        QuestInstance questInstance = questData.getQuestInstance(packet.questId);
+                    QuestData questData = QuestData.get(player.getUUID());
+                    QuestInstance questInstance = questData.getQuestInstance(packet.questId);
 
-                        if (questInstance != null) {
+                    if (questInstance != null) {
+                        QuestStage questStage = questInstance.getQuest().getStageById(packet.stageId);
 
-                            // Or find the specific stage by ID in the instance
-                            QuestStage questStage = questInstance.getQuest().getStageById(packet.stageId);
-
-                            if (questStage instanceof ObjectiveStage objectiveStage) {
-                                if (objectiveStage.getObjective() instanceof PackageDeliverObjective packageDeliverObjective) {
-                                    packageDeliverObjective.currentDeliverEntity = packet.villagerUuid;
-
-                                    if (Minecraft.getInstance().level != null) {
-                                        Entity entity = Minecraft.getInstance().level.getEntity(packet.villagerId);
-                                        if (entity instanceof Villager villager) {
-                                            villager.setGlowingTag(true);
-                                            villager.getPersistentData().putUUID(PackageDeliverObjective.objectiveEntityTag, questInstance.getQuestVillager(player).getUUID());
-                                        }
-                                    }
-                                }
+                        if (questStage instanceof ObjectiveStage objectiveStage) {
+                            if (objectiveStage.getObjective() instanceof PackageDeliverObjective packageDeliverObjective) {
+                                packageDeliverObjective.currentDeliverEntity = packet.villagerUuid;
                             }
                         }
-                    });
+                    }
                 }
             }
         });

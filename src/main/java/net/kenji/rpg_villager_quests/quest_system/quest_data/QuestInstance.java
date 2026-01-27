@@ -23,11 +23,11 @@ public class QuestInstance {
     private Reputation questReputation;
     private UUID questVillagerUUID;
 
-    public QuestInstance(Quest quest, Villager villager) {
+    public QuestInstance(Quest quest, UUID villager) {
         this.questDefinition = quest;
         this.currentStageIndex = 0;
         this.completed = false;
-        this.questVillagerUUID = villager.getUUID();
+        this.questVillagerUUID = villager;
     }
     public CompoundTag serializeNBT() {
         CompoundTag tag = new CompoundTag();
@@ -64,29 +64,8 @@ public class QuestInstance {
 
         return instance;
     }
-    public Villager getQuestVillager(Player player){
-        Villager villager = null;
-        if(player.level().isClientSide()){
-            assert Minecraft.getInstance().level != null;
-            for (Entity entity : Minecraft.getInstance().level.entitiesForRendering()) {
-               if(entity.getUUID() == questVillagerUUID){
-                   if(entity instanceof Villager questVillager){
-                       villager = questVillager;
-                   }
-               }
-            }
-        }
-        else {
-
-            if(player instanceof ServerPlayer serverPlayer){
-                Entity entity = serverPlayer.serverLevel().getEntity(questVillagerUUID);
-                if(entity instanceof Villager questVillager){
-                    villager = questVillager;
-                }
-            }
-        }
-
-        return villager;
+    public UUID getQuestVillager(){
+        return questVillagerUUID;
     }
 
     public void advanceFromCurrentStage(Player player) {
@@ -96,12 +75,13 @@ public class QuestInstance {
     public boolean isComplete() {
         return completed;
     }
-    public void triggerQuestComplete(PlayerQuestData questData, QuestEffects effects, Player player){
+    public void triggerQuestComplete(QuestEffects effects, Player player){
         completed = true;
-
-            QuestInstance questInstance = questData.getQuestInstance(questDefinition.getQuestId());
-            questData.removeActiveQuest(questDefinition.getQuestId());
-            questData.addCompetedQuest(questDefinition.getQuestId(), questInstance);
+        if(QuestData.get(player.getUUID()) != null) {
+            QuestInstance questInstance = QuestData.get(player.getUUID()).getQuestInstance(questDefinition.getQuestId());
+            QuestData.get(player.getUUID()).removeActiveQuest(questDefinition.getQuestId());
+            QuestData.get(player.getUUID()).addCompetedQuest(questDefinition.getQuestId(), questInstance);
+        }
     }
     public Quest getQuest() {
         return questDefinition;

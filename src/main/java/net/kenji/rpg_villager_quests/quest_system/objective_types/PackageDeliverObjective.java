@@ -4,8 +4,8 @@ import net.kenji.rpg_villager_quests.network.ModPacketHandler;
 import net.kenji.rpg_villager_quests.network.packets.SyncVillagerDeliverPacket;
 import net.kenji.rpg_villager_quests.quest_system.Page;
 import net.kenji.rpg_villager_quests.quest_system.QuestEffects;
-import net.kenji.rpg_villager_quests.quest_system.capability.QuestCapabilities;
 import net.kenji.rpg_villager_quests.quest_system.interfaces.QuestObjective;
+import net.kenji.rpg_villager_quests.quest_system.quest_data.QuestData;
 import net.kenji.rpg_villager_quests.quest_system.quest_data.QuestInstance;
 import net.kenji.rpg_villager_quests.quest_system.stage_types.ObjectiveStage;
 import net.minecraft.ChatFormatting;
@@ -53,7 +53,7 @@ public class PackageDeliverObjective implements QuestObjective {
     public UUID currentDeliverEntity;
 
     public boolean hasDelivered;
-    public PackageDeliverObjective(ResourceLocation item, ResourceLocation deliverEntity, boolean consume, String belongingQuestId, String belongingStageId,int maxDistance, int minDistance, String structure, List<Page> target_dialogue) {
+    public PackageDeliverObjective(ResourceLocation item, ResourceLocation deliverEntity, boolean consume, String belongingQuestId, String belongingStageId,int maxDistance, int minDistance, String structure, List<Page> secondaryDialogue) {
         this.item = ForgeRegistries.ITEMS.getValue(item);
         this.maxDistance = maxDistance;
         this.minDistance = minDistance;
@@ -66,28 +66,27 @@ public class PackageDeliverObjective implements QuestObjective {
                 new ResourceLocation(structure));
         else this.structure = null;
 
-        deliveryPackageDialogue = target_dialogue;
+        deliveryPackageDialogue = secondaryDialogue;
     }
     @SubscribeEvent
     public static void onTick(TickEvent.PlayerTickEvent event) {
-        event.player.getCapability(QuestCapabilities.PLAYER_QUESTS).ifPresent((questData) -> {
 
-            if (questData.getActiveQuests() != null) {
-                for (QuestInstance questInstance : questData.getActiveQuests()) {
-                    if (!questInstance.isComplete()) {
-                        if (questInstance.getCurrentStage() instanceof ObjectiveStage objectiveStage) {
-                            if (objectiveStage.getObjective() instanceof PackageDeliverObjective deliverPackageObjective) {
-                                if (deliverPackageObjective.canComplete(event.player)) {
-                                    if (objectiveStage.tag != null) {
-                                        objectiveStage.onComplete(objectiveStage.getStageEffects(), event.player, questInstance);
-                                    }
+        QuestData questData = QuestData.get(event.player.getUUID());
+        if (questData.getActiveQuests() != null) {
+            for (QuestInstance questInstance : questData.getActiveQuests()) {
+                if (!questInstance.isComplete()) {
+                    if (questInstance.getCurrentStage() instanceof ObjectiveStage objectiveStage) {
+                        if (objectiveStage.getObjective() instanceof PackageDeliverObjective deliverPackageObjective) {
+                            if(deliverPackageObjective.canComplete(event.player)){
+                                if(objectiveStage.tag != null){
+                                    objectiveStage.onComplete(objectiveStage.getStageEffects(), event.player, questInstance);
                                 }
                             }
                         }
                     }
                 }
             }
-        });
+        }
     }
 
     @Override
@@ -166,7 +165,7 @@ public class PackageDeliverObjective implements QuestObjective {
                             ModPacketHandler.sendToPlayer(new SyncVillagerDeliverPacket(belongingQuestId, objectiveStage.id, currentDeliverEntity, newVillager.getId()), serverPlayer);
                             Entity entity = serverLevel.getEntity(currentDeliverEntity);
                             if (entity instanceof Villager villagerEntity) {
-                                villagerEntity.getPersistentData().putUUID(objectiveEntityTag, questInstance.getQuestVillager(player).getUUID());
+                                villagerEntity.getPersistentData().putUUID(objectiveEntityTag, questInstance.getQuestVillager());
                             }
                         }
                     }

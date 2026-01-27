@@ -12,8 +12,7 @@ import net.kenji.rpg_villager_quests.quest_system.Page;
 import net.kenji.rpg_villager_quests.quest_system.Quest;
 import net.kenji.rpg_villager_quests.quest_system.QuestChoice;
 import net.kenji.rpg_villager_quests.quest_system.Reputation;
-import net.kenji.rpg_villager_quests.quest_system.capability.QuestCapabilities;
-import net.kenji.rpg_villager_quests.quest_system.quest_data.PlayerQuestData;
+import net.kenji.rpg_villager_quests.quest_system.quest_data.QuestData;
 import net.kenji.rpg_villager_quests.quest_system.quest_data.QuestInstance;
 import net.kenji.rpg_villager_quests.quest_system.stage_types.DialogueStage;
 import net.minecraft.client.Minecraft;
@@ -24,13 +23,14 @@ import net.minecraft.client.gui.screens.inventory.InventoryScreen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.SoundEvents;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.npc.Villager;
 import net.minecraft.world.entity.player.Player;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.fml.common.Mod;
+import org.jline.utils.Log;
 
 import java.util.*;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Pattern;
 
 @Mod.EventBusSubscriber(modid = RpgVillagerQuests.MODID, bus = Mod.EventBusSubscriber.Bus.FORGE, value = Dist.CLIENT)
@@ -145,8 +145,8 @@ public class VillagerQuestMenu extends Screen {
     }
 
 
-    private Villager villager;
-    private Villager secondaryVillager;
+    private UUID questVillager;
+    private UUID interactingVillager;
 
     private static List<String> getPages(String raw) {
         return Arrays.stream(raw.split(Pattern.quote(PAGE_DELIMITER)))
@@ -181,11 +181,12 @@ public class VillagerQuestMenu extends Screen {
         return pages.get(pages.size() - 1).text;
     }
 
-    public VillagerQuestMenu(Component pTitle, Villager questVillager, Villager secondaryVillager) {
+    public VillagerQuestMenu(Component pTitle, UUID questVillager, UUID secondaryVillager) {
         super(pTitle);
-        villager = questVillager;
-        this.secondaryVillager = secondaryVillager;
-        villagerQuest = VillagerQuestManager.getVillagerQuest(villager);
+        this.questVillager = questVillager;
+        this.interactingVillager = secondaryVillager;
+
+        villagerQuest = VillagerQuestManager.getVillagerQuest(this.questVillager);
     }
     private int getBgWidth(GuiDisplay ui) {
         return ui.TEXTURE_WIDTH;
@@ -207,7 +208,7 @@ public class VillagerQuestMenu extends Screen {
     @Override
     protected void init() {
        Player player = Minecraft.getInstance().player;
-        if(VillagerQuestManager.getVillagerQuest(villager) == null)
+        if(VillagerQuestManager.getVillagerQuest(questVillager) == null)
             return;
         backgroundGui = new GuiDisplay(
                 MENU_BACKGROUND,
@@ -250,9 +251,8 @@ public class VillagerQuestMenu extends Screen {
         int posYOffset = -10;
         int negYOffset = 15;
 
-        player.getCapability(QuestCapabilities.PLAYER_QUESTS).ifPresent((questData) -> {
 
-
+        QuestData questData = QuestData.get(player.getUUID());
         QuestInstance questInstance = questData.getQuestInstance(villagerQuest.id);
 
         pages = getQuestDialoge(questData, questInstance);
@@ -261,10 +261,9 @@ public class VillagerQuestMenu extends Screen {
 
         int pX = bgX + padding;
         int pY = bgY + bgH - buttonHeight - padding;
-        });
     }
 
-    public void addButtons(Player player, PlayerQuestData questData) {
+    public void addButtons(Player player, QuestData questData) {
         // Recalculate the same values as in render()
         int DISPLAY_WIDTH = GetTextureSize(DisplayType.BACKGROUND_DISPLAY).x + 20;
         int DISPLAY_HEIGHT = GetTextureSize(DisplayType.BACKGROUND_DISPLAY).y + 10;
@@ -300,7 +299,7 @@ public class VillagerQuestMenu extends Screen {
                     posButton = this.addRenderableWidget(
                             Button.builder(
                                     Component.literal("Accept Quest"),
-                                    btn -> onAcceptQuest(player, questData)
+                                    btn -> onAcceptQuest(player)
                             ).bounds(
                                     pX + xOffset,
                                     pY + posYOffset,
@@ -312,7 +311,7 @@ public class VillagerQuestMenu extends Screen {
                     posButton = this.addRenderableWidget(
                             Button.builder(
                                     Component.literal(getCurrentPage().button1Text),
-                                    btn -> onAcceptQuest(player, questData)
+                                    btn -> onAcceptQuest(player)
                             ).bounds(
                                     pX + xOffset,
                                     pY + posYOffset,
@@ -333,7 +332,7 @@ public class VillagerQuestMenu extends Screen {
                                             btn -> {
                                                 if (questInstance != null) {
 
-                                                    onPositivePress(player, questInstance, questData);
+                                                    onPositivePress(player, questInstance);
                                                 } else {
                                                     onNextPage(player);
                                                 }
@@ -353,7 +352,7 @@ public class VillagerQuestMenu extends Screen {
                                             btn -> {
                                                 if (questInstance != null) {
 
-                                                    onPositivePress(player, questInstance, questData);
+                                                    onPositivePress(player, questInstance);
                                                 } else {
                                                     onNextPage(player);
                                                 }
@@ -428,20 +427,20 @@ public class VillagerQuestMenu extends Screen {
         }
     }
 
-    private List<Page> getQuestDialoge(PlayerQuestData questData, QuestInstance questInstance){
-        if(questData.getActiveQuests() == null || !questData.getActiveQuests().contains(questInstance))
+    private List<Page> getQuestDialoge(QuestData questData, QuestInstance questInstance){
+        if(questVillager == interactingVillager && questData.getActiveQuests() == null || !questData.getActiveQuests().contains(questInstance))
             return villagerQuest.stages.get(0).pages;
         else {
-            return questInstance.getCurrentStage().getDialogue(questInstance, secondaryVillager);
+            return questInstance.getCurrentStage().getDialogue(questInstance, interactingVillager);
         }
     }
 
-    public void onAcceptQuest(Player player, PlayerQuestData questData){
+    public void onAcceptQuest(Player player){
         player.playSound(SoundEvents.VILLAGER_YES);
         didPositiveInteraction = true;
         hasSentenceCompleted = false;
-        Quest quest = VillagerQuestManager.getVillagerQuest(villager);
-        quest.StartQuestClient(questData, player, villager);
+        Quest quest = VillagerQuestManager.getVillagerQuest(questVillager);
+        quest.StartQuestClient(player, questVillager);
         onClose();
     }
     public void onNextPage(Player player) {
@@ -463,7 +462,7 @@ public class VillagerQuestMenu extends Screen {
             this.init();
         }
     }
-    public void onPositivePress(Player player, QuestInstance questInstance, PlayerQuestData questData){
+    public void onPositivePress(Player player, QuestInstance questInstance){
         if(questInstance != null && !questInstance.isComplete()) {
             if (pages.get(currentPageIndex).dialogueType != DialogueStage.DialogueType.CHOICE) {
                 if (currentPageIndex < pages.size() - 1) {
@@ -524,7 +523,7 @@ public class VillagerQuestMenu extends Screen {
                 onNextPage(player);
             }
             else{
-                onAcceptQuest(player, questData);
+                onAcceptQuest(player);
             }
         }
     }
@@ -594,7 +593,16 @@ public class VillagerQuestMenu extends Screen {
         hasSentenceCompleted = false;
         ModPacketHandler.sendToServer(new StageCompletionPacket(questInstance.getQuest().getQuestId(), questInstance.getCurrentStage().id, currentPage.effects));
         questInstance.getCurrentStage().onComplete(currentPage.effects, player,questInstance);
-        villager.setGlowingTag(false);
+
+        Entity villagerEntity = null;
+        for(Entity entity : Minecraft.getInstance().level.entitiesForRendering()) {
+            if(entity.getUUID() == questVillager) {
+                villagerEntity = entity;
+                break;
+            }
+        }
+        if(villagerEntity != null)
+            villagerEntity.setGlowingTag(false);
         player.playSound(SoundEvents.VILLAGER_YES);
         didPositiveInteraction = true;
         this.onClose();
@@ -628,9 +636,18 @@ public class VillagerQuestMenu extends Screen {
         lastTypeTime = 0;
         isPausedAfterPeriod = false;
         pauseStartTime = 0;
-        if(villager != null) {
-            villager.setTradingPlayer(null);
-            villager = null;
+        Villager villagerEntity = null;
+        for(Entity entity : Minecraft.getInstance().level.entitiesForRendering()) {
+            if(entity.getUUID() == questVillager) {
+                if(entity instanceof Villager villagerEntity1) {
+                    villagerEntity = villagerEntity1;
+                    break;
+                }
+            }
+        }
+        if(villagerEntity != null) {
+            villagerEntity.setTradingPlayer(null);
+            villagerEntity = null;
         }
         if(player != null && !didPositiveInteraction)
             player.playSound(SoundEvents.VILLAGER_NO);
@@ -690,32 +707,28 @@ public class VillagerQuestMenu extends Screen {
         // Check if our custom keybind was pressed
         if (ModKeybinds.NEXT_PAGE_KEY.matches(keyCode, scanCode)) {
             Player player = getMinecraft().player;
-            if (player != null) {
-              AtomicReference<PlayerQuestData> questData = new AtomicReference<>();
-                player.getCapability(QuestCapabilities.PLAYER_QUESTS).ifPresent(questData::set);
+            if(player != null) {
 
-                    if (!hasSentenceCompleted) {
-                        skipDialogue = true;
+                if (!hasSentenceCompleted) {
+                    skipDialogue = true;
 
-                        // Force-end any active pause
-                        isPausedAfterPeriod = false;
-                        isPausedAfterComma = false;
-                        isPausedAfterExclamationMark = false;
-                        isPausedAfterQuestionMark = false;
+                    // Force-end any active pause
+                    isPausedAfterPeriod = false;
+                    isPausedAfterComma = false;
+                    isPausedAfterExclamationMark = false;
+                    isPausedAfterQuestionMark = false;
 
-                        lastTypeTime = System.currentTimeMillis();
-                        return true; // Consume the event
-                    } else {
-                        QuestInstance questInstance = questData.get().getQuestInstance(villagerQuest.getQuestId());
-                        if (posButton != null)
-                            onPositivePress(player, questInstance, questData.get());
-                        else onNegativePress(player, questInstance);
-                        return true;
-                    }
-
+                    lastTypeTime = System.currentTimeMillis();
+                    return true; // Consume the event
+                } else {
+                    QuestInstance questInstance = QuestData.get(player.getUUID()).getQuestInstance(villagerQuest.getQuestId());
+                    if (posButton != null)
+                        onPositivePress(player, questInstance);
+                    else onNegativePress(player, questInstance);
+                    return true;
+                }
             }
         }
-
         // Let parent handle other keys (like ESC to close)
         return super.keyPressed(keyCode, scanCode, modifiers);
     }
@@ -726,12 +739,23 @@ public class VillagerQuestMenu extends Screen {
     public void render(GuiGraphics gfx, int mouseX, int mouseY, float partialTick) {
         if(villagerQuest == null)
             return;
-
         this.renderBackground(gfx);
-        villager.ambientSoundTime = 0;
+        Villager villagerEntity = null;
+        for(Entity entity : Minecraft.getInstance().level.entitiesForRendering()) {
+            if(entity.getUUID() == questVillager || entity.getUUID() == interactingVillager) {
+                if(entity instanceof Villager villagerEntity1) {
+                    villagerEntity = villagerEntity1;
+                    break;
+                }
+            }
+        }
+        if(villagerEntity == null)
+            return;
+
+        villagerEntity.ambientSoundTime = 0;
         Player player = Minecraft.getInstance().player;
-        if(player == null) return;
-        player.getCapability(QuestCapabilities.PLAYER_QUESTS).ifPresent((questData) -> {
+        if(player != null) {
+            QuestData questData = QuestData.get(player.getUUID());
 
             int DISPLAY_WIDTH = GetTextureSize(DisplayType.BACKGROUND_DISPLAY).x + 20;
             int DISPLAY_HEIGHT = GetTextureSize(DisplayType.BACKGROUND_DISPLAY).y + 10;
@@ -852,7 +876,7 @@ public class VillagerQuestMenu extends Screen {
                 } else if (!hasSentenceCompleted) {
                     hasSentenceCompleted = true;
                     skipDialogue = false;
-                    addButtons(player, questData);
+                    addButtons(getMinecraft().player, questData);
                 }
                 String visibleText = buildSafeVisibleText(pages.get(currentPageIndex).text, textWidth);
 
@@ -879,7 +903,7 @@ public class VillagerQuestMenu extends Screen {
             }
 
 
-            if (villager != null) {
+            if (questVillager != null) {
                 int headWidth = 48;
                 int headHeight = 60;
                 int headYOffset = -65;
@@ -912,12 +936,12 @@ public class VillagerQuestMenu extends Screen {
                         scale,
                         entityX - mouseX,
                         entityY - (mouseY + 40),
-                        villager
+                        villagerEntity
                 );
 
                 gfx.disableScissor();
             }
-        });
+        }
         super.render(gfx, mouseX, mouseY, partialTick);
     }
 

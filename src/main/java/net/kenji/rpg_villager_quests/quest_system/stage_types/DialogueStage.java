@@ -3,13 +3,13 @@ package net.kenji.rpg_villager_quests.quest_system.stage_types;
 import net.kenji.rpg_villager_quests.network.ModPacketHandler;
 import net.kenji.rpg_villager_quests.network.packets.StageStartPacket;
 import net.kenji.rpg_villager_quests.quest_system.*;
-import net.kenji.rpg_villager_quests.quest_system.capability.QuestCapabilities;
 import net.kenji.rpg_villager_quests.quest_system.interfaces.QuestReward;
 import net.kenji.rpg_villager_quests.quest_system.quest_data.QuestInstance;
 import net.minecraft.world.entity.npc.Villager;
 import net.minecraft.world.entity.player.Player;
 
 import java.util.List;
+import java.util.UUID;
 
 public class DialogueStage extends QuestStage {
 
@@ -81,26 +81,24 @@ public class DialogueStage extends QuestStage {
     public void onComplete(QuestEffects completionEffects, Player player, QuestInstance questInstance) {
         isComplete = true;
         QuestStage nextStage = getNextStage(player, questInstance);
-        player.getCapability(QuestCapabilities.PLAYER_QUESTS).ifPresent((questData) -> {
 
-            if (completionEffects != null) {
-                if (completionEffects.giveReward) {
-                    if (stageRewards != null) {
-                        for (QuestReward reward : stageRewards) {
-                            reward.apply(player);
-                        }
+        if (completionEffects != null) {
+            if (completionEffects.giveReward) {
+                if(stageRewards != null) {
+                    for (QuestReward reward : stageRewards){
+                        reward.apply(player);
                     }
                 }
-                completionEffects.apply(player);
             }
-            if (nextStage != null) {
-                questInstance.advanceFromCurrentStage(player);
-            } else {
-                questInstance.triggerQuestComplete(questData, completionEffects, player);
-            }
-        });
+            completionEffects.apply(player);
+        }
+        if (nextStage != null) {
+            questInstance.advanceFromCurrentStage(player);
+        } else {
+            questInstance.triggerQuestComplete(completionEffects, player);
+        }
     }
-    public List<Page> getDialogue(QuestInstance questInstance, Villager villager){
+    public List<Page> getDialogue(QuestInstance questInstance, UUID villager){
         if(!questInstance.isComplete()) {
             List<Page> pageList;
             if (choices != null) {

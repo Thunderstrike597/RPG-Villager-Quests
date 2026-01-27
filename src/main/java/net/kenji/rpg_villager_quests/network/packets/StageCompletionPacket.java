@@ -2,7 +2,7 @@ package net.kenji.rpg_villager_quests.network.packets;
 
 import net.kenji.rpg_villager_quests.quest_system.QuestEffects;
 import net.kenji.rpg_villager_quests.quest_system.QuestStage;
-import net.kenji.rpg_villager_quests.quest_system.capability.QuestCapabilities;
+import net.kenji.rpg_villager_quests.quest_system.quest_data.QuestData;
 import net.kenji.rpg_villager_quests.quest_system.quest_data.QuestInstance;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.entity.player.Player;
@@ -63,15 +63,13 @@ public class StageCompletionPacket {
         ctx.get().enqueueWork(() -> {
             Player player = ctx.get().getSender();
             if(player != null) {
-                player.getCapability(QuestCapabilities.PLAYER_QUESTS).ifPresent((questData) -> {
+                QuestData questData = QuestData.get(player.getUUID());
+                QuestInstance questInstance = questData.getQuestInstance(packet.questId);
+                QuestStage questStage = questInstance.getQuest().getStageById(packet.stageId);
 
-                    QuestInstance questInstance = questData.getQuestInstance(packet.questId);
-                    QuestStage questStage = questInstance.getQuest().getStageById(packet.stageId);
-
-                    if (questStage != null && questStage.stageRewards != null) {
-                        questStage.onComplete(packet.effects, player, questInstance);
-                    }
-                });
+                if(questStage != null && questStage.stageRewards != null) {
+                    questStage.onComplete(packet.effects, player, questInstance);
+                }
             }
         });
         ctx.get().setPacketHandled(true);

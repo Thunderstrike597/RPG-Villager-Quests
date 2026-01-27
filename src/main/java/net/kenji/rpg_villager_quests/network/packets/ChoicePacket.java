@@ -2,7 +2,7 @@ package net.kenji.rpg_villager_quests.network.packets;
 
 import net.kenji.rpg_villager_quests.quest_system.QuestEffects;
 import net.kenji.rpg_villager_quests.quest_system.QuestStage;
-import net.kenji.rpg_villager_quests.quest_system.capability.QuestCapabilities;
+import net.kenji.rpg_villager_quests.quest_system.quest_data.QuestData;
 import net.kenji.rpg_villager_quests.quest_system.quest_data.QuestInstance;
 import net.kenji.rpg_villager_quests.quest_system.stage_types.DialogueStage;
 import net.minecraft.network.FriendlyByteBuf;
@@ -42,19 +42,18 @@ public class ChoicePacket {
         ctx.get().enqueueWork(() -> {
             Player player = ctx.get().getSender();
             if(player != null) {
-                player.getCapability(QuestCapabilities.PLAYER_QUESTS).ifPresent((questData) -> {
-                    QuestInstance questInstance = questData.getQuestInstance(packet.questId);
-                    QuestStage questStage = questInstance.getQuest().getStageById(packet.stageId);
+                QuestData questData = QuestData.get(player.getUUID());
+                QuestInstance questInstance = questData.getQuestInstance(packet.questId);
+                QuestStage questStage = questInstance.getQuest().getStageById(packet.stageId);
 
-                    if (questStage instanceof DialogueStage dialogueStage) {
-                        if (dialogueStage.choices != null) {
+                if(questStage instanceof DialogueStage dialogueStage){
+                    if(dialogueStage.choices != null){
 
-                            if (packet.choiceIndex < dialogueStage.choices.size()) {
-                                dialogueStage.choices.get(packet.choiceIndex).applyRewards(player);
-                            }
+                        if(packet.choiceIndex < dialogueStage.choices.size()) {
+                            dialogueStage.choices.get(packet.choiceIndex).applyRewards(player);
                         }
                     }
-                });
+                }
             }
         });
         ctx.get().setPacketHandled(true);

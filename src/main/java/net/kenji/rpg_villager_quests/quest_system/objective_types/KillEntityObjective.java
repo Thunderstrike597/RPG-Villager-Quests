@@ -2,8 +2,8 @@ package net.kenji.rpg_villager_quests.quest_system.objective_types;
 
 import net.kenji.rpg_villager_quests.RpgVillagerQuests;
 import net.kenji.rpg_villager_quests.quest_system.QuestEffects;
-import net.kenji.rpg_villager_quests.quest_system.capability.QuestCapabilities;
 import net.kenji.rpg_villager_quests.quest_system.interfaces.QuestObjective;
+import net.kenji.rpg_villager_quests.quest_system.quest_data.QuestData;
 import net.kenji.rpg_villager_quests.quest_system.quest_data.QuestInstance;
 import net.kenji.rpg_villager_quests.quest_system.stage_types.ObjectiveStage;
 import net.minecraft.resources.ResourceLocation;
@@ -35,43 +35,41 @@ public class KillEntityObjective implements QuestObjective {
     @SubscribeEvent
     public static void onEntityKilled(LivingDeathEvent event) {
         if (event.getSource().getEntity() instanceof Player player) {
-            player.getCapability(QuestCapabilities.PLAYER_QUESTS).ifPresent((questData) -> {
-
-                if (questData.getActiveQuests() != null) {
-                    for (QuestInstance questInstance : questData.getActiveQuests()) {
-                        if (!questInstance.isComplete()) {
-                            if (questInstance.getCurrentStage() instanceof ObjectiveStage objectiveStage) {
-                                if (objectiveStage.getObjective() instanceof KillEntityObjective killEntityObjective) {
-                                    if (event.getEntity().getType() == killEntityObjective.entityType) {
-                                        killEntityObjective.entitiesKilled++;
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            });
-        }
-    }
-    @SubscribeEvent
-    public static void onTick(TickEvent.PlayerTickEvent event) {
-        event.player.getCapability(QuestCapabilities.PLAYER_QUESTS).ifPresent((questData) -> {
+            QuestData questData = QuestData.get(player.getUUID());
             if (questData.getActiveQuests() != null) {
                 for (QuestInstance questInstance : questData.getActiveQuests()) {
                     if (!questInstance.isComplete()) {
-                        if (questInstance.getCurrentStage() instanceof ObjectiveStage objectiveStage) {
-                            if (objectiveStage.getObjective() instanceof KillEntityObjective killEntityObjective) {
-                                if (killEntityObjective.canComplete(event.player)) {
-                                    if (objectiveStage.tag != null && objectiveStage.tag.equals("complete_on_kill")) {
-                                        objectiveStage.onComplete(objectiveStage.getStageEffects(), event.player, questInstance);
-                                    }
+                        if(questInstance.getCurrentStage() instanceof ObjectiveStage objectiveStage){
+                            if(objectiveStage.getObjective() instanceof KillEntityObjective killEntityObjective) {
+                                if (event.getEntity().getType() == killEntityObjective.entityType){
+                                    killEntityObjective.entitiesKilled++;
                                 }
                             }
                         }
                     }
                 }
             }
-        });
+        }
+    }
+    @SubscribeEvent
+    public static void onTick(TickEvent.PlayerTickEvent event) {
+
+        QuestData questData = QuestData.get(event.player.getUUID());
+        if (questData.getActiveQuests() != null) {
+            for (QuestInstance questInstance : questData.getActiveQuests()) {
+                if (!questInstance.isComplete()) {
+                    if (questInstance.getCurrentStage() instanceof ObjectiveStage objectiveStage) {
+                        if (objectiveStage.getObjective() instanceof KillEntityObjective killEntityObjective) {
+                           if(killEntityObjective.canComplete(event.player)){
+                               if(objectiveStage.tag != null && objectiveStage.tag.equals("complete_on_kill")){
+                                   objectiveStage.onComplete(objectiveStage.getStageEffects(), event.player, questInstance);
+                               }
+                           }
+                        }
+                    }
+                }
+            }
+        }
     }
 
     @Override
