@@ -2,6 +2,7 @@ package net.kenji.rpg_villager_quests.events;
 
 import net.kenji.rpg_villager_quests.RpgVillagerQuests;
 import net.kenji.rpg_villager_quests.client.menu.VillagerQuestMenu;
+import net.kenji.rpg_villager_quests.entity.villager.VillagerQuestTypes;
 import net.kenji.rpg_villager_quests.manager.VillagerQuestManager;
 import net.kenji.rpg_villager_quests.quest_system.Quest;
 import net.kenji.rpg_villager_quests.quest_system.objective_types.PackageDeliverObjective;
@@ -39,6 +40,10 @@ public class QuestVillagerEvents {
           if (!villager.getPersistentData().getBoolean(IS_QUEST_VILLAGER_TAG)) return;
 
           villager.setGlowingTag(false);
+          villager.setVillagerData(
+                  villager.getVillagerData().setType(VillagerQuestTypes.QUEST_VILLAGER)
+          );
+          Log.info("IS LOGGING VILLAGER SET TYPE");
       }
     }
     @SubscribeEvent

@@ -5,6 +5,7 @@
   "compatibilityLevel": "JAVA_17",
   "refmap": "rpg_villager_quests.refmap.json",
   "mixins": [
+
   ],
   "client": [
   ],
