@@ -41,11 +41,21 @@ public class QuestVillagerEvents {
           villager.setGlowingTag(false);
       }
     }
+    @SubscribeEvent
+    public static void onVillagerFinalize(MobSpawnEvent.FinalizeSpawn event) {
+        if (!(event.getEntity() instanceof Villager villager)) return;
+
+        if (event.getSpawnType() == MobSpawnType.TRIGGERED) {
+            villager.getPersistentData().putBoolean("ForceNoQuest", true);
+        }
+    }
 
     @SubscribeEvent
     public static void onVillagerSpawn(MobSpawnEvent event) throws Exception {
         if (!(event.getEntity() instanceof Villager villager)) return;
-        if(villager.getSpawnType() == MobSpawnType.TRIGGERED) return;
+
+
+        if (villager.getPersistentData().getBoolean("ForceNoQuest")) return;
 
         if (villager.getVillagerData().getLevel() > 1) return;
 
@@ -101,7 +111,6 @@ public class QuestVillagerEvents {
                     QuestInstance questInstance = questData.getQuestInstance(quest.getQuestId());
                     questVillager = questInstance.getQuestVillager();
                     secondaryVillager = clickedVillager.getUUID();
-                    Log.info("IsDeliveryQuest!");
                 }
             }
 
@@ -134,16 +143,13 @@ public class QuestVillagerEvents {
                     if (questInstance.getCurrentStage() instanceof ObjectiveStage objectiveStage) {
                         if (objectiveStage.getObjective() instanceof PackageDeliverObjective packageDeliverObjective) {
 
-                            if (packageDeliverObjective.currentDeliverEntity != null) {
+                            if (questInstance.currentSecondaryEntity != null) {
                                 for (Entity entity : mc.level.entitiesForRendering()) {
                                     if (entity instanceof Villager villager) {
-                                        if (villager.getUUID().equals(packageDeliverObjective.currentDeliverEntity)) {
+                                        if (villager.getUUID().equals(questInstance.currentSecondaryEntity)) {
                                             if (!villager.hasGlowingTag()) {
 
                                                 if(questInstance.getQuestVillager() != null) {
-                                                    Log.info("CurrentDeliverEntity: " + packageDeliverObjective.currentDeliverEntity);
-                                                    Log.info("CurrentQuestEntity: " + questInstance.getQuestVillager());
-
                                                     villager.setGlowingTag(true);
                                                     villager.getPersistentData().putUUID(
                                                             PackageDeliverObjective.objectiveEntityTag,

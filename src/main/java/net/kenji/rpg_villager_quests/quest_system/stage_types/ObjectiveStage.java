@@ -5,11 +5,10 @@ import net.kenji.rpg_villager_quests.network.packets.StageStartPacket;
 import net.kenji.rpg_villager_quests.quest_system.*;
 import net.kenji.rpg_villager_quests.quest_system.interfaces.QuestObjective;
 import net.kenji.rpg_villager_quests.quest_system.interfaces.QuestReward;
-import net.kenji.rpg_villager_quests.quest_system.objective_types.PackageDeliverObjective;
+import net.kenji.rpg_villager_quests.quest_system.objective_types.SecondaryVillagerQuestObjective;
 import net.kenji.rpg_villager_quests.quest_system.quest_data.QuestInstance;
 import net.minecraft.world.entity.npc.Villager;
 import net.minecraft.world.entity.player.Player;
-import org.jline.utils.Log;
 
 import java.util.List;
 import java.util.UUID;
@@ -81,16 +80,13 @@ public class ObjectiveStage extends QuestStage {
     }
 
     @Override
-    public List<Page> getDialogue(QuestInstance questInstance, UUID interactingVillager) {
+    public List<Page> getDialogue(Player player,QuestInstance questInstance, UUID interactingVillager) {
         if(!questInstance.isComplete()) {
-            if(objective instanceof PackageDeliverObjective packageDeliverObjective){
-                Log.info("Interacting Villager: " + interactingVillager);
-                Log.info("Delivery Villager: " + packageDeliverObjective.currentDeliverEntity);
-
-                Log.info("Quest Villager: " + questInstance.getQuestVillager());
-
-                if(interactingVillager.equals(packageDeliverObjective.currentDeliverEntity)){
-                    return packageDeliverObjective.deliveryPackageDialogue;
+            if(questInstance.currentSecondaryEntity != null) {
+                if (objective instanceof SecondaryVillagerQuestObjective secondaryVillagerQuestObjective) {
+                    if (interactingVillager.equals(questInstance.currentSecondaryEntity)) {
+                        return secondaryVillagerQuestObjective.secondaryVillagerDialogue;
+                    }
                 }
             }
             return pages;
@@ -101,7 +97,7 @@ public class ObjectiveStage extends QuestStage {
     }
 
     @Override
-    public boolean canCompleteStage(Player player) {
+    public boolean canCompleteStage(Player player, QuestInstance questInstance, UUID villager) {
         return this.objective.canComplete(player);
     }
 

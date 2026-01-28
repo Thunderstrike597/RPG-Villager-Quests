@@ -1,10 +1,9 @@
 package net.kenji.rpg_villager_quests.quest_system.objective_types;
 
 import net.kenji.rpg_villager_quests.network.ModPacketHandler;
-import net.kenji.rpg_villager_quests.network.packets.SyncVillagerDeliverPacket;
+import net.kenji.rpg_villager_quests.network.packets.SyncScondaryVillagerPacket;
 import net.kenji.rpg_villager_quests.quest_system.Page;
 import net.kenji.rpg_villager_quests.quest_system.QuestEffects;
-import net.kenji.rpg_villager_quests.quest_system.interfaces.QuestObjective;
 import net.kenji.rpg_villager_quests.quest_system.quest_data.QuestData;
 import net.kenji.rpg_villager_quests.quest_system.quest_data.QuestInstance;
 import net.kenji.rpg_villager_quests.quest_system.stage_types.ObjectiveStage;
@@ -36,9 +35,8 @@ import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.registries.ForgeRegistries;
 
 import java.util.List;
-import java.util.UUID;
 
-public class PackageDeliverObjective implements QuestObjective {
+public class PackageDeliverObjective extends SecondaryVillagerQuestObjective {
 
     private final Item item;
     private final int maxDistance;
@@ -47,13 +45,12 @@ public class PackageDeliverObjective implements QuestObjective {
     private final boolean consume;
     private final String belongingQuestId;
     private final String belongingStageId;
-    public final List<Page> deliveryPackageDialogue;
 
     public static String objectiveEntityTag = "OBJECTIVE_ENTITY";
-    public UUID currentDeliverEntity;
 
     public boolean hasDelivered;
-    public PackageDeliverObjective(ResourceLocation item, ResourceLocation deliverEntity, boolean consume, String belongingQuestId, String belongingStageId,int maxDistance, int minDistance, String structure, List<Page> secondaryDialogue) {
+    public PackageDeliverObjective(ResourceLocation item, ResourceLocation deliverEntity, boolean consume, String belongingQuestId, String belongingStageId,int maxDistance, int minDistance, String structure, List<Page> secondaryDialogue, List<Page> deliveredDialogue) {
+       super(secondaryDialogue, deliveredDialogue);
         this.item = ForgeRegistries.ITEMS.getValue(item);
         this.maxDistance = maxDistance;
         this.minDistance = minDistance;
@@ -65,8 +62,6 @@ public class PackageDeliverObjective implements QuestObjective {
                 Registries.STRUCTURE,
                 new ResourceLocation(structure));
         else this.structure = null;
-
-        deliveryPackageDialogue = secondaryDialogue;
     }
     @SubscribeEvent
     public static void onTick(TickEvent.PlayerTickEvent event) {
@@ -157,16 +152,11 @@ public class PackageDeliverObjective implements QuestObjective {
                 if (pos != null) {
                     Villager newVillager = EntityType.VILLAGER.spawn(serverLevel, ItemStack.EMPTY, player, pos, MobSpawnType.TRIGGERED, false, false);
                     if (newVillager != null) {
-                        currentDeliverEntity = newVillager.getUUID();
-
-                        if (questInstance.getQuest().getStageById(belongingStageId) instanceof ObjectiveStage objectiveStage) {
-
-
-                            ModPacketHandler.sendToPlayer(new SyncVillagerDeliverPacket(belongingQuestId, objectiveStage.id, currentDeliverEntity, newVillager.getId()), serverPlayer);
-                            Entity entity = serverLevel.getEntity(currentDeliverEntity);
-                            if (entity instanceof Villager villagerEntity) {
-                                villagerEntity.getPersistentData().putUUID(objectiveEntityTag, questInstance.getQuestVillager());
-                            }
+                        questInstance.currentSecondaryEntity = newVillager.getUUID();
+                        ModPacketHandler.sendToPlayer(new SyncScondaryVillagerPacket(belongingQuestId, newVillager.getUUID()), serverPlayer);
+                        Entity entity = serverLevel.getEntity(questInstance.currentSecondaryEntity);
+                        if (entity instanceof Villager villagerEntity) {
+                            villagerEntity.getPersistentData().putUUID(objectiveEntityTag, questInstance.getQuestVillager());
                         }
                     }
                     Component coords = Component.literal(

@@ -33,8 +33,8 @@ public abstract class QuestStage {
     public abstract QuestStage getNextStage(Player player, QuestInstance questInstance);
     public abstract void onComplete(QuestEffects completionEffects, Player player, QuestInstance questInstance);
 
-    public abstract List<Page> getDialogue(QuestInstance questInstance, UUID interactVillager);
-    public abstract boolean canCompleteStage(Player player);
+    public abstract List<Page> getDialogue(Player player, QuestInstance questInstance, UUID interactVillager);
+    public abstract boolean canCompleteStage(Player player, QuestInstance questInstance, UUID villager);
     public abstract boolean canCompleteStage(int currentPageIndex,Player player);
 
 

@@ -5,11 +5,7 @@ import net.kenji.rpg_villager_quests.quest_system.Quest;
 import net.kenji.rpg_villager_quests.quest_system.QuestEffects;
 import net.kenji.rpg_villager_quests.quest_system.QuestStage;
 import net.kenji.rpg_villager_quests.quest_system.Reputation;
-import net.minecraft.client.Minecraft;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.npc.Villager;
 import net.minecraft.world.entity.player.Player;
 
 import java.util.Objects;
@@ -22,6 +18,7 @@ public class QuestInstance {
     private boolean completed;
     private Reputation questReputation;
     private UUID questVillagerUUID;
+    public UUID currentSecondaryEntity;
 
     public QuestInstance(Quest quest, UUID villager) {
         this.questDefinition = quest;

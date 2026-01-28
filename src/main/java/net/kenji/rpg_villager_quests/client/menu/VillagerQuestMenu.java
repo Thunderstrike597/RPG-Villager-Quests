@@ -8,10 +8,7 @@ import net.kenji.rpg_villager_quests.manager.VillagerQuestManager;
 import net.kenji.rpg_villager_quests.network.packets.ChoicePacket;
 import net.kenji.rpg_villager_quests.network.ModPacketHandler;
 import net.kenji.rpg_villager_quests.network.packets.StageCompletionPacket;
-import net.kenji.rpg_villager_quests.quest_system.Page;
-import net.kenji.rpg_villager_quests.quest_system.Quest;
-import net.kenji.rpg_villager_quests.quest_system.QuestChoice;
-import net.kenji.rpg_villager_quests.quest_system.Reputation;
+import net.kenji.rpg_villager_quests.quest_system.*;
 import net.kenji.rpg_villager_quests.quest_system.quest_data.QuestData;
 import net.kenji.rpg_villager_quests.quest_system.quest_data.QuestInstance;
 import net.kenji.rpg_villager_quests.quest_system.stage_types.DialogueStage;
@@ -322,7 +319,7 @@ public class VillagerQuestMenu extends Screen {
                 }
             } else {
                 QuestInstance questInstance = questData.getQuestInstance(villagerQuest.getQuestId());
-                if ((questInstance != null && questInstance.getCurrentStage().canCompleteStage(player)) || currentPageIndex < pages.size() - 1) {
+                if ((questInstance != null && questInstance.getCurrentStage().canCompleteStage(player, questInstance, interactingVillager)) || currentPageIndex < pages.size() - 1) {
                     if (!Objects.equals(getCurrentPage().button1Text, "NONE")) {
                         if ((getButtonText(questInstance, ButtonType.POSITIVE) == null || getButtonText(questInstance, ButtonType.POSITIVE).isEmpty()) && getCurrentPage().dialogueType != DialogueStage.DialogueType.CHOICE) {
 
@@ -431,7 +428,7 @@ public class VillagerQuestMenu extends Screen {
         if(questVillager == interactingVillager && questData.getActiveQuests() == null || !questData.getActiveQuests().contains(questInstance))
             return villagerQuest.stages.get(0).pages;
         else {
-            return questInstance.getCurrentStage().getDialogue(questInstance, interactingVillager);
+            return questInstance.getCurrentStage().getDialogue(getMinecraft().player, questInstance, interactingVillager);
         }
     }
 
@@ -468,7 +465,7 @@ public class VillagerQuestMenu extends Screen {
                 if (currentPageIndex < pages.size() - 1) {
                     onNextPage(player);
                 } else {
-                    if (questInstance.getCurrentStage().canCompleteStage(player)) {
+                    if (questInstance.getCurrentStage().canCompleteStage(player, questInstance, interactingVillager)) {
                         if (pages.get(currentPageIndex).effects == null || !pages.get(currentPageIndex).effects.endQuest) {
                             onCompleteStage(player, questInstance, pages.get(currentPageIndex));
                         } else if (pages.get(currentPageIndex).effects != null && pages.get(currentPageIndex).effects.endQuest) {
@@ -531,7 +528,7 @@ public class VillagerQuestMenu extends Screen {
         if(questInstance != null && !questInstance.isComplete()) {
 
             if (pages.get(currentPageIndex).dialogueType != DialogueStage.DialogueType.CHOICE) {
-                if (questInstance.getCurrentStage().canCompleteStage(player)) {
+                if (questInstance.getCurrentStage().canCompleteStage(player, questInstance, interactingVillager)) {
                     int currentStageIndex = questInstance.getCurrentStageIndex();
                     boolean isLastStage = currentStageIndex == questInstance.getQuest().stages.size() - 1;
 
@@ -617,14 +614,18 @@ public class VillagerQuestMenu extends Screen {
             currentSentenceStartDelay = 0;
             hasSentenceCompleted = false;
 
+            QuestStage stage = questInstance.getCurrentStage();
             ModPacketHandler.sendToServer(new StageCompletionPacket(questInstance.getQuest().getQuestId(), questInstance.getCurrentStage().id, currentPage.effects));
             questInstance.getCurrentStage().onComplete(currentPage.effects, player,questInstance);
 
             player.playSound(SoundEvents.VILLAGER_TRADE);
 
-            this.clearWidgets();
             posButton.active = false;
-            this.init();
+            if(!Objects.equals(stage.tag, QuestStageTags.CLOSE_ON_COMPLETE.tag)) {
+                this.clearWidgets();
+                this.init();
+            }
+            else this.onClose();
         }
     }
 

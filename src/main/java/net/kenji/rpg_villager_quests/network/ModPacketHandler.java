@@ -46,10 +46,10 @@ public class ModPacketHandler {
                 .encoder(ChoicePacket::encode)
                 .consumerMainThread(ChoicePacket::handle)
                 .add();
-        INSTANCE.messageBuilder(SyncVillagerDeliverPacket.class, id(), NetworkDirection.PLAY_TO_CLIENT)
-                .decoder(SyncVillagerDeliverPacket::decode)
-                .encoder(SyncVillagerDeliverPacket::encode)
-                .consumerMainThread(SyncVillagerDeliverPacket::handle)
+        INSTANCE.messageBuilder(SyncScondaryVillagerPacket.class, id(), NetworkDirection.PLAY_TO_CLIENT)
+                .decoder(SyncScondaryVillagerPacket::decode)
+                .encoder(SyncScondaryVillagerPacket::encode)
+                .consumerMainThread(SyncScondaryVillagerPacket::handle)
                 .add();
     }
 

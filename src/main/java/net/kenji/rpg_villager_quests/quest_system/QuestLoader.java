@@ -460,8 +460,28 @@ public class QuestLoader {
                 if(secondaryInProgressDialogue.isEmpty()){
                     throw new RuntimeException("\"secondary\" Dialogue is Empty Or Missing!!");
                 }
+                List<Page> deliveryDialogue = new ArrayList<>();
+                JsonArray deliveryDialogueArray;
+                if(obj.has("delivered_dialogue")){
+                    deliveryDialogueArray = obj.get("delivered_dialogue").getAsJsonArray();
+                    for (JsonElement pageElem : deliveryDialogueArray) {
+                        JsonObject pageObj = pageElem.getAsJsonObject();
+                        Page newPage = new Page();
+                        newPage.text = pageObj.get("text").getAsString();
+                        if (pageObj.has("button_1_text")) {
+                            newPage.button1Text = pageObj.get("button_1_text").getAsString();
+                        }
+                        if (pageObj.has("button_2_text")) {
+                            newPage.button2Text = pageObj.get("button_2_text").getAsString();
+                        }
+                        deliveryDialogue.add(newPage);
+                    }
+                }
+                else{
+                    throw new RuntimeException("Missing \"delivered_dialogue\" type in: " + type);
+                }
 
-                objective = new PackageDeliverObjective(item, entityType, consume, questId, stageId, minDist, maxDist, structure, secondaryInProgressDialogue);
+                objective = new PackageDeliverObjective(item, entityType, consume, questId, stageId, minDist, maxDist, structure, secondaryInProgressDialogue, deliveryDialogue);
             }
             default -> throw new IllegalArgumentException(
                     "Unknown objective_type: " + type
