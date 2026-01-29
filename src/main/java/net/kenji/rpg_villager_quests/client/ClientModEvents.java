@@ -1,7 +1,6 @@
 package net.kenji.rpg_villager_quests.client;
 
 import net.kenji.rpg_villager_quests.RpgVillagerQuests;
-import net.kenji.rpg_villager_quests.client.layers.QuestVillagerClothingLayer;
 import net.kenji.rpg_villager_quests.keybinds.ModKeybinds;
 import net.minecraft.client.renderer.entity.VillagerRenderer;
 import net.minecraft.core.Registry;

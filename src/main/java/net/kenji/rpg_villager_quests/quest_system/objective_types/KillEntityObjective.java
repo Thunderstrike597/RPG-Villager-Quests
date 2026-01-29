@@ -7,6 +7,7 @@ import net.kenji.rpg_villager_quests.quest_system.quest_data.QuestData;
 import net.kenji.rpg_villager_quests.quest_system.quest_data.QuestInstance;
 import net.kenji.rpg_villager_quests.quest_system.stage_types.ObjectiveStage;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
@@ -35,7 +36,7 @@ public class KillEntityObjective implements QuestObjective {
     @SubscribeEvent
     public static void onEntityKilled(LivingDeathEvent event) {
         if (event.getSource().getEntity() instanceof Player player) {
-            QuestData questData = QuestData.get(player.getUUID());
+            QuestData questData = QuestData.get(player);
             if (questData.getActiveQuests() != null) {
                 for (QuestInstance questInstance : questData.getActiveQuests()) {
                     if (!questInstance.isComplete()) {
@@ -54,17 +55,19 @@ public class KillEntityObjective implements QuestObjective {
     @SubscribeEvent
     public static void onTick(TickEvent.PlayerTickEvent event) {
 
-        QuestData questData = QuestData.get(event.player.getUUID());
-        if (questData.getActiveQuests() != null) {
-            for (QuestInstance questInstance : questData.getActiveQuests()) {
-                if (!questInstance.isComplete()) {
-                    if (questInstance.getCurrentStage() instanceof ObjectiveStage objectiveStage) {
-                        if (objectiveStage.getObjective() instanceof KillEntityObjective killEntityObjective) {
-                           if(killEntityObjective.canComplete(event.player)){
-                               if(objectiveStage.tag != null && objectiveStage.tag.equals("complete_on_kill")){
-                                   objectiveStage.onComplete(objectiveStage.getStageEffects(), event.player, questInstance);
-                               }
-                           }
+        QuestData questData = QuestData.get(event.player);
+        if (event.player instanceof ServerPlayer serverPlayer) {
+            if (questData.getActiveQuests() != null) {
+                for (QuestInstance questInstance : questData.getActiveQuests()) {
+                    if (!questInstance.isComplete()) {
+                        if (questInstance.getCurrentStage() instanceof ObjectiveStage objectiveStage) {
+                            if (objectiveStage.getObjective() instanceof KillEntityObjective killEntityObjective) {
+                                if (killEntityObjective.canComplete(event.player)) {
+                                    if (objectiveStage.tag != null && objectiveStage.tag.equals("complete_on_kill")) {
+                                        objectiveStage.onComplete(objectiveStage.getStageEffects(), serverPlayer, questInstance);
+                                    }
+                                }
+                            }
                         }
                     }
                 }

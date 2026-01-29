@@ -1,13 +1,14 @@
 package net.kenji.rpg_villager_quests.quest_system.stage_types;
 
 import net.kenji.rpg_villager_quests.network.ModPacketHandler;
-import net.kenji.rpg_villager_quests.network.packets.StageStartPacket;
+import net.kenji.rpg_villager_quests.network.packets.server_side.StageStartServerPacket;
 import net.kenji.rpg_villager_quests.quest_system.*;
 import net.kenji.rpg_villager_quests.quest_system.interfaces.QuestObjective;
 import net.kenji.rpg_villager_quests.quest_system.interfaces.QuestReward;
 import net.kenji.rpg_villager_quests.quest_system.objective_types.SecondaryVillagerQuestObjective;
+import net.kenji.rpg_villager_quests.quest_system.quest_data.QuestData;
 import net.kenji.rpg_villager_quests.quest_system.quest_data.QuestInstance;
-import net.minecraft.world.entity.npc.Villager;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
 
 import java.util.List;
@@ -32,11 +33,10 @@ public class ObjectiveStage extends QuestStage {
     }
 
     @Override
-    public void start(Player player, QuestInstance questInstance) {
-
-        ModPacketHandler.sendToServer(new StageStartPacket(belongingQuestId, id));
+    public void start(ServerPlayer player, QuestInstance questInstance) {
         questInstance.setCurrentStage(id);
         objective.onStartObjective(player, questInstance);
+        QuestData.syncToClient(player);
     }
 
     public void restartStage(Player player, QuestInstance questInstance) {
@@ -107,7 +107,7 @@ public class ObjectiveStage extends QuestStage {
     }
 
     @Override
-    public void onComplete(QuestEffects completionEffects, Player player, QuestInstance questInstance) {
+    public void onComplete(QuestEffects completionEffects, ServerPlayer player, QuestInstance questInstance) {
         isComplete = true;
         QuestStage nextStage = getNextStage(player, questInstance);
 
@@ -127,6 +127,7 @@ public class ObjectiveStage extends QuestStage {
             questInstance.triggerQuestComplete(completionEffects, player);
         }
         objective.onComplete(completionEffects, player);
+        QuestData.syncToClient(player);
     }
 
 }

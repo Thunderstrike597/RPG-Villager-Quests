@@ -1,5 +1,6 @@
 package net.kenji.rpg_villager_quests.manager;
 
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import net.kenji.rpg_villager_quests.events.QuestVillagerEvents;
@@ -8,6 +9,7 @@ import net.kenji.rpg_villager_quests.quest_system.QuestLoader;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.npc.Villager;
 import net.minecraftforge.fml.loading.FMLPaths;
+import org.jline.utils.Log;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -16,7 +18,7 @@ import java.util.*;
 import java.util.stream.Stream;
 
 public class VillagerQuestManager {
-    public static final Map<String, String> rawJsonFiles = new HashMap<>();
+    public static final Map<String, JsonObject> rawJsonFiles = new HashMap<>();
 
     public static Map<UUID, Quest> currentQuestMap = new HashMap<>();
     public static Map<UUID, Quest> villagerQuestMap = new HashMap<>();
@@ -25,15 +27,24 @@ public class VillagerQuestManager {
         return villagerQuestMap.get(villager);
     }
 
-    public static Quest getQuestByName(String questName) throws Exception {
-        String jsonContents = rawJsonFiles.get(questName);
+    public static Quest getQuestByName(String questName) {
 
-        JsonObject root = JsonParser.parseString(jsonContents).getAsJsonObject();
+        // Strip .json extension if present (backwards compatibility with old villager data)
+        if (questName != null && questName.endsWith(".json")) {
+            questName = questName.substring(0, questName.length() - 5);
+            Log.info("Stripped .json, now using: " + questName);
+        }
+        JsonObject root = rawJsonFiles.get(questName);
+
+        if (root == null) {
+            throw new IllegalArgumentException("Quest '" + questName + "' not found. Available: " + rawJsonFiles.keySet());
+        }
 
         return QuestLoader.load(root);
     }
 
-    public static void assignRandomQuestToVillager(Villager villager) throws Exception {
+
+    public static void assignRandomQuestToVillager(Villager villager) {
 
         List<String> keys = new ArrayList<>(rawJsonFiles.keySet());
 
@@ -54,6 +65,8 @@ public class VillagerQuestManager {
         static Path questDir = gameDir.resolve("rpg_villager_quests");
 
         public static void init() {
+            Log.info("Logging Init()");
+
             try {
                 Files.createDirectories(questDir);
             } catch (IOException e) {
@@ -65,7 +78,17 @@ public class VillagerQuestManager {
                         .filter(p -> p.toString().endsWith(".json"))
                         .forEach(path -> {
                             try {
-                                rawJsonFiles.put(path.getFileName().toString(), Files.readString(path));
+                                String rawFileText = Files.readString(path);
+                                JsonObject root = JsonParser.parseString(rawFileText).getAsJsonObject();
+                                String questId;
+                                if(root.has("id")) {
+                                    questId = root.get("id").getAsString();
+                               }
+                               else{
+                                   throw new RuntimeException("No \"id\" type in quest file");
+                               }
+                                Log.info("Registering: " + questId);
+                                rawJsonFiles.put(questId, root);
                             } catch (IOException e) {
                                 throw new RuntimeException(e);
                             }

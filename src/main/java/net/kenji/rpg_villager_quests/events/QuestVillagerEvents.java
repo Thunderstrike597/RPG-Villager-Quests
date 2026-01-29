@@ -43,7 +43,6 @@ public class QuestVillagerEvents {
           villager.setVillagerData(
                   villager.getVillagerData().setType(VillagerQuestTypes.QUEST_VILLAGER)
           );
-          Log.info("IS LOGGING VILLAGER SET TYPE");
       }
     }
     @SubscribeEvent
@@ -110,7 +109,7 @@ public class QuestVillagerEvents {
 
             // If the clicked villager is a delivery target
             if(clickedVillager.getPersistentData().contains(PackageDeliverObjective.objectiveEntityTag)){
-                QuestData questData = QuestData.get(player.getUUID());
+                QuestData questData = QuestData.get(player);
                 Quest quest = VillagerQuestManager.getVillagerQuest(clickedVillager.getPersistentData().getUUID(PackageDeliverObjective.objectiveEntityTag));
                 if(quest != null) {
                     QuestInstance questInstance = questData.getQuestInstance(quest.getQuestId());
@@ -142,7 +141,7 @@ public class QuestVillagerEvents {
 
             if (player == null || mc.level == null || !player.level().isClientSide) return;
 
-            QuestData questData = QuestData.get(player.getUUID());
+            QuestData questData = QuestData.get(player);
             if (questData.getActiveQuests() != null) {
                 for (QuestInstance questInstance : questData.getActiveQuests()) {
                     if (questInstance.getCurrentStage() instanceof ObjectiveStage objectiveStage) {

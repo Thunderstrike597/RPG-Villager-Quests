@@ -1,7 +1,5 @@
 package net.kenji.rpg_villager_quests.quest_system.objective_types;
 
-import net.kenji.rpg_villager_quests.network.ModPacketHandler;
-import net.kenji.rpg_villager_quests.network.packets.SyncScondaryVillagerPacket;
 import net.kenji.rpg_villager_quests.quest_system.Page;
 import net.kenji.rpg_villager_quests.quest_system.QuestEffects;
 import net.kenji.rpg_villager_quests.quest_system.quest_data.QuestData;
@@ -33,6 +31,7 @@ import net.minecraft.world.level.levelgen.structure.Structure;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.registries.ForgeRegistries;
+import org.jline.utils.Log;
 
 import java.util.List;
 
@@ -66,15 +65,17 @@ public class PackageDeliverObjective extends SecondaryVillagerQuestObjective {
     @SubscribeEvent
     public static void onTick(TickEvent.PlayerTickEvent event) {
 
-        QuestData questData = QuestData.get(event.player.getUUID());
-        if (questData.getActiveQuests() != null) {
-            for (QuestInstance questInstance : questData.getActiveQuests()) {
-                if (!questInstance.isComplete()) {
-                    if (questInstance.getCurrentStage() instanceof ObjectiveStage objectiveStage) {
-                        if (objectiveStage.getObjective() instanceof PackageDeliverObjective deliverPackageObjective) {
-                            if(deliverPackageObjective.canComplete(event.player)){
-                                if(objectiveStage.tag != null){
-                                    objectiveStage.onComplete(objectiveStage.getStageEffects(), event.player, questInstance);
+        QuestData questData = QuestData.get(event.player);
+        if(event.player instanceof ServerPlayer serverPlayer) {
+            if (questData.getActiveQuests() != null) {
+                for (QuestInstance questInstance : questData.getActiveQuests()) {
+                    if (!questInstance.isComplete()) {
+                        if (questInstance.getCurrentStage() instanceof ObjectiveStage objectiveStage) {
+                            if (objectiveStage.getObjective() instanceof PackageDeliverObjective deliverPackageObjective) {
+                                if (deliverPackageObjective.canComplete(event.player)) {
+                                    if (objectiveStage.tag != null) {
+                                        objectiveStage.onComplete(objectiveStage.getStageEffects(), serverPlayer, questInstance);
+                                    }
                                 }
                             }
                         }
@@ -90,6 +91,7 @@ public class PackageDeliverObjective extends SecondaryVillagerQuestObjective {
 
         if(level instanceof ServerLevel serverLevel) {
             if (player instanceof ServerPlayer serverPlayer) {
+                Log.info("LOGGING PLAYER");
                 BlockPos pos;
                 BlockPos origin = player.blockPosition();
                 int randomDist = (int) Mth.randomBetween(player.getRandom(), minDistance, maxDistance);
@@ -153,7 +155,6 @@ public class PackageDeliverObjective extends SecondaryVillagerQuestObjective {
                     Villager newVillager = EntityType.VILLAGER.spawn(serverLevel, ItemStack.EMPTY, player, pos, MobSpawnType.TRIGGERED, false, false);
                     if (newVillager != null) {
                         questInstance.currentSecondaryEntity = newVillager.getUUID();
-                        ModPacketHandler.sendToPlayer(new SyncScondaryVillagerPacket(belongingQuestId, newVillager.getUUID()), serverPlayer);
                         Entity entity = serverLevel.getEntity(questInstance.currentSecondaryEntity);
                         if (entity instanceof Villager villagerEntity) {
                             villagerEntity.getPersistentData().putUUID(objectiveEntityTag, questInstance.getQuestVillager());

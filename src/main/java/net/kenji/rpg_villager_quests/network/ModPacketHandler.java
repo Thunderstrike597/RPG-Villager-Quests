@@ -2,6 +2,10 @@ package net.kenji.rpg_villager_quests.network;
 
 import net.kenji.rpg_villager_quests.RpgVillagerQuests;
 import net.kenji.rpg_villager_quests.network.packets.*;
+import net.kenji.rpg_villager_quests.network.packets.client_side.VillagerGlowPacket;
+import net.kenji.rpg_villager_quests.network.packets.server_side.StartQuestServerPacket;
+import net.kenji.rpg_villager_quests.network.packets.server_side.StageCompleteServerPacket;
+import net.kenji.rpg_villager_quests.network.packets.server_side.StageStartServerPacket;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraftforge.network.NetworkDirection;
@@ -25,35 +29,48 @@ public class ModPacketHandler {
         return packetId++;
     }
 
+
     public static void register() {
-        INSTANCE.messageBuilder(StageCompletionPacket.class, id(), NetworkDirection.PLAY_TO_SERVER)
-                .decoder(StageCompletionPacket::decode)
-                .encoder(StageCompletionPacket::encode)
-                .consumerMainThread(StageCompletionPacket::handle)
+        INSTANCE.messageBuilder(StartQuestServerPacket.class, id(), NetworkDirection.PLAY_TO_SERVER)
+                .decoder(StartQuestServerPacket::decode)
+                .encoder(StartQuestServerPacket::encode)
+                .consumerMainThread(StartQuestServerPacket::handle)
                 .add();
-        INSTANCE.messageBuilder(AddQuestPacket.class, id(), NetworkDirection.PLAY_TO_SERVER)
-                .decoder(AddQuestPacket::decode)
-                .encoder(AddQuestPacket::encode)
-                .consumerMainThread(AddQuestPacket::handle)
+
+        INSTANCE.messageBuilder(StageCompleteServerPacket.class, id(), NetworkDirection.PLAY_TO_SERVER)
+                .decoder(StageCompleteServerPacket::decode)
+                .encoder(StageCompleteServerPacket::encode)
+                .consumerMainThread(StageCompleteServerPacket::handle)
                 .add();
-        INSTANCE.messageBuilder(StageStartPacket.class, id(), NetworkDirection.PLAY_TO_SERVER)
-                .decoder(StageStartPacket::decode)
-                .encoder(StageStartPacket::encode)
-                .consumerMainThread(StageStartPacket::handle)
+        INSTANCE.messageBuilder(StageStartServerPacket.class, id(), NetworkDirection.PLAY_TO_SERVER)
+                .decoder(StageStartServerPacket::decode)
+                .encoder(StageStartServerPacket::encode)
+                .consumerMainThread(StageStartServerPacket::handle)
                 .add();
         INSTANCE.messageBuilder(ChoicePacket.class, id(), NetworkDirection.PLAY_TO_SERVER)
                 .decoder(ChoicePacket::decode)
                 .encoder(ChoicePacket::encode)
                 .consumerMainThread(ChoicePacket::handle)
                 .add();
-        INSTANCE.messageBuilder(SyncScondaryVillagerPacket.class, id(), NetworkDirection.PLAY_TO_CLIENT)
-                .decoder(SyncScondaryVillagerPacket::decode)
-                .encoder(SyncScondaryVillagerPacket::encode)
-                .consumerMainThread(SyncScondaryVillagerPacket::handle)
+        INSTANCE.messageBuilder(VillagerGlowPacket.class, id(), NetworkDirection.PLAY_TO_CLIENT)
+                .decoder(VillagerGlowPacket::decode)
+                .encoder(VillagerGlowPacket::encode)
+                .consumerMainThread(VillagerGlowPacket::handle)
+                .add();
+        INSTANCE.messageBuilder(SyncQuestDataPacket.class, id(), NetworkDirection.PLAY_TO_CLIENT)
+                .decoder(SyncQuestDataPacket::decode)
+                .encoder(SyncQuestDataPacket::encode)
+                .consumerMainThread(SyncQuestDataPacket::handle)
+                .add();
+        INSTANCE.messageBuilder(UpdateQuestProgressPacket.class, id(), NetworkDirection.PLAY_TO_CLIENT)
+                .decoder(UpdateQuestProgressPacket::new)
+                .encoder(UpdateQuestProgressPacket::encode)
+                .consumerMainThread(UpdateQuestProgressPacket::handle)
                 .add();
     }
 
-    // Helper method to send packet to server
+
+    // Helper method to send packet to server_side
     public static void sendToServer(Object packet) {
         INSTANCE.sendToServer(packet);
     }

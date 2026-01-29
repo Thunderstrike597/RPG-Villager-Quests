@@ -24,7 +24,7 @@ import java.util.Objects;
 
 public class QuestLoader {
 
-    public static Quest load(JsonObject json) throws Exception {
+    public static Quest load(JsonObject json){
         String id = json.get("id").getAsString();
 
         String displayName = json.get("quest_display_name").getAsString();
@@ -47,11 +47,9 @@ public class QuestLoader {
         if (json.has("quest_reward")) {
             JsonObject questRewardObject = json.getAsJsonObject("quest_reward");
             QuestRewardType rewardType;
-            try {
-                rewardType = QuestRewardType.valueOf(questRewardObject.get("type").getAsString().toUpperCase());
-            }catch (Exception e){
-                throw new Exception("No Reward Type of: " + questRewardObject.get("type").getAsString());
-            }
+
+            rewardType = QuestRewardType.valueOf(questRewardObject.get("type").getAsString().toUpperCase());
+
 
             switch (rewardType){
                 case ITEM_REWARD -> {

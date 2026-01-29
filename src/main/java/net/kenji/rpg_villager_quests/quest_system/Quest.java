@@ -2,7 +2,7 @@ package net.kenji.rpg_villager_quests.quest_system;
 
 import net.kenji.rpg_villager_quests.quest_system.quest_data.QuestData;
 import net.kenji.rpg_villager_quests.quest_system.quest_data.QuestInstance;
-import net.minecraft.world.entity.npc.Villager;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
 
 import java.util.ArrayList;
@@ -70,11 +70,9 @@ public class Quest {
 
     }
 
-    public QuestInstance StartQuestClient(Player player, UUID villager){
-
-        QuestData questData = QuestData.get(player.getUUID());
-        questData.startQuestServer(this.getQuestId(),villager);
-        return questData.startQuestClient(this, villager, player);
+    public QuestInstance startQuest(ServerPlayer player, UUID villager){
+        QuestData questData = QuestData.get(player);
+        return questData.startQuest(this, villager, player);
     }
 
 }

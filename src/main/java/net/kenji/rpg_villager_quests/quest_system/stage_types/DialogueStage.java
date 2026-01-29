@@ -1,12 +1,13 @@
 package net.kenji.rpg_villager_quests.quest_system.stage_types;
 
 import net.kenji.rpg_villager_quests.network.ModPacketHandler;
-import net.kenji.rpg_villager_quests.network.packets.StageStartPacket;
+import net.kenji.rpg_villager_quests.network.packets.server_side.StageStartServerPacket;
 import net.kenji.rpg_villager_quests.quest_system.*;
 import net.kenji.rpg_villager_quests.quest_system.interfaces.QuestReward;
 import net.kenji.rpg_villager_quests.quest_system.objective_types.SecondaryVillagerQuestObjective;
+import net.kenji.rpg_villager_quests.quest_system.quest_data.QuestData;
 import net.kenji.rpg_villager_quests.quest_system.quest_data.QuestInstance;
-import net.minecraft.world.entity.npc.Villager;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
 import org.jline.utils.Log;
 
@@ -41,9 +42,10 @@ public class DialogueStage extends QuestStage {
         this.choices = choices;
     }
     @Override
-    public void start(Player player, QuestInstance questInstance) {
-        ModPacketHandler.sendToServer(new StageStartPacket(belongingQuestId, id));
+    public void start(ServerPlayer player, QuestInstance questInstance) {
+        ModPacketHandler.sendToServer(new StageStartServerPacket(belongingQuestId, id));
         questInstance.setCurrentStage(id);
+        QuestData.syncToClient(player);
     }
 
     @Override
@@ -80,7 +82,7 @@ public class DialogueStage extends QuestStage {
     }
 
     @Override
-    public void onComplete(QuestEffects completionEffects, Player player, QuestInstance questInstance) {
+    public void onComplete(QuestEffects completionEffects, ServerPlayer player, QuestInstance questInstance) {
         isComplete = true;
         QuestStage nextStage = getNextStage(player, questInstance);
 
@@ -99,36 +101,33 @@ public class DialogueStage extends QuestStage {
         } else {
             questInstance.triggerQuestComplete(completionEffects, player);
         }
+        QuestData.syncToClient(player);
     }
-    public List<Page> getDialogue(Player player,QuestInstance questInstance, UUID interactVillager){
-        if(!questInstance.isComplete()) {
-            List<Page> pageList;
-            if (choices != null && !choices.isEmpty()) {
-                pageList = chosenDialogueOption == ChoiceType.OPTION_1 ? choice1Pages : chosenDialogueOption == ChoiceType.OPTION_2 ? choice2Pages : pages;
-            } else {
-                if (interactVillager.equals(questInstance.currentSecondaryEntity)) {
-                    for (QuestStage stage : questInstance.getQuest().stages) {
-                        if (!(stage instanceof ObjectiveStage objectiveStage)) continue;
-                        if (!(objectiveStage.getObjective() instanceof SecondaryVillagerQuestObjective objective)) continue;
-                        if (!objectiveStage.isComplete(player)) continue;
-                        QuestStage next = objectiveStage.getNextStage(player, questInstance);
+    public List<Page> getDialogue(Player player,QuestInstance questInstance, UUID interactVillager) {
+
+        List<Page> pageList;
+        if (choices != null && !choices.isEmpty()) {
+            pageList = chosenDialogueOption == ChoiceType.OPTION_1 ? choice1Pages : chosenDialogueOption == ChoiceType.OPTION_2 ? choice2Pages : pages;
+        } else {
+            if (interactVillager.equals(questInstance.currentSecondaryEntity)) {
+                for (QuestStage stage : questInstance.getQuest().stages) {
+                    if (!(stage instanceof ObjectiveStage objectiveStage)) continue;
+                    if (!(objectiveStage.getObjective() instanceof SecondaryVillagerQuestObjective objective)) continue;
+                    if (!objectiveStage.isComplete(player)) continue;
+                    QuestStage next = objectiveStage.getNextStage(player, questInstance);
 
 
-                        if (next == null || next.isComplete(player)) continue;
+                    if (next == null || next.isComplete(player)) continue;
 
-                        // Only play secondary-completed dialogue on the secondary villager
-                        return objective.completedSecondaryVillagerDialogue;
-                    }
+                    // Only play secondary-completed dialogue on the secondary villager
+                    return objective.completedSecondaryVillagerDialogue;
                 }
-
-                pageList = pages;
             }
 
-            return pageList;
+            pageList = pages;
         }
-        Log.info("STAGE IS COMPLETE");
 
-        return questInstance.getQuest().getCompletionDialogue(questInstance);
+        return pageList;
     }
 
     @Override

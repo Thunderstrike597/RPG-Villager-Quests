@@ -6,8 +6,10 @@ import net.kenji.rpg_villager_quests.quest_system.quest_data.QuestData;
 import net.kenji.rpg_villager_quests.quest_system.quest_data.QuestInstance;
 import net.kenji.rpg_villager_quests.quest_system.stage_types.DialogueStage;
 import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
 import net.minecraftforge.network.NetworkEvent;
+import org.jline.utils.Log;
 
 import java.util.function.Supplier;
 
@@ -30,7 +32,6 @@ public class ChoicePacket {
 
     // Decode: Read data from buffer
     public static ChoicePacket decode(FriendlyByteBuf buf) {
-        QuestEffects questEffects = new QuestEffects();
         String questId = buf.readUtf();
         String stageId = buf.readUtf();
         int choiceIndex = buf.readInt();
@@ -40,9 +41,9 @@ public class ChoicePacket {
     // Handle: Process the packet on the receiving side
     public static void handle(ChoicePacket packet, Supplier<NetworkEvent.Context> ctx) {
         ctx.get().enqueueWork(() -> {
-            Player player = ctx.get().getSender();
+            ServerPlayer player = ctx.get().getSender();
             if(player != null) {
-                QuestData questData = QuestData.get(player.getUUID());
+                QuestData questData = QuestData.get(player);
                 QuestInstance questInstance = questData.getQuestInstance(packet.questId);
                 QuestStage questStage = questInstance.getQuest().getStageById(packet.stageId);
 
@@ -51,6 +52,9 @@ public class ChoicePacket {
 
                         if(packet.choiceIndex < dialogueStage.choices.size()) {
                             dialogueStage.choices.get(packet.choiceIndex).applyRewards(player);
+                            if(dialogueStage.choices.get(packet.choiceIndex).effects != null){
+                                dialogueStage.choices.get(packet.choiceIndex).effects.apply(player);
+                            }
                         }
                     }
                 }
