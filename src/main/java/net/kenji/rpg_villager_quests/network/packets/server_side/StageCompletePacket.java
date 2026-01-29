@@ -11,12 +11,12 @@ import net.minecraftforge.network.NetworkEvent;
 
 import java.util.function.Supplier;
 
-public class StageCompleteServerPacket {
+public class StageCompletePacket {
     private final String questId;
     private final String stageId;
     private final QuestEffects effects;
 
-    public StageCompleteServerPacket(String questId, String stageId, QuestEffects questEffects) {
+    public StageCompletePacket(String questId, String stageId, QuestEffects questEffects) {
         this.questId = questId;
         this.stageId = stageId;
 
@@ -24,7 +24,7 @@ public class StageCompleteServerPacket {
     }
 
     // Encode: Write data to buffer
-    public static void encode(StageCompleteServerPacket packet, FriendlyByteBuf buf) {
+    public static void encode(StageCompletePacket packet, FriendlyByteBuf buf) {
         buf.writeUtf(packet.questId);
         buf.writeUtf(packet.stageId);
         if(packet.effects != null){
@@ -44,7 +44,7 @@ public class StageCompleteServerPacket {
     }
 
     // Decode: Read data from buffer
-    public static StageCompleteServerPacket decode(FriendlyByteBuf buf) {
+    public static StageCompletePacket decode(FriendlyByteBuf buf) {
         QuestEffects questEffects = new QuestEffects();
         String questId = buf.readUtf();
         String stageId = buf.readUtf();
@@ -52,11 +52,11 @@ public class StageCompleteServerPacket {
         questEffects.endQuest = buf.readBoolean();
         questEffects.removeItem = buf.readItem();
         questEffects.itemCount = buf.readInt();
-        return new StageCompleteServerPacket(questId, stageId, questEffects);
+        return new StageCompletePacket(questId, stageId, questEffects);
     }
 
     // Handle: Process the packet on the receiving side
-    public static void handle(StageCompleteServerPacket packet, Supplier<NetworkEvent.Context> ctx) {
+    public static void handle(StageCompletePacket packet, Supplier<NetworkEvent.Context> ctx) {
         ctx.get().enqueueWork(() -> {
             ServerPlayer player = ctx.get().getSender();
             if(player != null) {

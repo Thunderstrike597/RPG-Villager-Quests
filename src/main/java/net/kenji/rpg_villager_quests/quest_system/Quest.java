@@ -2,8 +2,11 @@ package net.kenji.rpg_villager_quests.quest_system;
 
 import net.kenji.rpg_villager_quests.quest_system.quest_data.QuestData;
 import net.kenji.rpg_villager_quests.quest_system.quest_data.QuestInstance;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.npc.VillagerProfession;
 import net.minecraft.world.entity.player.Player;
+import net.minecraftforge.registries.ForgeRegistries;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -17,9 +20,9 @@ public class Quest {
     public final List<QuestStage> stages;
 
     public final Dialogue completionDialogue;
+    public final VillagerProfession questProfession;
 
-
-    public Quest(String id, String displayName, String type, List<QuestStage> stages, Dialogue completionDialogue) {
+    public Quest(String id, String displayName, String type, List<QuestStage> stages, Dialogue completionDialogue, String villagerProfession) {
         this.id = id;
         this.displayName = displayName;
         this.type = type;
@@ -38,6 +41,16 @@ public class Quest {
             Dialogue.Outcome defaultOutcome = new Dialogue.Outcome(defaultPageList);
             this.completionDialogue = new Dialogue(defaultOutcome, null);
         }
+        if(!Objects.equals(villagerProfession, "generic")){
+            for (VillagerProfession profession : ForgeRegistries.VILLAGER_PROFESSIONS.getValues()) {
+                ResourceLocation key = ForgeRegistries.VILLAGER_PROFESSIONS.getKey(profession);
+                if (key != null && key.getPath().equals(villagerProfession)) {
+                    questProfession = profession;
+                    return;
+                }
+            }
+        }
+        questProfession = null;
     }
 
     public String getQuestId(){

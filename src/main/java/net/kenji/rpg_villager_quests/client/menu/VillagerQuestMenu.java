@@ -7,8 +7,8 @@ import net.kenji.rpg_villager_quests.keybinds.ModKeybinds;
 import net.kenji.rpg_villager_quests.manager.VillagerQuestManager;
 import net.kenji.rpg_villager_quests.network.packets.ChoicePacket;
 import net.kenji.rpg_villager_quests.network.ModPacketHandler;
-import net.kenji.rpg_villager_quests.network.packets.server_side.StageCompleteServerPacket;
-import net.kenji.rpg_villager_quests.network.packets.server_side.StartQuestServerPacket;
+import net.kenji.rpg_villager_quests.network.packets.server_side.StageCompletePacket;
+import net.kenji.rpg_villager_quests.network.packets.server_side.StartQuestPacket;
 import net.kenji.rpg_villager_quests.quest_system.*;
 import net.kenji.rpg_villager_quests.quest_system.quest_data.QuestData;
 import net.kenji.rpg_villager_quests.quest_system.quest_data.QuestInstance;
@@ -581,7 +581,7 @@ public class VillagerQuestMenu extends Screen {
         hasSentenceCompleted = false;
         Quest quest = VillagerQuestManager.getVillagerQuest(questVillager);
 
-        ModPacketHandler.sendToServer(new StartQuestServerPacket(quest.getQuestId(), questVillager));
+        ModPacketHandler.sendToServer(new StartQuestPacket(quest.getQuestId(), questVillager));
 
         onClose();
     }
@@ -613,7 +613,7 @@ public class VillagerQuestMenu extends Screen {
         currentSentenceStartDelay = 0;
         hasSentenceCompleted = false;
 
-        ModPacketHandler.sendToServer(new StageCompleteServerPacket(questInstance.getQuest().getQuestId(), questInstance.getCurrentStage().id, currentPage.effects));
+        ModPacketHandler.sendToServer(new StageCompletePacket(questInstance.getQuest().getQuestId(), questInstance.getCurrentStage().id, currentPage.effects));
 
         Entity villagerEntity = null;
         for(Entity entity : Minecraft.getInstance().level.entitiesForRendering()) {
@@ -644,7 +644,7 @@ public class VillagerQuestMenu extends Screen {
                 replaceEffects = new QuestEffects();
             else replaceEffects = currentPage.effects;
 
-            ModPacketHandler.sendToServer(new StageCompleteServerPacket(questInstance.getQuest().getQuestId(), questInstance.getCurrentStage().id, replaceEffects));
+            ModPacketHandler.sendToServer(new StageCompletePacket(questInstance.getQuest().getQuestId(), questInstance.getCurrentStage().id, replaceEffects));
 
             player.playSound(SoundEvents.VILLAGER_TRADE);
 

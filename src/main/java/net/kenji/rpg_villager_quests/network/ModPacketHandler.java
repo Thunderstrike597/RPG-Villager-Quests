@@ -3,9 +3,9 @@ package net.kenji.rpg_villager_quests.network;
 import net.kenji.rpg_villager_quests.RpgVillagerQuests;
 import net.kenji.rpg_villager_quests.network.packets.*;
 import net.kenji.rpg_villager_quests.network.packets.client_side.VillagerGlowPacket;
-import net.kenji.rpg_villager_quests.network.packets.server_side.StartQuestServerPacket;
-import net.kenji.rpg_villager_quests.network.packets.server_side.StageCompleteServerPacket;
-import net.kenji.rpg_villager_quests.network.packets.server_side.StageStartServerPacket;
+import net.kenji.rpg_villager_quests.network.packets.server_side.StageCompletePacket;
+import net.kenji.rpg_villager_quests.network.packets.server_side.StartQuestPacket;
+import net.kenji.rpg_villager_quests.network.packets.server_side.StageStartPacket;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraftforge.network.NetworkDirection;
@@ -31,21 +31,21 @@ public class ModPacketHandler {
 
 
     public static void register() {
-        INSTANCE.messageBuilder(StartQuestServerPacket.class, id(), NetworkDirection.PLAY_TO_SERVER)
-                .decoder(StartQuestServerPacket::decode)
-                .encoder(StartQuestServerPacket::encode)
-                .consumerMainThread(StartQuestServerPacket::handle)
+        INSTANCE.messageBuilder(StartQuestPacket.class, id(), NetworkDirection.PLAY_TO_SERVER)
+                .decoder(StartQuestPacket::decode)
+                .encoder(StartQuestPacket::encode)
+                .consumerMainThread(StartQuestPacket::handle)
                 .add();
 
-        INSTANCE.messageBuilder(StageCompleteServerPacket.class, id(), NetworkDirection.PLAY_TO_SERVER)
-                .decoder(StageCompleteServerPacket::decode)
-                .encoder(StageCompleteServerPacket::encode)
-                .consumerMainThread(StageCompleteServerPacket::handle)
+        INSTANCE.messageBuilder(StageCompletePacket.class, id(), NetworkDirection.PLAY_TO_SERVER)
+                .decoder(StageCompletePacket::decode)
+                .encoder(StageCompletePacket::encode)
+                .consumerMainThread(StageCompletePacket::handle)
                 .add();
-        INSTANCE.messageBuilder(StageStartServerPacket.class, id(), NetworkDirection.PLAY_TO_SERVER)
-                .decoder(StageStartServerPacket::decode)
-                .encoder(StageStartServerPacket::encode)
-                .consumerMainThread(StageStartServerPacket::handle)
+        INSTANCE.messageBuilder(StageStartPacket.class, id(), NetworkDirection.PLAY_TO_SERVER)
+                .decoder(StageStartPacket::decode)
+                .encoder(StageStartPacket::encode)
+                .consumerMainThread(StageStartPacket::handle)
                 .add();
         INSTANCE.messageBuilder(ChoicePacket.class, id(), NetworkDirection.PLAY_TO_SERVER)
                 .decoder(ChoicePacket::decode)

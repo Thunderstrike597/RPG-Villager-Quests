@@ -1,7 +1,7 @@
 package net.kenji.rpg_villager_quests.quest_system.stage_types;
 
 import net.kenji.rpg_villager_quests.network.ModPacketHandler;
-import net.kenji.rpg_villager_quests.network.packets.server_side.StageStartServerPacket;
+import net.kenji.rpg_villager_quests.network.packets.server_side.StageStartPacket;
 import net.kenji.rpg_villager_quests.quest_system.*;
 import net.kenji.rpg_villager_quests.quest_system.interfaces.QuestReward;
 import net.kenji.rpg_villager_quests.quest_system.objective_types.SecondaryVillagerQuestObjective;
@@ -9,7 +9,6 @@ import net.kenji.rpg_villager_quests.quest_system.quest_data.QuestData;
 import net.kenji.rpg_villager_quests.quest_system.quest_data.QuestInstance;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
-import org.jline.utils.Log;
 
 import java.util.List;
 import java.util.UUID;
@@ -43,7 +42,7 @@ public class DialogueStage extends QuestStage {
     }
     @Override
     public void start(ServerPlayer player, QuestInstance questInstance) {
-        ModPacketHandler.sendToServer(new StageStartServerPacket(belongingQuestId, id));
+        ModPacketHandler.sendToServer(new StageStartPacket(belongingQuestId, id));
         questInstance.setCurrentStage(id);
         QuestData.syncToClient(player);
     }

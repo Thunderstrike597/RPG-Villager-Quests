@@ -43,19 +43,19 @@ public class VillagerQuestManager {
         return QuestLoader.load(root);
     }
 
-
-    public static void assignRandomQuestToVillager(Villager villager) {
-
+    public static Quest getRandomQuest(Villager villager){
         List<String> keys = new ArrayList<>(rawJsonFiles.keySet());
 
         int questCount = keys.size();
         int randomIndex = Mth.nextInt(villager.getRandom(), 0, questCount - 1);
         String questName = keys.get(randomIndex);
+        return getQuestByName(questName);
+    }
 
-       Quest quest = getQuestByName(questName);
+    public static void assignRandomQuestToVillager(Quest quest, Villager villager) {
 
         villagerQuestMap.put(villager.getUUID(), quest);
-        villager.getPersistentData().putString(QuestVillagerEvents.QUEST_VILLAGER_TAG, questName);
+        villager.getPersistentData().putString(QuestVillagerEvents.QUEST_VILLAGER_TAG, quest.getQuestId());
     }
 
 

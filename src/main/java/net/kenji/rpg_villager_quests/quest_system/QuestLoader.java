@@ -121,11 +121,13 @@ public class QuestLoader {
             }
         }
 
-
         Dialogue dialogue = new Dialogue(outcome, altOutcome);
+        String villagerProfession = "generic";
+        if (json.has("profession")) {
+            villagerProfession = json.get("profession").getAsString();
+        }
 
-
-        return new Quest(id, displayName, type, stages, dialogue);
+        return new Quest(id, displayName, type, stages, dialogue, villagerProfession);
     }
     private static DialogueStage parseDialogue(String id, JsonObject stage, String questId) {
         if(!stage.has("dialogue"))

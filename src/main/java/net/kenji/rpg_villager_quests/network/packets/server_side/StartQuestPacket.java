@@ -8,32 +8,31 @@ import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
 import net.minecraftforge.network.NetworkEvent;
-import org.jline.utils.Log;
 
 import java.util.UUID;
 import java.util.function.Supplier;
 
-public class StartQuestServerPacket {
+public class StartQuestPacket {
     private final String questId;
     private final UUID villagerUuid;
 
-    public StartQuestServerPacket(String questId, UUID villagerUuid) {
+    public StartQuestPacket(String questId, UUID villagerUuid) {
         this.questId = questId;
         this.villagerUuid = villagerUuid;
     }
 
-    public static void encode(StartQuestServerPacket packet, FriendlyByteBuf buf) {
+    public static void encode(StartQuestPacket packet, FriendlyByteBuf buf) {
         buf.writeUtf(packet.questId);
         buf.writeUUID(packet.villagerUuid);
     }
 
-    public static StartQuestServerPacket decode(FriendlyByteBuf buf) {
+    public static StartQuestPacket decode(FriendlyByteBuf buf) {
         String questId = buf.readUtf();
         UUID villagerUuid = buf.readUUID();
-        return new StartQuestServerPacket(questId, villagerUuid);
+        return new StartQuestPacket(questId, villagerUuid);
     }
 
-    public static void handle(StartQuestServerPacket packet, Supplier<NetworkEvent.Context> ctx) {
+    public static void handle(StartQuestPacket packet, Supplier<NetworkEvent.Context> ctx) {
         ctx.get().enqueueWork(() -> {
             ServerPlayer player = ctx.get().getSender();
             if (player == null) {

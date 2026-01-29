@@ -1,6 +1,8 @@
 package net.kenji.rpg_villager_quests.quest_system.quest_data;
 
 import net.kenji.rpg_villager_quests.manager.VillagerQuestManager;
+import net.kenji.rpg_villager_quests.network.ModPacketHandler;
+import net.kenji.rpg_villager_quests.network.packets.client_side.VillagerGlowPacket;
 import net.kenji.rpg_villager_quests.quest_system.Quest;
 import net.kenji.rpg_villager_quests.quest_system.QuestEffects;
 import net.kenji.rpg_villager_quests.quest_system.QuestStage;
@@ -9,6 +11,8 @@ import net.kenji.rpg_villager_quests.quest_system.quest_data.saved_data.QuestSav
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.npc.Villager;
 import net.minecraft.world.entity.player.Player;
 
 import java.util.*;
@@ -149,11 +153,14 @@ public class QuestInstance {
             QuestData.get(player).removeActiveQuest(questDefinition.getQuestId());
             QuestData.get(player).addCompletedQuest(questDefinition.getQuestId(), questInstance);
         }
+        Entity entity = player.serverLevel().getEntity(questVillagerUUID);
 
+        if(entity instanceof Villager villagerEntity)
+            ModPacketHandler.sendToPlayer(new VillagerGlowPacket(villagerEntity.getId(), false), player);
 
-            ServerLevel level = (ServerLevel) player.level();
-            QuestSavedData.get(level).markDirty();
-            QuestData.syncToClient(player);
+        ServerLevel level = (ServerLevel) player.level();
+        QuestSavedData.get(level).markDirty();
+        QuestData.syncToClient(player);
 
     }
 
