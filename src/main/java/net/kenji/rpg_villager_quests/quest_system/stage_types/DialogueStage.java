@@ -42,7 +42,7 @@ public class DialogueStage extends QuestStage {
     }
     @Override
     public void start(ServerPlayer player, QuestInstance questInstance) {
-        ModPacketHandler.sendToServer(new StageStartPacket(belongingQuestId, id));
+        ModPacketHandler.sendToServer(new StageStartPacket(belongingQuestId, id,questInstance.getQuestVillager()));
         questInstance.setCurrentStage(id);
         QuestData.syncToClient(player);
     }
@@ -98,7 +98,7 @@ public class DialogueStage extends QuestStage {
         if (nextStage != null) {
             questInstance.advanceFromCurrentStage(player);
         } else {
-            questInstance.triggerQuestComplete(completionEffects, player);
+            questInstance.triggerQuestComplete(completionEffects, player, questInstance.getQuestVillager());
         }
         QuestData.syncToClient(player);
     }

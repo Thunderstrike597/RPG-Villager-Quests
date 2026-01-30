@@ -11,15 +11,21 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraftforge.network.NetworkEvent;
 import org.jline.utils.Log;
 
+import java.util.UUID;
 import java.util.function.Supplier;
 
 public class ChoicePacket {
     private final String questId;
     private final String stageId;
+    private final UUID villagerUuid;
+
     private final int choiceIndex;
-    public ChoicePacket(String questId, String stageId, int choiceIndex) {
+
+
+    public ChoicePacket(String questId, String stageId, UUID villagerUuid,int choiceIndex) {
         this.questId = questId;
         this.stageId = stageId;
+        this.villagerUuid = villagerUuid;
         this.choiceIndex = choiceIndex;
     }
 
@@ -27,6 +33,7 @@ public class ChoicePacket {
     public static void encode(ChoicePacket packet, FriendlyByteBuf buf) {
         buf.writeUtf(packet.questId);
         buf.writeUtf(packet.stageId);
+        buf.writeUUID(packet.villagerUuid);
         buf.writeInt(packet.choiceIndex);
     }
 
@@ -34,8 +41,9 @@ public class ChoicePacket {
     public static ChoicePacket decode(FriendlyByteBuf buf) {
         String questId = buf.readUtf();
         String stageId = buf.readUtf();
+        UUID villagerUuid = buf.readUUID();
         int choiceIndex = buf.readInt();
-        return new ChoicePacket(questId, stageId, choiceIndex);
+        return new ChoicePacket(questId, stageId, villagerUuid, choiceIndex);
     }
 
     // Handle: Process the packet on the receiving side
@@ -44,7 +52,7 @@ public class ChoicePacket {
             ServerPlayer player = ctx.get().getSender();
             if(player != null) {
                 QuestData questData = QuestData.get(player);
-                QuestInstance questInstance = questData.getQuestInstance(packet.questId);
+                QuestInstance questInstance = questData.getQuestInstance(packet.questId, packet.villagerUuid);
                 QuestStage questStage = questInstance.getQuest().getStageById(packet.stageId);
 
                 if(questStage instanceof DialogueStage dialogueStage){

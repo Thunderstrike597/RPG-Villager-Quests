@@ -9,18 +9,21 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.network.NetworkEvent;
 
+import java.util.UUID;
 import java.util.function.Supplier;
 
 public class StageCompletePacket {
     private final String questId;
     private final String stageId;
     private final QuestEffects effects;
+    private final UUID villagerUuid;
 
-    public StageCompletePacket(String questId, String stageId, QuestEffects questEffects) {
+    public StageCompletePacket(String questId, String stageId, QuestEffects questEffects, UUID villagerUuid) {
         this.questId = questId;
         this.stageId = stageId;
-
         this.effects = questEffects;
+
+        this.villagerUuid = villagerUuid;
     }
 
     // Encode: Write data to buffer
@@ -41,6 +44,7 @@ public class StageCompletePacket {
             buf.writeItemStack(ItemStack.EMPTY, true);
             buf.writeInt(0);
         }
+        buf.writeUUID(packet.villagerUuid);
     }
 
     // Decode: Read data from buffer
@@ -52,7 +56,8 @@ public class StageCompletePacket {
         questEffects.endQuest = buf.readBoolean();
         questEffects.removeItem = buf.readItem();
         questEffects.itemCount = buf.readInt();
-        return new StageCompletePacket(questId, stageId, questEffects);
+        UUID villagerUuid = buf.readUUID();
+        return new StageCompletePacket(questId, stageId, questEffects, villagerUuid);
     }
 
     // Handle: Process the packet on the receiving side
@@ -61,7 +66,7 @@ public class StageCompletePacket {
             ServerPlayer player = ctx.get().getSender();
             if(player != null) {
                 QuestData questData = QuestData.get(player);
-                QuestInstance questInstance = questData.getQuestInstance(packet.questId);
+                QuestInstance questInstance = questData.getQuestInstance(packet.questId, packet.villagerUuid);
                 QuestStage questStage = questInstance.getQuest().getStageById(packet.stageId);
 
                 if(questStage != null && questStage.stageRewards != null) {

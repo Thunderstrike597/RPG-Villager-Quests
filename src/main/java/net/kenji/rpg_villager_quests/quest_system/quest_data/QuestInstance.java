@@ -66,7 +66,7 @@ public class QuestInstance {
         return tag;
     }
 
-    public static QuestInstance fromNBT(String questId, CompoundTag tag) throws Exception {
+    public static QuestInstance fromNBT(String questId, CompoundTag tag) {
         Quest quest = VillagerQuestManager.getQuestByName(questId);
 
         QuestInstance instance = new QuestInstance(quest, null);
@@ -140,7 +140,7 @@ public class QuestInstance {
         return completed;
     }
 
-    public void triggerQuestComplete(QuestEffects effects, ServerPlayer player){
+    public void triggerQuestComplete(QuestEffects effects, ServerPlayer player, UUID villagerUUID){
         completed = true;
 
         // ✅ Mark all stages complete
@@ -149,8 +149,8 @@ public class QuestInstance {
         }
 
         if(QuestData.get(player) != null) {
-            QuestInstance questInstance = QuestData.get(player).getQuestInstance(questDefinition.getQuestId());
-            QuestData.get(player).removeActiveQuest(questDefinition.getQuestId());
+            QuestInstance questInstance = QuestData.get(player).getQuestInstance(questDefinition.getQuestId(), villagerUUID);
+            QuestData.get(player).removeActiveQuest(questDefinition.getQuestId(), villagerUUID);
             QuestData.get(player).addCompletedQuest(questDefinition.getQuestId(), questInstance);
         }
         Entity entity = player.serverLevel().getEntity(questVillagerUUID);

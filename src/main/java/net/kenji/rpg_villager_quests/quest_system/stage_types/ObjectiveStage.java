@@ -122,7 +122,7 @@ public class ObjectiveStage extends QuestStage {
         if (nextStage != null) {
             questInstance.advanceFromCurrentStage(player);
         } else {
-            questInstance.triggerQuestComplete(completionEffects, player);
+            questInstance.triggerQuestComplete(completionEffects, player, questInstance.getQuestVillager());
         }
         objective.onComplete(completionEffects, player);
         QuestData.syncToClient(player);

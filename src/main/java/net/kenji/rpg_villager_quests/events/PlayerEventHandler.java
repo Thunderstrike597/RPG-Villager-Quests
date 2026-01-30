@@ -15,6 +15,7 @@ import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 
+import java.util.List;
 import java.util.UUID;
 
 
@@ -29,13 +30,15 @@ public class PlayerEventHandler {
             for(String key : VillagerQuestManager.rawJsonFiles.keySet()) {
                 Villager glowVillager = null;
                 Quest quest = VillagerQuestManager.getQuestByName(key);
-                QuestInstance questInstance = questData.getQuestInstance(quest.getQuestId());
-                if (questInstance != null) {
-                    UUID villagerUuid = questInstance.getQuestVillager();
-                    Entity entity = player.serverLevel().getEntity(villagerUuid);
-                    if (entity instanceof Villager villagerEntity) {
-                        if(!questInstance.isComplete()) {
-                            glowVillager = villagerEntity;
+               List<QuestInstance> questInstances = questData.getQuestInstances(quest.getQuestId());
+                if (questInstances != null) {
+                    for(QuestInstance questInstance : questInstances) {
+                        UUID villagerUuid = questInstance.getQuestVillager();
+                        Entity entity = player.serverLevel().getEntity(villagerUuid);
+                        if (entity instanceof Villager villagerEntity) {
+                            if (!questInstance.isComplete()) {
+                                glowVillager = villagerEntity;
+                            }
                         }
                     }
                 }

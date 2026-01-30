@@ -20,8 +20,8 @@ import java.util.*;
 public class QuestData {
 
     private static final Map<UUID, QuestData> questDataMap = new HashMap<>();
-    private final Map<String, QuestInstance> activeQuests = new HashMap<>();
-    private final Map<String, QuestInstance> completedQuests = new HashMap<>();
+    private final Map<String, List<QuestInstance>> activeQuests = new HashMap<>();
+    private final Map<String, List<QuestInstance>> completedQuests = new HashMap<>();
 
 
     //------------DATA MANAGEMENT---------------//
@@ -56,15 +56,33 @@ public class QuestData {
         questDataMap.put(player.getUUID(), data);
     }
 
-    // Client-side: update specific quest
     public static void updateClientQuest(String questId, CompoundTag instanceData) {
         Player player = Minecraft.getInstance().player;
         if (player == null) return;
 
-        QuestData data = questDataMap.computeIfAbsent(player.getUUID(), id -> new QuestData());
+        QuestData data = questDataMap.computeIfAbsent(
+                player.getUUID(),
+                id -> new QuestData()
+        );
+
         try {
-            QuestInstance instance = QuestInstance.fromNBT(questId, instanceData);
-            data.activeQuests.put(questId, instance);
+            QuestInstance incoming = QuestInstance.fromNBT(questId, instanceData);
+            UUID villagerUuid = incoming.getQuestVillager();
+
+            List<QuestInstance> list = data.activeQuests
+                    .computeIfAbsent(questId, id -> new ArrayList<>());
+
+            // Replace existing instance from same villager
+            for (int i = 0; i < list.size(); i++) {
+                if (list.get(i).getQuestVillager().equals(villagerUuid)) {
+                    list.set(i, incoming);
+                    return;
+                }
+            }
+
+            // Otherwise, new quest instance from new villager
+            list.add(incoming);
+
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -72,65 +90,50 @@ public class QuestData {
     public CompoundTag serializeNBT() {
         CompoundTag tag = new CompoundTag();
 
-        ListTag activeList = new ListTag();
-        for (QuestInstance instance : activeQuests.values()) {
-            activeList.add(instance.serializeNBT());
-        }
-        tag.put("ActiveQuests", activeList);
-
-        ListTag completedList = new ListTag();
-        for (QuestInstance instance : completedQuests.values()) {
-            completedList.add(instance.serializeNBT());
-        }
-        tag.put("CompletedQuests", completedList);
+        tag.put("ActiveQuests", serializeQuestMap(activeQuests));
+        tag.put("CompletedQuests", serializeQuestMap(completedQuests));
 
         return tag;
+    }
+
+    private CompoundTag serializeQuestMap(Map<String, List<QuestInstance>> map) {
+        CompoundTag questsTag = new CompoundTag();
+
+        for (Map.Entry<String, List<QuestInstance>> entry : map.entrySet()) {
+            ListTag list = new ListTag();
+            for (QuestInstance instance : entry.getValue()) {
+                list.add(instance.serializeNBT());
+            }
+            questsTag.put(entry.getKey(), list);
+        }
+
+        return questsTag;
     }
 
     public static QuestData fromNBT(CompoundTag tag) {
         QuestData data = new QuestData();
 
-        ListTag activeList = tag.getList("ActiveQuests", Tag.TAG_COMPOUND);
-        for (int i = 0; i < activeList.size(); i++) {
-            try {
-                CompoundTag questTag = activeList.getCompound(i);
-                // Get the questId from the tag itself
-                String questId = questTag.getString("QuestId");
-
-                if (questId == null || questId.isEmpty()) {
-                    System.err.println("Skipping quest with missing QuestId");
-                    continue;
-                }
-
-                QuestInstance instance = QuestInstance.fromNBT(questId, questTag);
-                data.activeQuests.put(instance.getQuest().getQuestId(), instance);
-            } catch (Exception e) {
-                System.err.println("Failed to load active quest " + i);
-                e.printStackTrace();
-            }
-        }
-
-        ListTag completedList = tag.getList("CompletedQuests", Tag.TAG_COMPOUND);
-        for (int i = 0; i < completedList.size(); i++) {
-            try {
-                CompoundTag questTag = completedList.getCompound(i);
-                // Get the questId from the tag itself
-                String questId = questTag.getString("QuestId");
-
-                if (questId == null || questId.isEmpty()) {
-                    System.err.println("Skipping completed quest with missing QuestId");
-                    continue;
-                }
-
-                QuestInstance instance = QuestInstance.fromNBT(questId, questTag);
-                data.completedQuests.put(instance.getQuest().getQuestId(), instance);
-            } catch (Exception e) {
-                System.err.println("Failed to load completed quest " + i);
-                e.printStackTrace();
-            }
-        }
+        deserializeQuestMap(tag.getCompound("ActiveQuests"), data.activeQuests);
+        deserializeQuestMap(tag.getCompound("CompletedQuests"), data.completedQuests);
 
         return data;
+    }
+
+    private static void deserializeQuestMap(
+            CompoundTag questsTag,
+            Map<String, List<QuestInstance>> target
+    ) {
+        for (String questId : questsTag.getAllKeys()) {
+            ListTag list = questsTag.getList(questId, Tag.TAG_COMPOUND);
+            List<QuestInstance> instances = new ArrayList<>();
+
+            for (int i = 0; i < list.size(); i++) {
+                CompoundTag instanceTag = list.getCompound(i);
+                instances.add(QuestInstance.fromNBT(questId, instanceTag));
+            }
+
+            target.put(questId, instances);
+        }
     }
 
     private void markDirtyAndSync(ServerPlayer player, String questId, QuestInstance instance) {
@@ -143,57 +146,103 @@ public class QuestData {
 
     //------------QUEST MANAGEMENT---------------//
 
-    public boolean hasCompletedQuest(String questId) {
-        for (QuestInstance q : completedQuests.values()) {
-            if (q.getQuest().getQuestId().equals(questId)) {
-                return true;
+    public boolean hasCompletedQuest(String questId, UUID villagerUuid) {
+        for (List<QuestInstance> instances : completedQuests.values()) {
+            for (QuestInstance q : instances) {
+                if (q.getQuest().getQuestId().equals(questId)) {
+                    if(q.getQuestVillager().equals(villagerUuid))
+                        return true;
+                }
             }
         }
         return false;
     }
 
-    public boolean hasActiveQuest(String questId) {
-        for (QuestInstance q : activeQuests.values()) {
-            if (q.getQuest().getQuestId().equals(questId)) {
-                return true;
+    public boolean hasActiveQuest(String questId, UUID villagerUuid) {
+        for (List<QuestInstance> instances : activeQuests.values()) {
+            for (QuestInstance q : instances) {
+                if (q.getQuest().getQuestId().equals(questId)) {
+                    if(q.getQuestVillager().equals(villagerUuid))
+                        return true;
+                }
             }
         }
         return false;
     }
 
     public Collection<QuestInstance> getActiveQuests() {
-        return activeQuests.values();
+        List<QuestInstance> finalActiveQuests = new ArrayList<>();
+        for(List<QuestInstance> questInstances : activeQuests.values()){
+            for(QuestInstance questInstance : questInstances){
+                if(!questInstance.isComplete())
+                    finalActiveQuests.add(questInstance);
+            }
+        }
+        return finalActiveQuests;
     }
     public Collection<QuestInstance> getCompletedQuests(){
-        return completedQuests.values();
+        List<QuestInstance> finalActiveQuests = new ArrayList<>();
+        for(List<QuestInstance> questInstances : completedQuests.values()){
+            finalActiveQuests.addAll(questInstances);
+        }
+        return finalActiveQuests;
     }
     public void addCompletedQuest(String questName, QuestInstance questInstance){
-        completedQuests.putIfAbsent(questName, questInstance);
-    }
-    public void removeActiveQuest(String questName){
-        if(activeQuests.get(questName) != null){
-            activeQuests.remove(questName);
+        if(completedQuests.containsKey(questName)){
+            completedQuests.get(questName).add(questInstance);
+        }
+        else {
+            List<QuestInstance> questInstances = new ArrayList<>();
+            questInstances.add(questInstance);
+            completedQuests.putIfAbsent(questName, questInstances);
         }
     }
 
-    public QuestInstance getQuestInstance(String questId) {
-        QuestInstance activeInstance = activeQuests.get(questId);
-        return activeInstance;
+
+    public void removeActiveQuest(String questName, UUID villagerUuid){
+        List<QuestInstance> instances = activeQuests.get(questName);
+        if(instances != null){
+            instances.removeIf(qi -> qi.getQuestVillager().equals(villagerUuid));
+            // Only remove the key if list is now empty
+            if(instances.isEmpty()) {
+                activeQuests.remove(questName);
+            }
+        }
     }
-    public QuestInstance getCompletedQuestInstance(String questId) {
-        QuestInstance activeInstance = completedQuests.get(questId);
-        return activeInstance;
+    public List<QuestInstance> getQuestInstances(String questId) {
+        return activeQuests.getOrDefault(questId, new ArrayList<>());
+    }
+    public QuestInstance getQuestInstance(String questId, UUID villagerUuid) {
+        for (QuestInstance questInstance : getQuestInstances(questId)){
+            if(questInstance.getQuestVillager().equals(villagerUuid)){
+                return questInstance;
+            }
+        }
+        return null;
+    }
+    public QuestInstance getCompletedQuestInstance(String questId, UUID villagerUuid) {
+        List<QuestInstance> completedInstances = completedQuests.get(questId);
+        QuestInstance fianlQuestInstance = null;
+        if(completedInstances != null) {
+            for (QuestInstance questInstance : completedInstances) {
+                if (questInstance.getQuestVillager().equals(villagerUuid)) {
+                    fianlQuestInstance = questInstance;
+                    break;
+                }
+            }
+        }
+        return fianlQuestInstance;
     }
 
     public QuestInstance startQuest(Quest quest, UUID villager, ServerPlayer player) {
         QuestInstance instance = new QuestInstance(quest, villager);
-        activeQuests.put(quest.getQuestId(), instance);
-        QuestInstance questInstance = getQuestInstance(quest.getQuestId());
 
-        if(questInstance != null){
-            questInstance.advanceFromCurrentStage(player);
-        }
-        markDirtyAndSync((ServerPlayer) player, quest.getQuestId(), instance);
+        // FIX: Add to activeQuests, not completedQuests!
+        activeQuests.computeIfAbsent(quest.getQuestId(), id -> new ArrayList<>()).add(instance);
+
+        instance.advanceFromCurrentStage(player);
+
+        markDirtyAndSync(player, quest.getQuestId(), instance);
         syncToClient(player);
         return instance;
     }

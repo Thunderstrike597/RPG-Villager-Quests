@@ -126,8 +126,12 @@ public class QuestLoader {
         if (json.has("profession")) {
             villagerProfession = json.get("profession").getAsString();
         }
+        boolean isGlobalQuest = false;
+        if (json.has("is_global")) {
+            isGlobalQuest = json.get("is_global").getAsBoolean();
+        }
 
-        return new Quest(id, displayName, type, stages, dialogue, villagerProfession);
+        return new Quest(id, displayName, type, stages, dialogue, villagerProfession, isGlobalQuest);
     }
     private static DialogueStage parseDialogue(String id, JsonObject stage, String questId) {
         if(!stage.has("dialogue"))

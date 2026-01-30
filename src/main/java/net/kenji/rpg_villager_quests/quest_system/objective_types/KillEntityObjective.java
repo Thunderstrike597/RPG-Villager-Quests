@@ -18,6 +18,8 @@ import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.registries.ForgeRegistries;
 
+import java.util.List;
+
 @Mod.EventBusSubscriber(modid = RpgVillagerQuests.MODID, bus = Mod.EventBusSubscriber.Bus.FORGE)
 public class KillEntityObjective implements QuestObjective {
 
@@ -40,9 +42,9 @@ public class KillEntityObjective implements QuestObjective {
             if (questData.getActiveQuests() != null) {
                 for (QuestInstance questInstance : questData.getActiveQuests()) {
                     if (!questInstance.isComplete()) {
-                        if(questInstance.getCurrentStage() instanceof ObjectiveStage objectiveStage){
-                            if(objectiveStage.getObjective() instanceof KillEntityObjective killEntityObjective) {
-                                if (event.getEntity().getType() == killEntityObjective.entityType){
+                        if (questInstance.getCurrentStage() instanceof ObjectiveStage objectiveStage) {
+                            if (objectiveStage.getObjective() instanceof KillEntityObjective killEntityObjective) {
+                                if (event.getEntity().getType() == killEntityObjective.entityType) {
                                     killEntityObjective.entitiesKilled++;
                                 }
                             }

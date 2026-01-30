@@ -22,11 +22,14 @@ public class Quest {
     public final Dialogue completionDialogue;
     public final VillagerProfession questProfession;
 
-    public Quest(String id, String displayName, String type, List<QuestStage> stages, Dialogue completionDialogue, String villagerProfession) {
+    public final boolean isGlobalQuest;
+
+    public Quest(String id, String displayName, String type, List<QuestStage> stages, Dialogue completionDialogue, String villagerProfession, boolean isGlobalQuest) {
         this.id = id;
         this.displayName = displayName;
         this.type = type;
         this.stages = stages;
+        this.isGlobalQuest = isGlobalQuest;
         if(completionDialogue != null)
             this.completionDialogue = completionDialogue;
         else{
