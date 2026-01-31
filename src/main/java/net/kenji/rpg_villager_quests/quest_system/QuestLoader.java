@@ -26,8 +26,11 @@ public class QuestLoader {
 
     public static Quest load(JsonObject json){
         String id = json.get("id").getAsString();
+        String displayName = id;
 
-        String displayName = json.get("quest_display_name").getAsString();
+        if(json.has("display_name")) {
+            displayName = json.get("display_name").getAsString();
+        }
         String type = json.get("type").getAsString();
 
         List<QuestStage> stages = new ArrayList<>();
@@ -154,6 +157,11 @@ public class QuestLoader {
         String stageTag = null;
         if(stage.has("tag")) {
             stageTag = stage.get("tag").getAsString();
+        }
+        String displayName = "Dialogue";
+
+        if(stage.has("display_name")){
+            displayName = stage.get("display_name").getAsString();
         }
 
         for (JsonElement pageElem : pagesArray) {
@@ -323,7 +331,7 @@ public class QuestLoader {
             }
         }
 
-        return new DialogueStage(id, pages, questId, nextStage, choices, choice1Pages, choice2Pages, parseRewards(stage), stageTag);
+        return new DialogueStage(id, displayName, pages, questId, nextStage, choices, choice1Pages, choice2Pages, parseRewards(stage), stageTag);
     }
     private static ObjectiveStage parseObjective(String id, JsonObject stage, String questId, String stageId) {
 
@@ -334,11 +342,15 @@ public class QuestLoader {
 
         String type = obj.get("objective_type").getAsString();
         String nextStage = stage.getAsJsonObject("on_complete").get("goto").getAsString();
-
+        String displayName = null;
 
         QuestObjective objective;
         JsonArray mainInProgressDialogueArray = null;
         JsonArray secondaryInProgressDialogueArray = null;
+
+        if(stage.has("display_name")){
+           displayName = stage.get("display_name").getAsString();
+        }
 
         if(stage.has("in_progress_dialogue")) {
             JsonObject inProgressDialogue = stage.get("in_progress_dialogue").getAsJsonObject();
@@ -357,7 +369,7 @@ public class QuestLoader {
         List<Page> mainInProgressDialogue = new ArrayList<>();
         List<Page> secondaryInProgressDialogue = new ArrayList<>();
 
-        String stageTag = null;
+        String stageTag = "Objective";
         if(stage.has("tag")) {
             stageTag = stage.get("tag").getAsString();
         }
@@ -493,7 +505,7 @@ public class QuestLoader {
         }
         QuestEffects completionEffects = new QuestEffects();
 
-        return new ObjectiveStage(id, objective, mainInProgressDialogue, questId, nextStage, completionEffects, parseRewards(stage), stageTag);
+        return new ObjectiveStage(id, displayName, objective, mainInProgressDialogue, questId, nextStage, completionEffects, parseRewards(stage), stageTag);
     }
 
     private static QuestEffects parseEffects(JsonObject obj) {

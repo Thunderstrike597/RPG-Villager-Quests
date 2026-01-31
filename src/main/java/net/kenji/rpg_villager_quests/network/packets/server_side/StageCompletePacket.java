@@ -8,6 +8,7 @@ import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.network.NetworkEvent;
+import org.jline.utils.Log;
 
 import java.util.UUID;
 import java.util.function.Supplier;
@@ -68,8 +69,9 @@ public class StageCompletePacket {
                 QuestData questData = QuestData.get(player);
                 QuestInstance questInstance = questData.getQuestInstance(packet.questId, packet.villagerUuid);
                 QuestStage questStage = questInstance.getQuest().getStageById(packet.stageId);
+                Log.info("LOGGING STAGE COMPLETE PACKET");
 
-                if(questStage != null && questStage.stageRewards != null) {
+                if(questStage != null) {
                     questStage.onComplete(packet.effects, player, questInstance);
                 }
             }

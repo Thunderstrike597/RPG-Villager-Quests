@@ -1,6 +1,10 @@
 package net.kenji.rpg_villager_quests.quest_system.stage_types;
 
+import net.kenji.rpg_villager_quests.network.ModPacketHandler;
+import net.kenji.rpg_villager_quests.network.packets.client_side.CompleteStageEventPacket;
+import net.kenji.rpg_villager_quests.network.packets.client_side.StartStageEventPacket;
 import net.kenji.rpg_villager_quests.quest_system.*;
+import net.kenji.rpg_villager_quests.quest_system.events.QuestStageEvents;
 import net.kenji.rpg_villager_quests.quest_system.interfaces.QuestObjective;
 import net.kenji.rpg_villager_quests.quest_system.interfaces.QuestReward;
 import net.kenji.rpg_villager_quests.quest_system.objective_types.SecondaryVillagerQuestObjective;
@@ -8,6 +12,8 @@ import net.kenji.rpg_villager_quests.quest_system.quest_data.QuestData;
 import net.kenji.rpg_villager_quests.quest_system.quest_data.QuestInstance;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
+import net.minecraftforge.common.MinecraftForge;
+import org.jline.utils.Log;
 
 import java.util.List;
 import java.util.UUID;
@@ -17,8 +23,8 @@ public class ObjectiveStage extends QuestStage {
     private final QuestObjective objective;
     private final QuestEffects effects;
 
-    public ObjectiveStage(String id, QuestObjective objective, List<Page> pages, String belongingQuest, String nextStageId, QuestEffects stageEffects, List<QuestReward> questReward, String tag) {
-        super(id, QuestStageType.valueOf("objective".toUpperCase()), pages, belongingQuest, nextStageId, questReward, tag);
+    public ObjectiveStage(String id, String displayName, QuestObjective objective, List<Page> pages, String belongingQuest, String nextStageId, QuestEffects stageEffects, List<QuestReward> questReward, String tag) {
+        super(id, displayName, QuestStageType.valueOf("objective".toUpperCase()), pages, belongingQuest, nextStageId, questReward, tag, 6);
         this.objective = objective;
         this.effects = stageEffects;
     }
@@ -34,7 +40,10 @@ public class ObjectiveStage extends QuestStage {
     public void start(ServerPlayer player, QuestInstance questInstance) {
         questInstance.setCurrentStage(id);
         objective.onStartObjective(player, questInstance);
+
         QuestData.syncToClient(player);
+        MinecraftForge.EVENT_BUS.post(new QuestStageEvents.StageStartEvent(questInstance));
+        ModPacketHandler.sendToPlayer(new StartStageEventPacket(questInstance.getQuest().getQuestId(), this.id, questInstance.getQuestVillager()), player);
     }
 
     public void restartStage(Player player, QuestInstance questInstance) {
@@ -101,7 +110,7 @@ public class ObjectiveStage extends QuestStage {
 
     @Override
     public boolean canCompleteStage(int currentPageIndex, Player player) {
-        return currentPageIndex >= pages.size() - 1;
+        return currentPageIndex >= pages.size() - 1 && objective.canComplete(player);
     }
 
     @Override
@@ -119,6 +128,7 @@ public class ObjectiveStage extends QuestStage {
             }
             completionEffects.apply(player);
         }
+        Log.info("LOGGING STAGE COMPLETE METHOD");
         if (nextStage != null) {
             questInstance.advanceFromCurrentStage(player);
         } else {
@@ -126,6 +136,8 @@ public class ObjectiveStage extends QuestStage {
         }
         objective.onComplete(completionEffects, player);
         QuestData.syncToClient(player);
+        MinecraftForge.EVENT_BUS.post(new QuestStageEvents.StageCompleteEvent(questInstance, this));
+        ModPacketHandler.sendToPlayer(new CompleteStageEventPacket(questInstance.getQuest().getQuestId(), this.id, questInstance.getQuestVillager()), player);
     }
 
 }

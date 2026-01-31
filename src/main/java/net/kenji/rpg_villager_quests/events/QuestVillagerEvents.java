@@ -165,7 +165,7 @@ public class QuestVillagerEvents {
                 QuestData questData = QuestData.get(player);
                 Quest quest = VillagerQuestManager.getVillagerQuest(clickedVillager.getPersistentData().getUUID(PackageDeliverObjective.objectiveEntityTag));
                 if(quest != null) {
-                    QuestInstance questInstance = questData.getQuestInstance(quest.getQuestId(), questVillager);
+                    QuestInstance questInstance = questData.getQuestInstance(quest.getQuestId(), clickedVillager.getPersistentData().getUUID(PackageDeliverObjective.objectiveEntityTag));
                     questVillager = questInstance.getQuestVillager();
                     secondaryVillager = clickedVillager.getUUID();
                 }

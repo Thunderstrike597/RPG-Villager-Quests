@@ -447,9 +447,7 @@ public class VillagerQuestMenu extends Screen {
 
     public void onPositivePress(Player player, QuestInstance questInstance){
         if(questInstance != null && !questInstance.isComplete()) {
-            Log.info("Logging Pos Press1");
             if (pages.get(currentPageIndex).dialogueType != DialogueStage.DialogueType.CHOICE) {
-                Log.info("Logging Pos Press2");
                 if (currentPageIndex < pages.size() - 1) {
                     onNextPage(player);
                 } else {
@@ -459,7 +457,6 @@ public class VillagerQuestMenu extends Screen {
                             onCompleteStage(player, questInstance, pages.get(currentPageIndex));
                         } else if (pages.get(currentPageIndex).effects != null && pages.get(currentPageIndex).effects.endQuest) {
                             onCompleteQuest(player, questInstance, pages.get(currentPageIndex));
-                            Log.info("Logging Pos Press4");
                         }
 
                         if (!(questInstance.getCurrentStage() instanceof DialogueStage))
@@ -533,7 +530,10 @@ public class VillagerQuestMenu extends Screen {
                             onCompleteQuest(player, questInstance, pages.get(currentPageIndex));
                         }
                     } else {
-                        this.onClose();
+                        if(questInstance.getCurrentStage().canCompleteStage(currentStageIndex, player)) {
+                            onCompleteStage(player, questInstance, pages.get(currentStageIndex));
+                            this.onClose();
+                        }
                     }
                 }
                 else{

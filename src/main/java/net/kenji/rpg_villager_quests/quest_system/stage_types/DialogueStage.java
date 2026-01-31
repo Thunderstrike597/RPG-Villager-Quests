@@ -1,14 +1,18 @@
 package net.kenji.rpg_villager_quests.quest_system.stage_types;
 
 import net.kenji.rpg_villager_quests.network.ModPacketHandler;
-import net.kenji.rpg_villager_quests.network.packets.server_side.StageStartPacket;
+import net.kenji.rpg_villager_quests.network.packets.client_side.CompleteStageEventPacket;
+import net.kenji.rpg_villager_quests.network.packets.client_side.StartStageEventPacket;
 import net.kenji.rpg_villager_quests.quest_system.*;
+import net.kenji.rpg_villager_quests.quest_system.events.QuestStageEvents;
 import net.kenji.rpg_villager_quests.quest_system.interfaces.QuestReward;
 import net.kenji.rpg_villager_quests.quest_system.objective_types.SecondaryVillagerQuestObjective;
 import net.kenji.rpg_villager_quests.quest_system.quest_data.QuestData;
 import net.kenji.rpg_villager_quests.quest_system.quest_data.QuestInstance;
+import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
+import net.minecraftforge.common.MinecraftForge;
 
 import java.util.List;
 import java.util.UUID;
@@ -34,17 +38,23 @@ public class DialogueStage extends QuestStage {
         OPTION_1,
         OPTION_2
     }
-    public DialogueStage(String id, List<Page> pages, String belongingQuest, String nextStageId, List<QuestChoice> choices, List<Page> choice1Pages, List<Page> choice2Pages, List<QuestReward> questReward, String tag) {
-        super(id, QuestStageType.valueOf("dialogue".toUpperCase()), pages, belongingQuest, nextStageId, questReward, tag);
+    public DialogueStage(String id, String displayName, List<Page> pages, String belongingQuest, String nextStageId, List<QuestChoice> choices, List<Page> choice1Pages, List<Page> choice2Pages, List<QuestReward> questReward, String tag) {
+        super(id, displayName,QuestStageType.valueOf("dialogue".toUpperCase()), pages, belongingQuest, nextStageId, questReward, tag, 12);
         this.choice1Pages = choice1Pages;
         this.choice2Pages = choice2Pages;
         this.choices = choices;
     }
     @Override
     public void start(ServerPlayer player, QuestInstance questInstance) {
-        ModPacketHandler.sendToServer(new StageStartPacket(belongingQuestId, id,questInstance.getQuestVillager()));
+       // ModPacketHandler.sendToServer(new StageStartPacket(belongingQuestId, id,questInstance.getQuestVillager()));
         questInstance.setCurrentStage(id);
+        BlockPos entityPos = questInstance.getEntityBlockPos(player);
+        if(entityPos != null) {
+            questInstance.setWaypoint(entityPos.getX(), entityPos.getY(), entityPos.getZ(), questInstance.getQuestVillager());
+        }
         QuestData.syncToClient(player);
+        MinecraftForge.EVENT_BUS.post(new QuestStageEvents.StageStartEvent(questInstance));
+        ModPacketHandler.sendToPlayer(new StartStageEventPacket(questInstance.getQuest().getQuestId(), this.id, questInstance.getQuestVillager()), player);
     }
 
     @Override
@@ -101,6 +111,8 @@ public class DialogueStage extends QuestStage {
             questInstance.triggerQuestComplete(completionEffects, player, questInstance.getQuestVillager());
         }
         QuestData.syncToClient(player);
+        MinecraftForge.EVENT_BUS.post(new QuestStageEvents.StageCompleteEvent(questInstance, this));
+        ModPacketHandler.sendToPlayer(new CompleteStageEventPacket(questInstance.getQuest().getQuestId(), this.id, questInstance.getQuestVillager()), player);
     }
     public List<Page> getDialogue(Player player,QuestInstance questInstance, UUID interactVillager) {
 

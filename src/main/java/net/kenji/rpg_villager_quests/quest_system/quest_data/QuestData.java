@@ -28,7 +28,6 @@ public class QuestData {
 
     public static QuestData get(Player player) {
         if (player.level().isClientSide) {
-            // Client just uses static map
             return questDataMap.computeIfAbsent(player.getUUID(), id -> new QuestData());
         } else {
             ServerLevel level = (ServerLevel) player.level();
@@ -48,12 +47,12 @@ public class QuestData {
     }
 
     // Client-side: load synced data
-    public static void loadClientData(CompoundTag tag) {
+    public static QuestData loadClientData(CompoundTag tag) {
         Player player = Minecraft.getInstance().player;
-        if (player == null) return;
+        if (player == null) return null;
 
         QuestData data = fromNBT(tag);
-        questDataMap.put(player.getUUID(), data);
+        return questDataMap.put(player.getUUID(), data);
     }
 
     public static void updateClientQuest(String questId, CompoundTag instanceData) {

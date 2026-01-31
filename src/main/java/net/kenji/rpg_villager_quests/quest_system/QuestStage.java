@@ -11,16 +11,18 @@ import java.util.UUID;
 
 public abstract class QuestStage {
     public final String id;
+    public final String displayName;
     public final QuestStageType type;
     public final List<Page> pages;
     public final String belongingQuestId;
     public final String nextStageId;
     public final List<QuestReward> stageRewards;
-    public boolean isComplete;
     public final String tag;
+    public final int waypointColorIndex;
 
+    public boolean isComplete;
 
-    protected QuestStage(String id, QuestStageType type, List<Page> pages, String belongingQuestId, String nextStageId, List<QuestReward> questReward, String tag) {
+    protected QuestStage(String id, String displayName, QuestStageType type, List<Page> pages, String belongingQuestId, String nextStageId, List<QuestReward> questReward, String tag, int waypointColorIndex) {
         this.id = id;
         this.type = type;
         this.pages = pages;
@@ -28,6 +30,8 @@ public abstract class QuestStage {
         this.nextStageId = nextStageId;
         this.stageRewards = questReward;
         this.tag = tag;
+        this.displayName = displayName;
+        this.waypointColorIndex = waypointColorIndex;
     }
     public abstract void start(ServerPlayer player, QuestInstance questInstance);
     public abstract boolean isComplete(Player player);

@@ -91,7 +91,6 @@ public class PackageDeliverObjective extends SecondaryVillagerQuestObjective {
 
         if(level instanceof ServerLevel serverLevel) {
             if (player instanceof ServerPlayer serverPlayer) {
-                Log.info("LOGGING PLAYER");
                 BlockPos pos;
                 BlockPos origin = player.blockPosition();
                 int randomDist = (int) Mth.randomBetween(player.getRandom(), minDistance, maxDistance);
@@ -155,6 +154,7 @@ public class PackageDeliverObjective extends SecondaryVillagerQuestObjective {
                     Villager newVillager = EntityType.VILLAGER.spawn(serverLevel, ItemStack.EMPTY, player, pos, MobSpawnType.TRIGGERED, false, false);
                     if (newVillager != null) {
                         questInstance.currentSecondaryEntity = newVillager.getUUID();
+                        questInstance.setWaypoint(pos.getX(), pos.getY(), pos.getZ(), questInstance.currentSecondaryEntity);
                         Entity entity = serverLevel.getEntity(questInstance.currentSecondaryEntity);
                         if (entity instanceof Villager villagerEntity) {
                             villagerEntity.getPersistentData().putUUID(objectiveEntityTag, questInstance.getQuestVillager());
@@ -202,8 +202,10 @@ public class PackageDeliverObjective extends SecondaryVillagerQuestObjective {
         for (int i = 0; i < inv.getContainerSize(); i++) {
             var stack = inv.getItem(i);
             if (stack.is(item)){
-                slot = player.inventoryMenu.getSlot(i);
-                break;
+                if(stack.getTag().getBoolean("QuestDeliveryItem")) {
+                    slot = player.inventoryMenu.getSlot(i);
+                    break;
+                }
             }
         }
         return slot != null;

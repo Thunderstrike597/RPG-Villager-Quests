@@ -8,23 +8,28 @@ import net.kenji.rpg_villager_quests.quest_system.QuestEffects;
 import net.kenji.rpg_villager_quests.quest_system.QuestStage;
 import net.kenji.rpg_villager_quests.quest_system.Reputation;
 import net.kenji.rpg_villager_quests.quest_system.quest_data.saved_data.QuestSavedData;
+import net.kenji.rpg_villager_quests.quest_system.waypoints.WaypointInstance;
+import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.npc.Villager;
-import net.minecraft.world.entity.player.Player;
 
 import java.util.*;
 
 public class QuestInstance {
+
+
     private final Quest questDefinition;
 
     private int currentStageIndex;
     private boolean completed;
     private Reputation questReputation;
     private UUID questVillagerUUID;
+
     public UUID currentSecondaryEntity;
+    public WaypointInstance currentQuestWaypoint;
 
     // ✅ Store which stages are complete for THIS instance
     private final Set<String> completedStageIds = new HashSet<>();
@@ -34,6 +39,21 @@ public class QuestInstance {
         this.currentStageIndex = 0;
         this.completed = false;
         this.questVillagerUUID = villager;
+    }
+
+    public WaypointInstance setWaypoint(int x, int y, int z, UUID waypointEntity){
+        return currentQuestWaypoint = new WaypointInstance(x, y, z, getCurrentStage().displayName, waypointEntity);
+    }
+    public void clearWaypoint(){
+        currentQuestWaypoint = null;
+    }
+
+    public BlockPos getEntityBlockPos(ServerPlayer serverPlayer){
+       Entity entity = serverPlayer.serverLevel().getEntity(getQuestVillager()) ;
+       if(entity != null){
+          return entity.blockPosition();
+       }
+       return null;
     }
 
     public CompoundTag serializeNBT() {
@@ -53,6 +73,11 @@ public class QuestInstance {
 
         if (questReputation != null) {
             tag.putString("Reputation", questReputation.name());
+        }
+        if (currentQuestWaypoint != null) {
+            tag.putIntArray("Waypoint", new int[]{currentQuestWaypoint.x, currentQuestWaypoint.y, currentQuestWaypoint.z});
+            tag.putString("WaypointName", currentQuestWaypoint.waypointName);
+            tag.putUUID("WaypointEntityUUID", currentQuestWaypoint.waypointEntityUuid);
         }
 
         // ✅ Save completed stages
@@ -91,7 +116,13 @@ public class QuestInstance {
         if(tag.contains("Reputation")) {
             instance.questReputation = Reputation.valueOf(tag.getString("Reputation"));
         }
+        if(tag.contains("Waypoint")) {
+            int[] intArray = tag.getIntArray("Waypoint");
+            String waypointName = tag.getString("WaypointName");
+            UUID waypointEntityUuid = tag.getUUID("WaypointEntityUUID");
 
+            instance.currentQuestWaypoint = new WaypointInstance(intArray[0], intArray[1], intArray[2], waypointName, waypointEntityUuid);
+        }
         if(tag.contains("CompletedStageCount")) {
             int completedCount = tag.getInt("CompletedStageCount");
             for (int i = 0; i < completedCount; i++) {
@@ -161,7 +192,6 @@ public class QuestInstance {
         ServerLevel level = (ServerLevel) player.level();
         QuestSavedData.get(level).markDirty();
         QuestData.syncToClient(player);
-
     }
 
     public Quest getQuest() {
