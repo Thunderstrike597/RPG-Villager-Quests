@@ -25,7 +25,7 @@ public class DialogueStage extends QuestStage {
 
     public ChoiceType chosenDialogueOption = ChoiceType.UNCHOSEN;
 
-    public List<Page> currentDialoguePages = pages;
+    public List<Page> currentDialoguePages = dialogue.main.pages;
 
 
     public enum DialogueType{
@@ -38,7 +38,7 @@ public class DialogueStage extends QuestStage {
         OPTION_1,
         OPTION_2
     }
-    public DialogueStage(String id, String displayName, List<Page> pages, String belongingQuest, String nextStageId, List<QuestChoice> choices, List<Page> choice1Pages, List<Page> choice2Pages, List<QuestReward> questReward, String tag) {
+    public DialogueStage(String id, String displayName, Dialogue pages, String belongingQuest, String nextStageId, List<QuestChoice> choices, List<Page> choice1Pages, List<Page> choice2Pages, List<QuestReward> questReward, String tag) {
         super(id, displayName,QuestStageType.valueOf("dialogue".toUpperCase()), pages, belongingQuest, nextStageId, questReward, tag, 12);
         this.choice1Pages = choice1Pages;
         this.choice2Pages = choice2Pages;
@@ -118,7 +118,7 @@ public class DialogueStage extends QuestStage {
 
         List<Page> pageList;
         if (choices != null && !choices.isEmpty()) {
-            pageList = chosenDialogueOption == ChoiceType.OPTION_1 ? choice1Pages : chosenDialogueOption == ChoiceType.OPTION_2 ? choice2Pages : pages;
+            pageList = chosenDialogueOption == ChoiceType.OPTION_1 ? choice1Pages : chosenDialogueOption == ChoiceType.OPTION_2 ? choice2Pages : getMainPages();
         } else {
             if (interactVillager.equals(questInstance.currentSecondaryEntity)) {
                 for (QuestStage stage : questInstance.getQuest().stages) {
@@ -135,7 +135,7 @@ public class DialogueStage extends QuestStage {
                 }
             }
 
-            pageList = pages;
+            pageList = getMainPages();
         }
 
         return pageList;
@@ -177,7 +177,7 @@ public class DialogueStage extends QuestStage {
            }
             if(option == ChoiceType.OPTION_2){
                 if(choices.get(1) != null) {
-                    if(choices.get(0).effects != null) {
+                    if(choices.get(1).effects != null) {
 
                         if (choices.get(1).effects.endQuest) {
                             return true;
@@ -187,6 +187,11 @@ public class DialogueStage extends QuestStage {
             }
         }
         return currentPageIndex >= currentDialoguePages.size() - 1;
+    }
+
+    @Override
+    public List<Page> getMainPages() {
+        return this.dialogue.main.pages;
     }
 
 }

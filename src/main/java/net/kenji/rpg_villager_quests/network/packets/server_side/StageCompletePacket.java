@@ -67,7 +67,7 @@ public class StageCompletePacket {
             ServerPlayer player = ctx.get().getSender();
             if(player != null) {
                 QuestData questData = QuestData.get(player);
-                QuestInstance questInstance = questData.getQuestInstance(packet.questId, packet.villagerUuid);
+                QuestInstance questInstance = questData.getQuestInstance(packet.questId, packet.villagerUuid, false);
                 QuestStage questStage = questInstance.getQuest().getStageById(packet.stageId);
                 Log.info("LOGGING STAGE COMPLETE PACKET");
 

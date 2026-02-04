@@ -18,18 +18,34 @@ public class Quest {
     public final String displayName;
     public final String type;
     public final List<QuestStage> stages;
+    public Dialogue reconsiderDialogue;
 
     public final Dialogue completionDialogue;
     public final VillagerProfession questProfession;
-
     public final boolean isGlobalQuest;
 
-    public Quest(String id, String displayName, String type, List<QuestStage> stages, Dialogue completionDialogue, String villagerProfession, boolean isGlobalQuest) {
+    public Quest(String id, String displayName, String type, List<QuestStage> stages, Dialogue completionDialogue, Dialogue reconsiderDialogue, String villagerProfession, boolean isGlobalQuest) {
         this.id = id;
         this.displayName = displayName;
         this.type = type;
         this.stages = stages;
         this.isGlobalQuest = isGlobalQuest;
+        if(reconsiderDialogue != null){
+            this.reconsiderDialogue = reconsiderDialogue;
+        }
+        else{
+            List<Page> mainPages = new ArrayList<>();
+            List<Page> posPages = new ArrayList<>();
+            List<Page> negPages = new ArrayList<>();
+
+            Page mainPage = new Page();
+            mainPage.text = "You're back? Have you changed your mind?";
+            mainPages.add(mainPage);
+
+            Dialogue.Outcome mainOutcome = new Dialogue.Outcome(mainPages);
+
+            this.reconsiderDialogue = new Dialogue(null,null , mainOutcome);
+        }
         if(completionDialogue != null)
             this.completionDialogue = completionDialogue;
         else{
@@ -59,17 +75,21 @@ public class Quest {
     public String getQuestId(){
         return this.id;
     }
-
-    public List<Page> getCompletionDialogue(QuestInstance questInstance){
-        if(questInstance.getQuestReputation() == Reputation.GOOD){
-            return completionDialogue.outcome.pages;
+    public List<Page> getQuedTemporaryDialogue(QuestInstance questInstance){
+            if(questInstance.getQuedTemporaryDialogue() != null) {
+                return questInstance.getQuedTemporaryDialogue();
+            }
+        return null;
+    }
+    public List<Page> getCompletionDialogue(QuestInstance questInstance) {
+        if (completionDialogue.positive != null && completionDialogue.negative != null) {
+            if (questInstance.getQuestReputation() == Reputation.GOOD) {
+                return completionDialogue.positive.pages;
+            } else if (questInstance.getQuestReputation() == Reputation.BAD) {
+                return completionDialogue.negative.pages;
+            }
         }
-        else if(questInstance.getQuestReputation() == Reputation.BAD){
-            if(completionDialogue.altOutcome == null)
-                return completionDialogue.outcome.pages;
-            return completionDialogue.altOutcome.pages;
-        }
-        return completionDialogue.outcome.pages;
+        return completionDialogue.main.pages;
     }
 
     public QuestStage getStageById(String id){

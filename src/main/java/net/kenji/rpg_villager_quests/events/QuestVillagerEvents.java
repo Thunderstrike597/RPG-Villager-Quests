@@ -165,7 +165,7 @@ public class QuestVillagerEvents {
                 QuestData questData = QuestData.get(player);
                 Quest quest = VillagerQuestManager.getVillagerQuest(clickedVillager.getPersistentData().getUUID(PackageDeliverObjective.objectiveEntityTag));
                 if(quest != null) {
-                    QuestInstance questInstance = questData.getQuestInstance(quest.getQuestId(), clickedVillager.getPersistentData().getUUID(PackageDeliverObjective.objectiveEntityTag));
+                    QuestInstance questInstance = questData.getQuestInstance(quest.getQuestId(), clickedVillager.getPersistentData().getUUID(PackageDeliverObjective.objectiveEntityTag), false);
                     questVillager = questInstance.getQuestVillager();
                     secondaryVillager = clickedVillager.getUUID();
                 }
@@ -180,7 +180,7 @@ public class QuestVillagerEvents {
             UUID finalSecondaryVillager = secondaryVillager;
             Minecraft.getInstance().execute(() -> {
                 Minecraft.getInstance().setScreen(
-                        new VillagerQuestMenu(Component.literal("Villager Quests"), finalQuestVillager, finalSecondaryVillager)
+                        VillagerQuestMenu.INSTANCE = new VillagerQuestMenu(Component.literal("Villager Quests"), finalQuestVillager, finalSecondaryVillager)
                 );
             });
         }

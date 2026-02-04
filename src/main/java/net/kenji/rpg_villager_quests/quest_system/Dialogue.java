@@ -9,12 +9,19 @@ public class Dialogue {
             this.pages = pages;
         }
     }
+    public final Outcome main;
 
-    public final Outcome outcome;
-    public final Outcome altOutcome;
+    public final Outcome positive;
+    public final Outcome negative;
 
-    Dialogue(Outcome outcome, Outcome altOutcome){
-        this.outcome = outcome;
-        this.altOutcome = altOutcome;
+    Dialogue(Outcome positive, Outcome negative){
+        this.positive = positive;
+        this.negative = negative;
+        this.main = null;
+    }
+    Dialogue(Outcome positive, Outcome negative, Outcome main){
+        this.positive = positive;
+        this.negative = negative;
+        this.main = main;
     }
 }

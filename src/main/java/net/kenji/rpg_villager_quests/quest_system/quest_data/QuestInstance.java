@@ -3,10 +3,7 @@ package net.kenji.rpg_villager_quests.quest_system.quest_data;
 import net.kenji.rpg_villager_quests.manager.VillagerQuestManager;
 import net.kenji.rpg_villager_quests.network.ModPacketHandler;
 import net.kenji.rpg_villager_quests.network.packets.client_side.VillagerGlowPacket;
-import net.kenji.rpg_villager_quests.quest_system.Quest;
-import net.kenji.rpg_villager_quests.quest_system.QuestEffects;
-import net.kenji.rpg_villager_quests.quest_system.QuestStage;
-import net.kenji.rpg_villager_quests.quest_system.Reputation;
+import net.kenji.rpg_villager_quests.quest_system.*;
 import net.kenji.rpg_villager_quests.quest_system.quest_data.saved_data.QuestSavedData;
 import net.kenji.rpg_villager_quests.quest_system.waypoints.WaypointInstance;
 import net.minecraft.core.BlockPos;
@@ -31,6 +28,11 @@ public class QuestInstance {
     public UUID currentSecondaryEntity;
     public WaypointInstance currentQuestWaypoint;
 
+    public boolean queQuestAccept = false;
+    public boolean queQuestDecline;
+    public boolean questDeclined = false;
+    private List<Page> temporaryDialogue;
+
     // ✅ Store which stages are complete for THIS instance
     private final Set<String> completedStageIds = new HashSet<>();
 
@@ -46,6 +48,16 @@ public class QuestInstance {
     }
     public void clearWaypoint(){
         currentQuestWaypoint = null;
+    }
+
+    public List<Page> getQuedTemporaryDialogue(){
+        return temporaryDialogue;
+    }
+    public void queTemporaryDialogue(List<Page> pages){
+        temporaryDialogue = pages;
+    }
+    public void clearQuedDialogue(){
+        temporaryDialogue = null;
     }
 
     public BlockPos getEntityBlockPos(ServerPlayer serverPlayer){
@@ -180,7 +192,7 @@ public class QuestInstance {
         }
 
         if(QuestData.get(player) != null) {
-            QuestInstance questInstance = QuestData.get(player).getQuestInstance(questDefinition.getQuestId(), villagerUUID);
+            QuestInstance questInstance = QuestData.get(player).getQuestInstance(questDefinition.getQuestId(), villagerUUID, false);
             QuestData.get(player).removeActiveQuest(questDefinition.getQuestId(), villagerUUID);
             QuestData.get(player).addCompletedQuest(questDefinition.getQuestId(), questInstance);
         }

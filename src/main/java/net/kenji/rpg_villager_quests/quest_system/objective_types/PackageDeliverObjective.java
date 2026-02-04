@@ -2,6 +2,7 @@ package net.kenji.rpg_villager_quests.quest_system.objective_types;
 
 import net.kenji.rpg_villager_quests.quest_system.Page;
 import net.kenji.rpg_villager_quests.quest_system.QuestEffects;
+import net.kenji.rpg_villager_quests.quest_system.QuestStage;
 import net.kenji.rpg_villager_quests.quest_system.quest_data.QuestData;
 import net.kenji.rpg_villager_quests.quest_system.quest_data.QuestInstance;
 import net.kenji.rpg_villager_quests.quest_system.stage_types.ObjectiveStage;
@@ -33,7 +34,10 @@ import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.registries.ForgeRegistries;
 import org.jline.utils.Log;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
+import java.util.UUID;
 
 public class PackageDeliverObjective extends SecondaryVillagerQuestObjective {
 
@@ -72,13 +76,45 @@ public class PackageDeliverObjective extends SecondaryVillagerQuestObjective {
                     if (!questInstance.isComplete()) {
                         if (questInstance.getCurrentStage() instanceof ObjectiveStage objectiveStage) {
                             if (objectiveStage.getObjective() instanceof PackageDeliverObjective deliverPackageObjective) {
-                                if (deliverPackageObjective.canComplete(event.player)) {
+                                if (deliverPackageObjective.canComplete(event.player, questInstance, questInstance.getQuestVillager())) {
                                     if (objectiveStage.tag != null) {
                                         objectiveStage.onComplete(objectiveStage.getStageEffects(), serverPlayer, questInstance);
                                     }
                                 }
                             }
                         }
+                        List<QuestStage> currentStages = new ArrayList<>();
+                        for(QuestStage stage : questInstance.getQuest().stages){
+                            if (questInstance.getCurrentStage() instanceof ObjectiveStage objectiveStage) {
+                                if (objectiveStage.getObjective() instanceof PackageDeliverObjective deliverPackageObjective) {
+                                    if(Objects.equals(deliverPackageObjective.belongingStageId, stage.id)){
+                                        currentStages.add(stage);
+                                    }
+                                }
+                            }
+                        }
+                        for (QuestStage currentStage : currentStages) {
+                            for(QuestStage stage : questInstance.getQuest().stages) {
+                                if(stage.id.equals(currentStage.nextStageId)){
+                                    if(stage.isComplete(serverPlayer)){
+                                        ServerLevel serverLevel =  serverPlayer.serverLevel();
+                                        Entity entity = serverLevel.getEntity(questInstance.currentSecondaryEntity);
+                                        if(entity != null){
+                                            if(entity.getPersistentData().contains(objectiveEntityTag))
+                                                entity.getPersistentData().remove(objectiveEntityTag);
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        }else if(questInstance.currentSecondaryEntity != null){
+                      ServerLevel serverLevel =  serverPlayer.serverLevel();
+                      Entity entity = serverLevel.getEntity(questInstance.currentSecondaryEntity);
+                      if(entity != null){
+                          if(entity.getPersistentData().contains(objectiveEntityTag))
+                              entity.getPersistentData().remove(objectiveEntityTag);
+                      }
                     }
                 }
             }
@@ -196,19 +232,8 @@ public class PackageDeliverObjective extends SecondaryVillagerQuestObjective {
     }
 
     @Override
-    public boolean canComplete(Player player) {
-        var inv = player.getInventory();
-        Slot slot = null;
-        for (int i = 0; i < inv.getContainerSize(); i++) {
-            var stack = inv.getItem(i);
-            if (stack.is(item)){
-                if(stack.getTag().getBoolean("QuestDeliveryItem")) {
-                    slot = player.inventoryMenu.getSlot(i);
-                    break;
-                }
-            }
-        }
-        return slot != null;
+    public boolean canComplete(Player player, QuestInstance questInstance, UUID villagerUuid) {
+        return villagerUuid == questInstance.getQuestVillager();
     }
 
     @Override
@@ -224,6 +249,7 @@ public class PackageDeliverObjective extends SecondaryVillagerQuestObjective {
                 inv.removeItem(stack);
             }
         }
+        hasDelivered = true;
     }
 
     @Override

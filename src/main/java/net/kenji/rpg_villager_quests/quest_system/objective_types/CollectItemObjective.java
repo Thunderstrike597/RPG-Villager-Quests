@@ -12,6 +12,8 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.registries.ForgeRegistries;
 
+import java.util.UUID;
+
 public class CollectItemObjective implements QuestObjective {
 
     private final ResourceLocation item;
@@ -36,7 +38,7 @@ public class CollectItemObjective implements QuestObjective {
     }
 
     @Override
-    public boolean canComplete(Player player) {
+    public boolean canComplete(Player player, QuestInstance questInstance, UUID villagerUuid) {
         Item requiredItem = ForgeRegistries.ITEMS.getValue(item);
         if (requiredItem == null) return false;
 

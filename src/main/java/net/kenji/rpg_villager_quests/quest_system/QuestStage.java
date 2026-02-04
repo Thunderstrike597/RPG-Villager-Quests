@@ -3,7 +3,6 @@ package net.kenji.rpg_villager_quests.quest_system;
 import net.kenji.rpg_villager_quests.quest_system.interfaces.QuestReward;
 import net.kenji.rpg_villager_quests.quest_system.quest_data.QuestInstance;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.entity.npc.Villager;
 import net.minecraft.world.entity.player.Player;
 
 import java.util.List;
@@ -13,7 +12,7 @@ public abstract class QuestStage {
     public final String id;
     public final String displayName;
     public final QuestStageType type;
-    public final List<Page> pages;
+    public final Dialogue dialogue;
     public final String belongingQuestId;
     public final String nextStageId;
     public final List<QuestReward> stageRewards;
@@ -22,10 +21,10 @@ public abstract class QuestStage {
 
     public boolean isComplete;
 
-    protected QuestStage(String id, String displayName, QuestStageType type, List<Page> pages, String belongingQuestId, String nextStageId, List<QuestReward> questReward, String tag, int waypointColorIndex) {
+    protected QuestStage(String id, String displayName, QuestStageType type, Dialogue pages, String belongingQuestId, String nextStageId, List<QuestReward> questReward, String tag, int waypointColorIndex) {
         this.id = id;
         this.type = type;
-        this.pages = pages;
+        this.dialogue = pages;
         this.belongingQuestId = belongingQuestId;
         this.nextStageId = nextStageId;
         this.stageRewards = questReward;
@@ -41,7 +40,7 @@ public abstract class QuestStage {
     public abstract List<Page> getDialogue(Player player, QuestInstance questInstance, UUID interactVillager);
     public abstract boolean canCompleteStage(Player player, QuestInstance questInstance, UUID villager);
     public abstract boolean canCompleteStage(int currentPageIndex,Player player);
-
+    public abstract List<Page> getMainPages();
 
 }
 

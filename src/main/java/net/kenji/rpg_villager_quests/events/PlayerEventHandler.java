@@ -30,7 +30,7 @@ public class PlayerEventHandler {
             for(String key : VillagerQuestManager.rawJsonFiles.keySet()) {
                 Villager glowVillager = null;
                 Quest quest = VillagerQuestManager.getQuestByName(key);
-               List<QuestInstance> questInstances = questData.getQuestInstances(quest.getQuestId());
+               List<QuestInstance> questInstances = questData.getQuestInstances(quest.getQuestId(), false);
                 if (questInstances != null) {
                     for(QuestInstance questInstance : questInstances) {
                         UUID villagerUuid = questInstance.getQuestVillager();

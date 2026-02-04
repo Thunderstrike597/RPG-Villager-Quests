@@ -1,5 +1,6 @@
 package net.kenji.rpg_villager_quests.quest_system.quest_data;
 
+import net.kenji.rpg_villager_quests.manager.VillagerQuestManager;
 import net.kenji.rpg_villager_quests.network.ModPacketHandler;
 import net.kenji.rpg_villager_quests.network.packets.SyncQuestDataPacket;
 import net.kenji.rpg_villager_quests.network.packets.UpdateQuestProgressPacket;
@@ -20,6 +21,8 @@ import java.util.*;
 public class QuestData {
 
     private static final Map<UUID, QuestData> questDataMap = new HashMap<>();
+    private final Map<String, List<QuestInstance>> inactiveQuests = new HashMap<>();
+
     private final Map<String, List<QuestInstance>> activeQuests = new HashMap<>();
     private final Map<String, List<QuestInstance>> completedQuests = new HashMap<>();
 
@@ -179,6 +182,16 @@ public class QuestData {
         }
         return finalActiveQuests;
     }
+    public Collection<QuestInstance> getInactiveQuests() {
+        List<QuestInstance> finalActiveQuests = new ArrayList<>();
+        for(List<QuestInstance> questInstances : inactiveQuests.values()){
+            for(QuestInstance questInstance : questInstances){
+                if(!questInstance.isComplete())
+                    finalActiveQuests.add(questInstance);
+            }
+        }
+        return finalActiveQuests;
+    }
     public Collection<QuestInstance> getCompletedQuests(){
         List<QuestInstance> finalActiveQuests = new ArrayList<>();
         for(List<QuestInstance> questInstances : completedQuests.values()){
@@ -186,6 +199,22 @@ public class QuestData {
         }
         return finalActiveQuests;
     }
+    public QuestInstance addInactiveQuest(UUID villager){
+        Quest quest = VillagerQuestManager.getVillagerQuest(villager);
+        QuestInstance questInstance = new QuestInstance(quest, villager);
+        if(quest != null) {
+            if (inactiveQuests.containsKey(quest.getQuestId())) {
+
+                inactiveQuests.get(quest.getQuestId()).add(questInstance);
+            } else {
+                List<QuestInstance> questInstances = new ArrayList<>();
+                questInstances.add(questInstance);
+                inactiveQuests.putIfAbsent(quest.getQuestId(), questInstances);
+            }
+        }
+        return  questInstance;
+    }
+
     public void addCompletedQuest(String questName, QuestInstance questInstance){
         if(completedQuests.containsKey(questName)){
             completedQuests.get(questName).add(questInstance);
@@ -208,11 +237,16 @@ public class QuestData {
             }
         }
     }
-    public List<QuestInstance> getQuestInstances(String questId) {
-        return activeQuests.getOrDefault(questId, new ArrayList<>());
+    public List<QuestInstance> getQuestInstances(String questId, boolean includeInactive) {
+       List<QuestInstance> questInstances = activeQuests.getOrDefault(questId, new ArrayList<>());
+       if((questInstances == null || questInstances.isEmpty()) && includeInactive){
+           questInstances = inactiveQuests.getOrDefault(questId, new ArrayList<>());
+       }
+
+        return questInstances;
     }
-    public QuestInstance getQuestInstance(String questId, UUID villagerUuid) {
-        for (QuestInstance questInstance : getQuestInstances(questId)){
+    public QuestInstance getQuestInstance(String questId, UUID villagerUuid, boolean includeInactive) {
+        for (QuestInstance questInstance : getQuestInstances(questId, includeInactive)){
             if(questInstance.getQuestVillager().equals(villagerUuid)){
                 return questInstance;
             }
@@ -234,7 +268,24 @@ public class QuestData {
     }
 
     public QuestInstance startQuest(Quest quest, UUID villager, ServerPlayer player) {
-        QuestInstance instance = new QuestInstance(quest, villager);
+        QuestInstance instance = null;
+
+        if(inactiveQuests.containsKey(quest.getQuestId())){
+            for (QuestInstance questInstance : inactiveQuests.get(quest.getQuestId())){
+                if(questInstance.getQuestVillager() == villager){
+                    instance = questInstance;
+                }
+                else {
+                    instance = new QuestInstance(quest, villager);
+                }
+            }
+            if(inactiveQuests.isEmpty()){
+                instance = new QuestInstance(quest, villager);
+            }
+        }
+        else {
+            instance = new QuestInstance(quest, villager);
+        }
 
         // FIX: Add to activeQuests, not completedQuests!
         activeQuests.computeIfAbsent(quest.getQuestId(), id -> new ArrayList<>()).add(instance);

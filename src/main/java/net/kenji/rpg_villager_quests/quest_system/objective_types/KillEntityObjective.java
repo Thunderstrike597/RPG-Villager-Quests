@@ -19,6 +19,7 @@ import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.registries.ForgeRegistries;
 
 import java.util.List;
+import java.util.UUID;
 
 @Mod.EventBusSubscriber(modid = RpgVillagerQuests.MODID, bus = Mod.EventBusSubscriber.Bus.FORGE)
 public class KillEntityObjective implements QuestObjective {
@@ -64,7 +65,7 @@ public class KillEntityObjective implements QuestObjective {
                     if (!questInstance.isComplete()) {
                         if (questInstance.getCurrentStage() instanceof ObjectiveStage objectiveStage) {
                             if (objectiveStage.getObjective() instanceof KillEntityObjective killEntityObjective) {
-                                if (killEntityObjective.canComplete(event.player)) {
+                                if (killEntityObjective.canComplete(event.player, questInstance, questInstance.getQuestVillager())) {
                                     if (objectiveStage.tag != null && objectiveStage.tag.equals("complete_on_kill")) {
                                         objectiveStage.onComplete(objectiveStage.getStageEffects(), serverPlayer, questInstance);
                                     }
@@ -88,7 +89,7 @@ public class KillEntityObjective implements QuestObjective {
     }
 
     @Override
-    public boolean canComplete(Player player) {
+    public boolean canComplete(Player player, QuestInstance questInstance, UUID villagerUuid) {
         if(this.entitiesKilled >= this.count) {
             return true;
         }

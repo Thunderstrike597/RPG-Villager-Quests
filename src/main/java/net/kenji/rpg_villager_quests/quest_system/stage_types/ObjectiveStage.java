@@ -23,7 +23,7 @@ public class ObjectiveStage extends QuestStage {
     private final QuestObjective objective;
     private final QuestEffects effects;
 
-    public ObjectiveStage(String id, String displayName, QuestObjective objective, List<Page> pages, String belongingQuest, String nextStageId, QuestEffects stageEffects, List<QuestReward> questReward, String tag) {
+    public ObjectiveStage(String id, String displayName, QuestObjective objective, Dialogue pages, String belongingQuest, String nextStageId, QuestEffects stageEffects, List<QuestReward> questReward, String tag) {
         super(id, displayName, QuestStageType.valueOf("objective".toUpperCase()), pages, belongingQuest, nextStageId, questReward, tag, 6);
         this.objective = objective;
         this.effects = stageEffects;
@@ -96,7 +96,7 @@ public class ObjectiveStage extends QuestStage {
                     }
                 }
             }
-            return pages;
+            return getMainPages();
         }
 
         return questInstance.getQuest().getCompletionDialogue(questInstance);
@@ -105,12 +105,12 @@ public class ObjectiveStage extends QuestStage {
 
     @Override
     public boolean canCompleteStage(Player player, QuestInstance questInstance, UUID villager) {
-        return this.objective.canComplete(player);
+        return this.objective.canComplete(player, questInstance, villager);
     }
 
     @Override
     public boolean canCompleteStage(int currentPageIndex, Player player) {
-        return currentPageIndex >= pages.size() - 1 && objective.canComplete(player);
+        return currentPageIndex >= getMainPages().size() - 1;
     }
 
     @Override
@@ -128,7 +128,6 @@ public class ObjectiveStage extends QuestStage {
             }
             completionEffects.apply(player);
         }
-        Log.info("LOGGING STAGE COMPLETE METHOD");
         if (nextStage != null) {
             questInstance.advanceFromCurrentStage(player);
         } else {
@@ -140,4 +139,8 @@ public class ObjectiveStage extends QuestStage {
         ModPacketHandler.sendToPlayer(new CompleteStageEventPacket(questInstance.getQuest().getQuestId(), this.id, questInstance.getQuestVillager()), player);
     }
 
+    @Override
+    public List<Page> getMainPages() {
+        return this.dialogue.main.pages;
+    }
 }

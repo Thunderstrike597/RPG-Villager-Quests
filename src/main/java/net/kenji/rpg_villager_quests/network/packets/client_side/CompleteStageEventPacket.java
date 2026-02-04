@@ -47,7 +47,7 @@ public class CompleteStageEventPacket {
                 Player player = mc.player;
                 if(player != null) {
                     QuestData questData = QuestData.get(player);
-                    QuestInstance questInstance = questData.getQuestInstance(packet.questId, packet.villagerUuid);
+                    QuestInstance questInstance = questData.getQuestInstance(packet.questId, packet.villagerUuid, false);
                     MinecraftForge.EVENT_BUS.post(new QuestStageEvents.StageCompleteEvent(questInstance, questInstance.getQuest().getStageById(packet.stageId)));
                 }
             }
