@@ -71,9 +71,9 @@ public class PackageDeliverObjective extends SecondaryVillagerQuestObjective {
 
         QuestData questData = QuestData.get(event.player);
         if(event.player instanceof ServerPlayer serverPlayer) {
-            if (questData.getActiveQuests() != null) {
-                for (QuestInstance questInstance : questData.getActiveQuests()) {
-                    if (!questInstance.isComplete()) {
+            if (questData.getActiveQuests(serverPlayer) != null) {
+                for (QuestInstance questInstance : questData.getActiveQuests(serverPlayer)) {
+                    if (!questInstance.isComplete(serverPlayer)) {
                         if (questInstance.getCurrentStage() instanceof ObjectiveStage objectiveStage) {
                             if (objectiveStage.getObjective() instanceof PackageDeliverObjective deliverPackageObjective) {
                                 if (deliverPackageObjective.canComplete(event.player, questInstance, questInstance.getQuestVillager())) {

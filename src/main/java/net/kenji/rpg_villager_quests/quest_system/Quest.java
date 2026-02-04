@@ -18,8 +18,7 @@ public class Quest {
     public final String displayName;
     public final String type;
     public final List<QuestStage> stages;
-    public Dialogue reconsiderDialogue;
-
+    public final Dialogue reconsiderDialogue;
     public final Dialogue completionDialogue;
     public final VillagerProfession questProfession;
     public final boolean isGlobalQuest;

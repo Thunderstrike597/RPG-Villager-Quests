@@ -486,7 +486,7 @@ public class VillagerQuestMenu extends Screen {
                 ModPacketHandler.sendToServer(new ChoicePacket(questInstance.getQuest().getQuestId(), questInstance.getCurrentStage().id, questVillager, choiceIndex));
             }
         }
-        if(QuestData.get(getMinecraft().player).getInactiveQuests().contains(questInstance)){
+        if(QuestData.get(getMinecraft().player).getInactiveQuests(player).contains(questInstance)){
             if(choiceType == DialogueStage.ChoiceType.OPTION_2){
                 questInstance.queQuestDecline = true;
             }

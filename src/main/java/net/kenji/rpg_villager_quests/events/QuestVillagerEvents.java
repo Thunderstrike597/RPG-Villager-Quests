@@ -195,8 +195,8 @@ public class QuestVillagerEvents {
             if (player == null || mc.level == null || !player.level().isClientSide) return;
 
             QuestData questData = QuestData.get(player);
-            if (questData.getActiveQuests() != null) {
-                for (QuestInstance questInstance : questData.getActiveQuests()) {
+            if (questData.getActiveQuests(player) != null) {
+                for (QuestInstance questInstance : questData.getActiveQuests(player)) {
                     if (questInstance.getCurrentStage() instanceof ObjectiveStage objectiveStage) {
                         if (objectiveStage.getObjective() instanceof PackageDeliverObjective packageDeliverObjective) {
 

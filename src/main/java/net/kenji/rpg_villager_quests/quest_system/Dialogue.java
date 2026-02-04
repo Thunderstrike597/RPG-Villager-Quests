@@ -10,18 +10,20 @@ public class Dialogue {
         }
     }
     public final Outcome main;
-
     public final Outcome positive;
     public final Outcome negative;
+    public final boolean isDefaultText;
 
     Dialogue(Outcome positive, Outcome negative){
         this.positive = positive;
         this.negative = negative;
         this.main = null;
+        this.isDefaultText = false;
     }
     Dialogue(Outcome positive, Outcome negative, Outcome main){
         this.positive = positive;
         this.negative = negative;
         this.main = main;
+        this.isDefaultText = (positive == null | negative == null) && main != null;
     }
 }

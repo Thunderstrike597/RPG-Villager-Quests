@@ -12,6 +12,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.npc.Villager;
+import net.minecraft.world.entity.player.Player;
 
 import java.util.*;
 
@@ -179,8 +180,8 @@ public class QuestInstance {
         QuestData.syncToClient(player);
     }
 
-    public boolean isComplete() {
-        return completed;
+    public boolean isComplete(Player player) {
+        return completed || QuestData.get(player).hasCompletedQuest(questDefinition.getQuestId(), getQuestVillager());
     }
 
     public void triggerQuestComplete(QuestEffects effects, ServerPlayer player, UUID villagerUUID){

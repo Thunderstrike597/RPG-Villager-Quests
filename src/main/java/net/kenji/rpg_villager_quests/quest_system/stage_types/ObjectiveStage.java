@@ -88,7 +88,7 @@ public class ObjectiveStage extends QuestStage {
 
     @Override
     public List<Page> getDialogue(Player player,QuestInstance questInstance, UUID interactingVillager) {
-        if(!questInstance.isComplete()) {
+        if(!questInstance.isComplete(player)) {
             if(questInstance.currentSecondaryEntity != null) {
                 if (objective instanceof SecondaryVillagerQuestObjective secondaryVillagerQuestObjective) {
                     if (interactingVillager.equals(questInstance.currentSecondaryEntity)) {

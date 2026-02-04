@@ -36,7 +36,7 @@ public class PlayerEventHandler {
                         UUID villagerUuid = questInstance.getQuestVillager();
                         Entity entity = player.serverLevel().getEntity(villagerUuid);
                         if (entity instanceof Villager villagerEntity) {
-                            if (!questInstance.isComplete()) {
+                            if (!questInstance.isComplete(player)) {
                                 glowVillager = villagerEntity;
                             }
                         }

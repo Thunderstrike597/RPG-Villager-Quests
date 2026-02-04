@@ -172,21 +172,21 @@ public class QuestData {
         return false;
     }
 
-    public Collection<QuestInstance> getActiveQuests() {
+    public Collection<QuestInstance> getActiveQuests(Player player) {
         List<QuestInstance> finalActiveQuests = new ArrayList<>();
         for(List<QuestInstance> questInstances : activeQuests.values()){
             for(QuestInstance questInstance : questInstances){
-                if(!questInstance.isComplete())
+                if(!questInstance.isComplete(player))
                     finalActiveQuests.add(questInstance);
             }
         }
         return finalActiveQuests;
     }
-    public Collection<QuestInstance> getInactiveQuests() {
+    public Collection<QuestInstance> getInactiveQuests(Player player) {
         List<QuestInstance> finalActiveQuests = new ArrayList<>();
         for(List<QuestInstance> questInstances : inactiveQuests.values()){
             for(QuestInstance questInstance : questInstances){
-                if(!questInstance.isComplete())
+                if(!questInstance.isComplete(player))
                     finalActiveQuests.add(questInstance);
             }
         }

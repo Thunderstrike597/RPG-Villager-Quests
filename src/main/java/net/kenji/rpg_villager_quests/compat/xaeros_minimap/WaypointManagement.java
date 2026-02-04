@@ -41,7 +41,7 @@ public class WaypointManagement {
             if (event.player.tickCount % 20 != 0) return;
 
             QuestData questData = QuestData.get(event.player);
-            var instances = questData.getActiveQuests();
+            var instances = questData.getActiveQuests(event.player);
 
             if (instances != null && !instances.isEmpty()) {
                 for (QuestInstance questInstance : instances) {

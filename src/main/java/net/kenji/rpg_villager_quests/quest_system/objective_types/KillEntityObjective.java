@@ -40,9 +40,9 @@ public class KillEntityObjective implements QuestObjective {
     public static void onEntityKilled(LivingDeathEvent event) {
         if (event.getSource().getEntity() instanceof Player player) {
             QuestData questData = QuestData.get(player);
-            if (questData.getActiveQuests() != null) {
-                for (QuestInstance questInstance : questData.getActiveQuests()) {
-                    if (!questInstance.isComplete()) {
+            if (questData.getActiveQuests(player) != null) {
+                for (QuestInstance questInstance : questData.getActiveQuests(player)) {
+                    if (!questInstance.isComplete(player)) {
                         if (questInstance.getCurrentStage() instanceof ObjectiveStage objectiveStage) {
                             if (objectiveStage.getObjective() instanceof KillEntityObjective killEntityObjective) {
                                 if (event.getEntity().getType() == killEntityObjective.entityType) {
@@ -60,9 +60,9 @@ public class KillEntityObjective implements QuestObjective {
 
         QuestData questData = QuestData.get(event.player);
         if (event.player instanceof ServerPlayer serverPlayer) {
-            if (questData.getActiveQuests() != null) {
-                for (QuestInstance questInstance : questData.getActiveQuests()) {
-                    if (!questInstance.isComplete()) {
+            if (questData.getActiveQuests(serverPlayer) != null) {
+                for (QuestInstance questInstance : questData.getActiveQuests(serverPlayer)) {
+                    if (!questInstance.isComplete(serverPlayer)) {
                         if (questInstance.getCurrentStage() instanceof ObjectiveStage objectiveStage) {
                             if (objectiveStage.getObjective() instanceof KillEntityObjective killEntityObjective) {
                                 if (killEntityObjective.canComplete(event.player, questInstance, questInstance.getQuestVillager())) {

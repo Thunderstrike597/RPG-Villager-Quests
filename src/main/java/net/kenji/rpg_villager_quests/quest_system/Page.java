@@ -30,72 +30,74 @@ public class Page {
     }
 
     public LoadPageTypes loadNextPage(Player player, DialogueStage.ChoiceType choiceType , QuestInstance questInstance, List<Page> pages, int currentPageIndex, UUID villager) {
-        switch (choiceType) {
-            case OPTION_1 -> {
-                if (dialogueType == DialogueStage.DialogueType.CHOICE) {
-                    return LoadPageTypes.CHOOSE_POSITIVE_DIALOGUE_OPTION;
-                } else {
-                    if (questInstance.getQuest().reconsiderDialogue != null && questInstance.getQuest().reconsiderDialogue.main != null) {
+        if (questInstance != null) {
+
+            switch (choiceType) {
+                case OPTION_1 -> {
+                    if (dialogueType == DialogueStage.DialogueType.CHOICE) {
+                        return LoadPageTypes.CHOOSE_POSITIVE_DIALOGUE_OPTION;
+                    } else {
+
+                        if (questInstance.getQuest().reconsiderDialogue.positive != null && questInstance.getQuest().reconsiderDialogue.main != null) {
+                            if (currentPageIndex >= pages.size() - 1) {
+                                if (pages == questInstance.getQuest().reconsiderDialogue.main.pages) {
+                                    return LoadPageTypes.RECONSIDER_POSITIVE;
+                                }
+                                if (pages == questInstance.getQuest().reconsiderDialogue.positive.pages) {
+                                    return LoadPageTypes.RECONTINUE_DIALOGUE;
+                                }
+                            }
+                        }
+
+                        if (currentPageIndex < pages.size() - 1) {
+                            return LoadPageTypes.NEXT_MAIN_PAGE;
+                        }
                         if (currentPageIndex >= pages.size() - 1) {
-                            if (pages == questInstance.getQuest().reconsiderDialogue.main.pages) {
-                                return LoadPageTypes.RECONSIDER_POSITIVE;
-                            }
-                            if (pages == questInstance.getQuest().reconsiderDialogue.positive.pages) {
-                                return LoadPageTypes.RECONTINUE_DIALOGUE;
+                            if (questInstance.getQuest().stages.get(0).dialogue.positive != null) {
+                                if (pages == questInstance.getQuest().stages.get(0).dialogue.positive.pages)
+                                    return LoadPageTypes.CLOSE_DIALOGUE;
+                                if (pages == Objects.requireNonNull(questInstance.getQuest().stages.get(0).dialogue.main).pages)
+                                    return LoadPageTypes.ACCEPT_DIALOGUE;
+                            } else if (questInstance.getCurrentStage() == questInstance.getQuest().stages.get(0))
+                                if (pages == Objects.requireNonNull(questInstance.getQuest().stages.get(0).dialogue.main).pages) {
+                                    return LoadPageTypes.ACCEPT_QUEST;
+                                }
+                            if(!questInstance.isComplete(player)) {
+                                if (questInstance.getCurrentStage().canCompleteStage(player, questInstance, villager)) {
+                                    if (questInstance.getCurrentStage().getNextStage(player, questInstance) != null)
+                                        return LoadPageTypes.COMPLETE_STAGE;
+                                    else return LoadPageTypes.COMPLETE_QUEST;
+                                }
                             }
                         }
                     }
-
-                    if (currentPageIndex < pages.size() - 1) {
-                        return LoadPageTypes.NEXT_MAIN_PAGE;
+                }
+                case OPTION_2 -> {
+                    if (dialogueType == DialogueStage.DialogueType.CHOICE) {
+                        return LoadPageTypes.CHOOSE_NEGATIVE_DIALOGUE_OPTION;
                     }
-                    if (currentPageIndex >= pages.size() - 1) {
-                        if (questInstance.getQuest().stages.get(0).dialogue.positive != null) {
-                            if (pages == questInstance.getQuest().stages.get(0).dialogue.positive.pages)
-                                return LoadPageTypes.CLOSE_DIALOGUE;
-                            if (pages == Objects.requireNonNull(questInstance.getQuest().stages.get(0).dialogue.main).pages)
-                                return LoadPageTypes.ACCEPT_DIALOGUE;
-                        } else if (questInstance.getCurrentStage() == questInstance.getQuest().stages.get(0))
-                            if (pages == Objects.requireNonNull(questInstance.getQuest().stages.get(0).dialogue.main).pages) {
-                                return LoadPageTypes.ACCEPT_QUEST;
-                            }
+                    if (questInstance.getQuest().reconsiderDialogue.main != null) {
+                        if (pages == questInstance.getQuest().reconsiderDialogue.main.pages) {
+                            if (currentPageIndex >= pages.size() - 1)
+                                return LoadPageTypes.RECONSIDER_NEGATIVE;
+                        }
+                    }
+                    if (questInstance.getQuest().stages.get(0).dialogue.negative != null) {
+                        if (pages == questInstance.getQuest().stages.get(0).dialogue.main.pages)
+                            return LoadPageTypes.DECLINE_DIALOGUE;
+                    }
+                    if(!questInstance.isComplete(player)) {
                         if (questInstance.getCurrentStage().canCompleteStage(player, questInstance, villager)) {
-                           if(questInstance.getCurrentStage().getNextStage(player, questInstance) != null)
-                            return LoadPageTypes.COMPLETE_STAGE;
-                           else return LoadPageTypes.COMPLETE_QUEST;
+                            if (questInstance.getCurrentStage().getNextStage(player, questInstance) != null)
+                                return LoadPageTypes.COMPLETE_STAGE;
+                            else return LoadPageTypes.COMPLETE_QUEST;
                         }
-
                     }
+                    return LoadPageTypes.CLOSE_DIALOGUE;
                 }
-            }
-            case OPTION_2 -> {
-                if (dialogueType == DialogueStage.DialogueType.CHOICE) {
-                    return LoadPageTypes.CHOOSE_NEGATIVE_DIALOGUE_OPTION;
-                }
-                if(questInstance.getQuest().reconsiderDialogue.main != null){
-                    if(pages == questInstance.getQuest().reconsiderDialogue.main.pages){
-                        if (currentPageIndex >= pages.size() - 1)
-                            return LoadPageTypes.RECONSIDER_NEGATIVE;
-                    }
-                }
-                if(questInstance.getQuest().stages.get(0).dialogue.negative != null) {
-                    if(pages == questInstance.getQuest().stages.get(0).dialogue.main.pages)
-                        return LoadPageTypes.DECLINE_DIALOGUE;
-                }
-                return LoadPageTypes.CLOSE_DIALOGUE;
             }
         }
         return LoadPageTypes.CLOSE_DIALOGUE;
     }
 
-    public CompletionType triggerCompletionType(Player player, QuestInstance questInstance, List<Page> pages, int currentPageIndex) {
-        if (pages.get(currentPageIndex).effects == null || !pages.get(currentPageIndex).effects.endQuest) {
-            if (questInstance.getCurrentStage().canCompleteStage(currentPageIndex, player)) {
-                return CompletionType.STAGE;
-            } else if (pages.get(currentPageIndex).effects != null && pages.get(currentPageIndex).effects.endQuest) {
-                return CompletionType.QUEST;
-            }
-        }
-        return CompletionType.SKIP;
-    }
 }
