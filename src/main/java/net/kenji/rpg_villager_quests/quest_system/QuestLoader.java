@@ -217,8 +217,12 @@ public class QuestLoader {
                 if(obj.has("consume_on_turn_in")) {
                     consume = obj.get("consume_on_turn_in").getAsBoolean();
                 }
+                String itemName = null;
+                if(obj.has("item_name")) {
+                    itemName = obj.get("item_name").getAsString();
+                }
 
-                objective = new CollectItemObjective(item, count, consume, questId);
+                objective = new CollectItemObjective(item, count, consume, questId, itemName);
             }
 
             // future-proofing

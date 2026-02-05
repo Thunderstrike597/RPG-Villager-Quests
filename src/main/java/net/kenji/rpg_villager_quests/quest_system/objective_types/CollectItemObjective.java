@@ -19,12 +19,14 @@ public class CollectItemObjective implements QuestObjective {
     private final ResourceLocation item;
     private final int count;
     private final boolean consume;
+    private final String itemName;
     private final String belongingQuestId;
-    public CollectItemObjective(ResourceLocation item, int count, boolean consume, String belongingQuestId) {
+    public CollectItemObjective(ResourceLocation item, int count, boolean consume, String belongingQuestId, String itemName) {
         this.item = item;
         this.count = count;
         this.consume = consume;
         this.belongingQuestId = belongingQuestId;
+        this.itemName = itemName;
     }
 
     @Override
@@ -46,7 +48,8 @@ public class CollectItemObjective implements QuestObjective {
             if (stack.isEmpty()) continue;
 
             if (stack.is(requiredItem) && stack.getCount() >= this.count) {
-                return true;
+                if(itemName == null || (stack.hasCustomHoverName() && stack.getHoverName().getString().equals(this.itemName)))
+                    return true;
             }
         }
 
