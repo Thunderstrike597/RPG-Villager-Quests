@@ -3,6 +3,7 @@ package net.kenji.rpg_villager_quests.quest_system;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import net.kenji.rpg_villager_quests.quest_system.enum_types.QuestRewardType;
 import net.kenji.rpg_villager_quests.quest_system.interfaces.QuestObjective;
 import net.kenji.rpg_villager_quests.quest_system.interfaces.QuestReward;
 import net.kenji.rpg_villager_quests.quest_system.objective_types.CollectItemObjective;

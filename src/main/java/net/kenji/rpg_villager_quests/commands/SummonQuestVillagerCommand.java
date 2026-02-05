@@ -42,7 +42,7 @@ public class SummonQuestVillagerCommand {
         Quest quest = VillagerQuestManager.getQuestByName(questId);
 
         if(quest != null && ctx.getSource().getEntity() != null){
-            LivingEntity livingEntity = EntityType.VILLAGER.spawn(ctx.getSource().getLevel(), ctx.getSource().getEntity().blockPosition(), MobSpawnType.TRIGGERED);
+            LivingEntity livingEntity = EntityType.VILLAGER.spawn(ctx.getSource().getLevel(), ctx.getSource().getEntity().blockPosition(), MobSpawnType.EVENT);
             if(livingEntity instanceof Villager villager) {
                 VillagerQuestManager.assignQuestToVillager(quest, villager);
                 villager.getPersistentData().putBoolean(QuestVillagerEvents.IS_QUEST_VILLAGER_TAG, true);

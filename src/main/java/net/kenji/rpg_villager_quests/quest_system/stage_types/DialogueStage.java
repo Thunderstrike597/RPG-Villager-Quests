@@ -4,6 +4,8 @@ import net.kenji.rpg_villager_quests.network.ModPacketHandler;
 import net.kenji.rpg_villager_quests.network.packets.client_side.CompleteStageEventPacket;
 import net.kenji.rpg_villager_quests.network.packets.client_side.StartStageEventPacket;
 import net.kenji.rpg_villager_quests.quest_system.*;
+import net.kenji.rpg_villager_quests.quest_system.enum_types.ChoiceType;
+import net.kenji.rpg_villager_quests.quest_system.enum_types.QuestStageType;
 import net.kenji.rpg_villager_quests.quest_system.events.QuestStageEvents;
 import net.kenji.rpg_villager_quests.quest_system.interfaces.QuestReward;
 import net.kenji.rpg_villager_quests.quest_system.objective_types.SecondaryVillagerQuestObjective;
@@ -34,7 +36,7 @@ public class DialogueStage extends QuestStage {
     }
 
     public DialogueStage(String id, String displayName, Dialogue pages, String belongingQuest, String nextStageId, List<QuestChoice> choices, List<Page> choice1Pages, List<Page> choice2Pages, List<QuestReward> questReward, String tag) {
-        super(id, displayName,QuestStageType.valueOf("dialogue".toUpperCase()), pages, belongingQuest, nextStageId, questReward, tag, 12);
+        super(id, displayName, QuestStageType.valueOf("dialogue".toUpperCase()), pages, belongingQuest, nextStageId, questReward, tag, 12);
         this.choice1Pages = choice1Pages;
         this.choice2Pages = choice2Pages;
         this.choices = choices;

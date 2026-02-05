@@ -1,7 +1,6 @@
-package net.kenji.rpg_villager_quests.quest_system;
+package net.kenji.rpg_villager_quests.quest_system.enum_types;
 
 import net.kenji.rpg_villager_quests.client.menu.VillagerQuestMenu;
-import net.kenji.rpg_villager_quests.quest_system.stage_types.DialogueStage;
 
 public enum LoadPageTypes {
     NEXT_MAIN_PAGE(VillagerQuestMenu.INSTANCE::onNextPage),

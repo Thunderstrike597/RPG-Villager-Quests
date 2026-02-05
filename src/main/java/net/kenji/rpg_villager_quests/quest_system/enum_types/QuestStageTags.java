@@ -1,4 +1,4 @@
-package net.kenji.rpg_villager_quests.quest_system;
+package net.kenji.rpg_villager_quests.quest_system.enum_types;
 
 public enum QuestStageTags {
     CLOSE_ON_COMPLETE("close_on_complete");

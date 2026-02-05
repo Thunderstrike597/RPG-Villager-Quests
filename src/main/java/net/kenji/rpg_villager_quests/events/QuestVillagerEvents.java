@@ -88,7 +88,11 @@ public class QuestVillagerEvents {
         public static void onVillagerSpawn(MobSpawnEvent event) {
             if (!(event.getEntity() instanceof Villager villager)) return;
 
-
+            if(villager.getSpawnType() == MobSpawnType.EVENT){
+                if(villager.getPersistentData().getBoolean("ForceNoQuest")){
+                    villager.getPersistentData().remove("ForceNoQuest");
+                }
+            }
             if (villager.getPersistentData().getBoolean("ForceNoQuest")) return;
 
             CompoundTag data = villager.getPersistentData();
@@ -106,6 +110,8 @@ public class QuestVillagerEvents {
                 }
                 return;
             }
+
+            if(villager.getSpawnType() == MobSpawnType.EVENT) return;
             Quest villagerQuest = VillagerQuestManager.getVillagerQuest(villager.getUUID());
 
             if (villager.getVillagerData().getLevel() > 1 && villagerQuest == null) return;
@@ -128,7 +134,6 @@ public class QuestVillagerEvents {
                 );
             }
         }
-
 
     @Mod.EventBusSubscriber(modid = RpgVillagerQuests.MODID, bus = Mod.EventBusSubscriber.Bus.FORGE, value = Dist.CLIENT)
     public static class VillagerClientEvents {

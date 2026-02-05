@@ -1,9 +1,10 @@
 package net.kenji.rpg_villager_quests.quest_system;
 
+import net.kenji.rpg_villager_quests.quest_system.enum_types.ChoiceType;
+import net.kenji.rpg_villager_quests.quest_system.enum_types.LoadPageTypes;
 import net.kenji.rpg_villager_quests.quest_system.quest_data.QuestInstance;
 import net.kenji.rpg_villager_quests.quest_system.stage_types.DialogueStage;
 import net.minecraft.world.entity.player.Player;
-import org.jline.utils.Log;
 
 import java.util.List;
 import java.util.Objects;

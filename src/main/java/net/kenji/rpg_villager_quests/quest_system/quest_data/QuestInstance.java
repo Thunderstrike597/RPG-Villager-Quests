@@ -4,6 +4,7 @@ import net.kenji.rpg_villager_quests.manager.VillagerQuestManager;
 import net.kenji.rpg_villager_quests.network.ModPacketHandler;
 import net.kenji.rpg_villager_quests.network.packets.client_side.VillagerGlowPacket;
 import net.kenji.rpg_villager_quests.quest_system.*;
+import net.kenji.rpg_villager_quests.quest_system.enum_types.Reputation;
 import net.kenji.rpg_villager_quests.quest_system.quest_data.saved_data.QuestSavedData;
 import net.kenji.rpg_villager_quests.quest_system.waypoints.WaypointInstance;
 import net.minecraft.core.BlockPos;

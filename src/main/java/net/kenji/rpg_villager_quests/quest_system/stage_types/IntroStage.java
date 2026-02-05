@@ -1,6 +1,8 @@
 package net.kenji.rpg_villager_quests.quest_system.stage_types;
 
 import net.kenji.rpg_villager_quests.quest_system.*;
+import net.kenji.rpg_villager_quests.quest_system.enum_types.DialogueTypes;
+import net.kenji.rpg_villager_quests.quest_system.enum_types.QuestStageType;
 import net.kenji.rpg_villager_quests.quest_system.quest_data.QuestInstance;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;

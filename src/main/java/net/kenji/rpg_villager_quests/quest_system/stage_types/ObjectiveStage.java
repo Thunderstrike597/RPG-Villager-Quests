@@ -4,6 +4,7 @@ import net.kenji.rpg_villager_quests.network.ModPacketHandler;
 import net.kenji.rpg_villager_quests.network.packets.client_side.CompleteStageEventPacket;
 import net.kenji.rpg_villager_quests.network.packets.client_side.StartStageEventPacket;
 import net.kenji.rpg_villager_quests.quest_system.*;
+import net.kenji.rpg_villager_quests.quest_system.enum_types.QuestStageType;
 import net.kenji.rpg_villager_quests.quest_system.events.QuestStageEvents;
 import net.kenji.rpg_villager_quests.quest_system.interfaces.QuestObjective;
 import net.kenji.rpg_villager_quests.quest_system.interfaces.QuestReward;
@@ -13,7 +14,6 @@ import net.kenji.rpg_villager_quests.quest_system.quest_data.QuestInstance;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
 import net.minecraftforge.common.MinecraftForge;
-import org.jline.utils.Log;
 
 import java.util.List;
 import java.util.UUID;
