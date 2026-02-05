@@ -148,6 +148,7 @@ public class VillagerQuestMenu extends Screen {
 
     private static UUID questVillager;
     private static UUID interactingVillager;
+    private static int interactingVillagerId;
 
     private static List<String> getPages(String raw) {
         return Arrays.stream(raw.split(Pattern.quote(PAGE_DELIMITER)))
@@ -188,11 +189,11 @@ public class VillagerQuestMenu extends Screen {
         return pages.get(pages.size() - 1).text;
     }
 
-    public VillagerQuestMenu(Component pTitle, UUID questVillager, UUID secondaryVillager) {
+    public VillagerQuestMenu(Component pTitle, UUID questVillager, UUID secondaryVillager, int interactingVillagerId) {
         super(pTitle);
         this.questVillager = questVillager;
         this.interactingVillager = secondaryVillager;
-
+        this.interactingVillagerId = interactingVillagerId;
         villagerQuest = VillagerQuestManager.getVillagerQuest(this.questVillager);
     }
     private int getBgWidth(GuiDisplay ui) {
@@ -762,15 +763,10 @@ public class VillagerQuestMenu extends Screen {
             return;
         this.renderBackground(gfx);
 
-        Villager villagerEntity = null;
-        for(Entity entity : Minecraft.getInstance().level.entitiesForRendering()) {
-            if(entity.getUUID() == questVillager || entity.getUUID() == interactingVillager) {
-                if(entity instanceof Villager villagerEntity1) {
-                    villagerEntity = villagerEntity1;
-                    break;
-                }
-            }
-        }
+        Entity entity = getMinecraft().player.level().getEntity(interactingVillagerId);
+
+
+        if(!(entity instanceof Villager villagerEntity)) return;
 
         if(pendingWidgetClear || !initFinished) {
             if(posButton != null)
@@ -972,6 +968,29 @@ public class VillagerQuestMenu extends Screen {
                 );
 
                 gfx.disableScissor();
+
+                pose.pushPose();
+
+// Position name next to the head display (right side)
+                int nameX = actualHeadDisplayX + actualHeadDisplayWidth + 5;
+                int nameY = actualHeadDisplayY + (actualHeadDisplayHeight / 2) - 4;
+
+// Translate to the desired position BEFORE scaling
+                pose.translate(nameX, nameY, 0);
+
+// Now scale
+                pose.scale(1.2F, 1.2F, 1.2F);
+
+// Draw at origin (0, 0) because we already translated
+                gfx.drawString(
+                        this.font,
+                        villagerEntity.getName(),
+                        0,  // Draw at 0,0 because we translated
+                        4,
+                        0xFFFFFF
+                );
+
+                pose.popPose();
             }
         }
         super.render(gfx, mouseX, mouseY, partialTick);

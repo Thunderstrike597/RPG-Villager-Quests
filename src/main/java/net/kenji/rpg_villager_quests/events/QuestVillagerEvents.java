@@ -170,7 +170,7 @@ public class QuestVillagerEvents {
             UUID finalSecondaryVillager = secondaryVillager;
             Minecraft.getInstance().execute(() -> {
                 Minecraft.getInstance().setScreen(
-                        VillagerQuestMenu.INSTANCE = new VillagerQuestMenu(Component.literal("Villager Quests"), finalQuestVillager, finalSecondaryVillager)
+                        VillagerQuestMenu.INSTANCE = new VillagerQuestMenu(Component.literal("Villager Quests"), finalQuestVillager, finalSecondaryVillager, clickedVillager.getId())
                 );
             });
         }
