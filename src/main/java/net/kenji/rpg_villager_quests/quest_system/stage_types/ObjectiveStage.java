@@ -85,6 +85,9 @@ public class ObjectiveStage extends QuestStage {
 
         return stages.get(nextIndex);
     }
+    public boolean shouldRevealPositiveButton(Player player, int pageIndex,QuestInstance questInstance, UUID villagerUuid){
+      return objective.canComplete(player, questInstance, villagerUuid) && pageIndex >= getMainPages().size() - 1 || pageIndex < getMainPages().size() - 1;
+    }
 
     @Override
     public List<Page> getDialogue(Player player,QuestInstance questInstance, UUID interactingVillager) {

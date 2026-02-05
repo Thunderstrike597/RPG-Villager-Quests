@@ -13,6 +13,7 @@ import net.kenji.rpg_villager_quests.quest_system.*;
 import net.kenji.rpg_villager_quests.quest_system.quest_data.QuestData;
 import net.kenji.rpg_villager_quests.quest_system.quest_data.QuestInstance;
 import net.kenji.rpg_villager_quests.quest_system.stage_types.DialogueStage;
+import net.kenji.rpg_villager_quests.quest_system.stage_types.ObjectiveStage;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
@@ -337,11 +338,15 @@ public class VillagerQuestMenu extends Screen {
                             ).build()
                     );
                 }
+                if(questInstance.getCurrentStage() instanceof ObjectiveStage objectiveStage){
+                    posButton.active = objectiveStage.shouldRevealPositiveButton(player, currentPageIndex, questInstance, questVillager);
+                }
             }
         }
         QuestInstance questInstance = questData.getQuestInstance(villagerQuest.getQuestId(), questVillager, true);
         if (!Objects.equals(getCurrentPage().button2Text, "NONE")) {
             if (questInstance != null) {
+
                 if (getButtonText(questInstance, ButtonType.NEGATIVE) == null || getButtonText(questInstance, ButtonType.NEGATIVE).isEmpty()) {
                     this.addRenderableWidget(
                             Button.builder(

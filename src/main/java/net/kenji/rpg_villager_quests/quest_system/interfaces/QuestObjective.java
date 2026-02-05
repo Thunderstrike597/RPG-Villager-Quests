@@ -12,5 +12,4 @@ public interface QuestObjective {
     boolean canComplete(Player player, QuestInstance questInstance, UUID villagerUuid);
     void onComplete(QuestEffects effects, Player player);
     boolean shouldRestartObjective(Player player);
-
 }
