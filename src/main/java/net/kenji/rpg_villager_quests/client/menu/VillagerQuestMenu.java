@@ -599,7 +599,6 @@ public class VillagerQuestMenu extends Screen {
         this.onClose();
     }
     public void onCompleteStage() {
-
         Minecraft mc = Minecraft.getInstance();
         Player player = mc.player;
         Page currentPage = pages.get(currentPageIndex);
@@ -615,6 +614,7 @@ public class VillagerQuestMenu extends Screen {
         hasSentenceCompleted = false;
 
         QuestStage stage = questInstance.getCurrentStage();
+        Log.info("Logging Stage Complete: " + stage.id);
         QuestEffects replaceEffects;
         if (currentPage.effects == null)
             replaceEffects = new QuestEffects();

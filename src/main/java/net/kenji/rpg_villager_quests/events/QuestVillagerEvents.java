@@ -1,6 +1,5 @@
 package net.kenji.rpg_villager_quests.events;
 
-import com.google.gson.JsonObject;
 import net.kenji.rpg_villager_quests.RpgVillagerQuests;
 import net.kenji.rpg_villager_quests.client.menu.VillagerQuestMenu;
 import net.kenji.rpg_villager_quests.entity.villager.VillagerQuestTypes;
@@ -13,27 +12,18 @@ import net.kenji.rpg_villager_quests.quest_system.stage_types.ObjectiveStage;
 import net.minecraft.client.Minecraft;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.MobSpawnType;
 import net.minecraft.world.entity.npc.Villager;
-import net.minecraft.world.entity.npc.VillagerData;
-import net.minecraft.world.entity.npc.VillagerProfession;
 import net.minecraft.world.entity.player.Player;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.entity.EntityJoinLevelEvent;
-import net.minecraftforge.event.entity.living.LivingEvent;
 import net.minecraftforge.event.entity.living.MobSpawnEvent;
 import net.minecraftforge.event.entity.player.PlayerInteractEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.registries.ForgeRegistries;
-import org.jline.utils.Log;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Objects;
 import java.util.UUID;
 
 @Mod.EventBusSubscriber(modid = RpgVillagerQuests.MODID, bus = Mod.EventBusSubscriber.Bus.FORGE)
@@ -128,7 +118,7 @@ public class QuestVillagerEvents {
 
 
             Quest quest = VillagerQuestManager.getRandomQuest(villager);
-            VillagerQuestManager.assignRandomQuestToVillager(quest, villager);
+            VillagerQuestManager.assignQuestToVillager(quest, villager);
 
             if (quest.questProfession != null) {
                 villager.setVillagerData(

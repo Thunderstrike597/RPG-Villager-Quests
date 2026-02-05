@@ -1,6 +1,5 @@
 package net.kenji.rpg_villager_quests.manager;
 
-import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import net.kenji.rpg_villager_quests.events.QuestVillagerEvents;
@@ -36,11 +35,10 @@ public class VillagerQuestManager {
         }
         JsonObject root = rawJsonFiles.get(questName);
 
-        if (root == null) {
-            throw new IllegalArgumentException("Quest '" + questName + "' not found. Available: " + rawJsonFiles.keySet());
+        if (root != null) {
+            return QuestLoader.load(root);
         }
-
-        return QuestLoader.load(root);
+        return null;
     }
 
     public static Quest getRandomQuest(Villager villager){
@@ -52,12 +50,10 @@ public class VillagerQuestManager {
         return getQuestByName(questName);
     }
 
-    public static void assignRandomQuestToVillager(Quest quest, Villager villager) {
-
+    public static void assignQuestToVillager(Quest quest, Villager villager) {
         villagerQuestMap.put(villager.getUUID(), quest);
         villager.getPersistentData().putString(QuestVillagerEvents.QUEST_VILLAGER_TAG, quest.getQuestId());
     }
-
 
     public static class JsonHelper {
 
