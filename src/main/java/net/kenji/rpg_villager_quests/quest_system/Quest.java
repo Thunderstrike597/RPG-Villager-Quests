@@ -87,6 +87,7 @@ public class Quest {
             } else if (questInstance.getQuestReputation() == Reputation.BAD) {
                 return completionDialogue.negative.pages;
             }
+            return completionDialogue.positive.pages;
         }
         return completionDialogue.main.pages;
     }

@@ -3,6 +3,7 @@ package net.kenji.rpg_villager_quests.quest_system;
 import net.kenji.rpg_villager_quests.quest_system.quest_data.QuestInstance;
 import net.kenji.rpg_villager_quests.quest_system.stage_types.DialogueStage;
 import net.minecraft.world.entity.player.Player;
+import org.jline.utils.Log;
 
 import java.util.List;
 import java.util.Objects;
@@ -29,12 +30,12 @@ public class Page {
         }
     }
 
-    public LoadPageTypes loadNextPage(Player player, DialogueStage.ChoiceType choiceType , QuestInstance questInstance, List<Page> pages, int currentPageIndex, UUID villager) {
+    public LoadPageTypes loadNextPage(Player player, ChoiceType choiceType , QuestInstance questInstance, List<Page> pages, int currentPageIndex, UUID villager) {
         if (questInstance != null) {
 
             switch (choiceType) {
                 case OPTION_1 -> {
-                    if (dialogueType == DialogueStage.DialogueType.CHOICE) {
+                    if (pages.get(currentPageIndex).dialogueType == DialogueStage.DialogueType.CHOICE) {
                         return LoadPageTypes.CHOOSE_POSITIVE_DIALOGUE_OPTION;
                     } else {
 
@@ -73,7 +74,7 @@ public class Page {
                     }
                 }
                 case OPTION_2 -> {
-                    if (dialogueType == DialogueStage.DialogueType.CHOICE) {
+                    if (pages.get(currentPageIndex).dialogueType == DialogueStage.DialogueType.CHOICE) {
                         return LoadPageTypes.CHOOSE_NEGATIVE_DIALOGUE_OPTION;
                     }
                     if (questInstance.getQuest().reconsiderDialogue.main != null) {

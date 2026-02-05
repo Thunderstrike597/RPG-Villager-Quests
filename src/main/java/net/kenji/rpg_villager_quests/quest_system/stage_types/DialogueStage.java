@@ -33,11 +33,6 @@ public class DialogueStage extends QuestStage {
         CHOICE
     }
 
-    public enum ChoiceType {
-        UNCHOSEN,
-        OPTION_1,
-        OPTION_2
-    }
     public DialogueStage(String id, String displayName, Dialogue pages, String belongingQuest, String nextStageId, List<QuestChoice> choices, List<Page> choice1Pages, List<Page> choice2Pages, List<QuestReward> questReward, String tag) {
         super(id, displayName,QuestStageType.valueOf("dialogue".toUpperCase()), pages, belongingQuest, nextStageId, questReward, tag, 12);
         this.choice1Pages = choice1Pages;
@@ -163,23 +158,12 @@ public class DialogueStage extends QuestStage {
 
     @Override
     public boolean canCompleteStage(int currentPageIndex, Player player) {
-        if(choices != null){
-           ChoiceType option = chosenDialogueOption ;
-           if(option == ChoiceType.OPTION_1){
-               if(choices.get(0) != null) {
-                   if(choices.get(0).effects != null) {
-                       if (choices.get(0).effects.endQuest) {
-                           return true;
-                       }
-                   }
-               }
-
-           }
-            if(option == ChoiceType.OPTION_2){
-                if(choices.get(1) != null) {
-                    if(choices.get(1).effects != null) {
-
-                        if (choices.get(1).effects.endQuest) {
+        if(choices != null) {
+            ChoiceType option = chosenDialogueOption;
+            if(option != ChoiceType.UNCHOSEN) {
+                if (choices.get(option.choiceIndex) != null) {
+                    if (choices.get(option.choiceIndex).effects != null) {
+                        if (choices.get(option.choiceIndex).effects.endQuest) {
                             return true;
                         }
                     }

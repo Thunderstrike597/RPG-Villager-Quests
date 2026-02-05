@@ -42,5 +42,8 @@ public abstract class QuestStage {
     public abstract boolean canCompleteStage(int currentPageIndex,Player player);
     public abstract List<Page> getMainPages();
 
+    public boolean hasTag(String tag){
+       return this.tag != null && this.tag.equals(tag);
+    }
 }
 

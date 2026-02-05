@@ -30,8 +30,9 @@ public class QuestInstance {
     public WaypointInstance currentQuestWaypoint;
 
     public boolean queQuestAccept = false;
-    public boolean queQuestDecline;
-    public boolean questDeclined = false;
+    public boolean queQuestComplete = false;
+    public boolean queQuestDecline = false;
+
     private List<Page> temporaryDialogue;
 
     // ✅ Store which stages are complete for THIS instance

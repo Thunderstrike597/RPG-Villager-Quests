@@ -444,12 +444,16 @@ public class QuestLoader {
             for (JsonElement pageElem : dialogueArray) {
                 JsonObject pageObj = pageElem.getAsJsonObject();
                 Page newPage = new Page();
+
                 newPage.text = pageObj.get("text").getAsString();
                 if (pageObj.has("button_1_text")) {
                     newPage.button1Text = pageObj.get("button_1_text").getAsString();
                 }
                 if (pageObj.has("button_2_text")) {
                     newPage.button2Text = pageObj.get("button_2_text").getAsString();
+                }
+                if(pageObj.has("type")){
+                    newPage.dialogueType = DialogueStage.DialogueType.valueOf(pageObj.get("type").getAsString().toUpperCase());
                 }
                 newPage.effects = getQuestEffects(pageObj);
                 pages.add(newPage);
@@ -471,6 +475,9 @@ public class QuestLoader {
                 }
                 if (pageObj.has("button_2_text")) {
                     newPage.button2Text = pageObj.get("button_2_text").getAsString();
+                }
+                if(pageObj.has("type")){
+                    newPage.dialogueType = DialogueStage.DialogueType.valueOf(pageObj.get("type").getAsString().toUpperCase());
                 }
                 newPage.effects = getQuestEffects(pageObj);
                 pages.add(newPage);
