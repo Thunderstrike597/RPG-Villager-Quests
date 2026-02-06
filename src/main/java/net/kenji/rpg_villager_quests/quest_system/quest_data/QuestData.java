@@ -238,10 +238,15 @@ public class QuestData {
         }
     }
     public List<QuestInstance> getQuestInstances(String questId, boolean includeInactive) {
-       List<QuestInstance> questInstances = activeQuests.getOrDefault(questId, new ArrayList<>());
-       if((questInstances == null || questInstances.isEmpty()) && includeInactive){
-           questInstances = inactiveQuests.getOrDefault(questId, new ArrayList<>());
-       }
+        List<QuestInstance> questInstances = new ArrayList<>();
+
+        // Always add active quests
+        questInstances.addAll(activeQuests.getOrDefault(questId, new ArrayList<>()));
+
+        // Add inactive quests if requested
+        if(includeInactive) {
+            questInstances.addAll(inactiveQuests.getOrDefault(questId, new ArrayList<>()));
+        }
 
         return questInstances;
     }

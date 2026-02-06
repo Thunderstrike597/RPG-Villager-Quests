@@ -5,6 +5,7 @@ import net.kenji.rpg_villager_quests.network.packets.*;
 import net.kenji.rpg_villager_quests.network.packets.client_side.CompleteStageEventPacket;
 import net.kenji.rpg_villager_quests.network.packets.client_side.StartStageEventPacket;
 import net.kenji.rpg_villager_quests.network.packets.client_side.VillagerGlowPacket;
+import net.kenji.rpg_villager_quests.network.packets.server_side.QuestMenuOpenPacket;
 import net.kenji.rpg_villager_quests.network.packets.server_side.StageCompletePacket;
 import net.kenji.rpg_villager_quests.network.packets.server_side.StartQuestPacket;
 import net.kenji.rpg_villager_quests.network.packets.server_side.StageStartPacket;
@@ -53,6 +54,11 @@ public class ModPacketHandler {
                 .decoder(ChoicePacket::decode)
                 .encoder(ChoicePacket::encode)
                 .consumerMainThread(ChoicePacket::handle)
+                .add();
+        INSTANCE.messageBuilder(QuestMenuOpenPacket.class, id(), NetworkDirection.PLAY_TO_SERVER)
+                .decoder(QuestMenuOpenPacket::decode)
+                .encoder(QuestMenuOpenPacket::encode)
+                .consumerMainThread(QuestMenuOpenPacket::handle)
                 .add();
         INSTANCE.messageBuilder(VillagerGlowPacket.class, id(), NetworkDirection.PLAY_TO_CLIENT)
                 .decoder(VillagerGlowPacket::decode)

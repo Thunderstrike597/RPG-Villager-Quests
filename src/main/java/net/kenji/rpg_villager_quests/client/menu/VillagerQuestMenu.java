@@ -7,6 +7,7 @@ import net.kenji.rpg_villager_quests.keybinds.ModKeybinds;
 import net.kenji.rpg_villager_quests.manager.VillagerQuestManager;
 import net.kenji.rpg_villager_quests.network.packets.ChoicePacket;
 import net.kenji.rpg_villager_quests.network.ModPacketHandler;
+import net.kenji.rpg_villager_quests.network.packets.server_side.QuestMenuOpenPacket;
 import net.kenji.rpg_villager_quests.network.packets.server_side.StageCompletePacket;
 import net.kenji.rpg_villager_quests.network.packets.server_side.StartQuestPacket;
 import net.kenji.rpg_villager_quests.quest_system.*;
@@ -201,6 +202,7 @@ public class VillagerQuestMenu extends Screen {
         this.interactingVillager = secondaryVillager;
         this.interactingVillagerId = interactingVillagerId;
         villagerQuest = VillagerQuestManager.getVillagerQuest(this.questVillager);
+        ModPacketHandler.sendToServer(new QuestMenuOpenPacket(true, questVillager));
     }
     private int getBgWidth(GuiDisplay ui) {
         return ui.TEXTURE_WIDTH;
@@ -343,8 +345,10 @@ public class VillagerQuestMenu extends Screen {
                             ).build()
                     );
                 }
-                if(questInstance.getCurrentStage() instanceof ObjectiveStage objectiveStage){
-                    posButton.active = objectiveStage.shouldRevealPositiveButton(player, currentPageIndex, questInstance, questVillager);
+                if(questInstance != null) {
+                    if (questInstance.getCurrentStage() instanceof ObjectiveStage objectiveStage) {
+                        posButton.active = objectiveStage.shouldRevealPositiveButton(player, currentPageIndex, questInstance, questVillager);
+                    }
                 }
             }
         }
@@ -624,6 +628,7 @@ public class VillagerQuestMenu extends Screen {
         didPositiveInteraction = true;
         this.onClose();
     }
+
     public void onCompleteStage() {
         Minecraft mc = Minecraft.getInstance();
         Player player = mc.player;
@@ -640,7 +645,6 @@ public class VillagerQuestMenu extends Screen {
         hasSentenceCompleted = false;
 
         QuestStage stage = questInstance.getCurrentStage();
-        Log.info("Logging Stage Complete: " + stage.id);
         QuestEffects replaceEffects;
         if (currentPage.effects == null)
             replaceEffects = new QuestEffects();
@@ -697,6 +701,7 @@ public class VillagerQuestMenu extends Screen {
                 questInstance.wasInterrupted = true;
         }
 
+        ModPacketHandler.sendToServer(new QuestMenuOpenPacket(false, questVillager));
         super.onClose();
 
         if (questInstance != null) {

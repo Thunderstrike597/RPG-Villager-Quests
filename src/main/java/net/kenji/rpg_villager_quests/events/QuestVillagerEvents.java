@@ -2,6 +2,7 @@ package net.kenji.rpg_villager_quests.events;
 
 import net.kenji.rpg_villager_quests.RpgVillagerQuests;
 import net.kenji.rpg_villager_quests.client.menu.VillagerQuestMenu;
+import net.kenji.rpg_villager_quests.entity.goals.MoveToPlayerGoal;
 import net.kenji.rpg_villager_quests.entity.villager.VillagerQuestTypes;
 import net.kenji.rpg_villager_quests.manager.VillagerQuestManager;
 import net.kenji.rpg_villager_quests.quest_system.Quest;
@@ -14,16 +15,23 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.MobSpawnType;
+import net.minecraft.world.entity.ai.goal.Goal;
+import net.minecraft.world.entity.ai.goal.MoveToBlockGoal;
+import net.minecraft.world.entity.ai.goal.WrappedGoal;
 import net.minecraft.world.entity.npc.Villager;
 import net.minecraft.world.entity.player.Player;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.entity.EntityJoinLevelEvent;
+import net.minecraftforge.event.entity.living.LivingEvent;
 import net.minecraftforge.event.entity.living.MobSpawnEvent;
 import net.minecraftforge.event.entity.player.PlayerInteractEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
+import org.jline.utils.Log;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 @Mod.EventBusSubscriber(modid = RpgVillagerQuests.MODID, bus = Mod.EventBusSubscriber.Bus.FORGE)
@@ -31,6 +39,7 @@ public class QuestVillagerEvents {
 
     public static String QUEST_VILLAGER_TAG = "quest_villager";
     public static String IS_QUEST_VILLAGER_TAG = "is_quest_villager";
+
 
 
     @SubscribeEvent
@@ -63,26 +72,6 @@ public class QuestVillagerEvents {
             villager.getPersistentData().putBoolean("ForceNoQuest", true);
         }
     }
-    /*@SubscribeEvent
-    public static void onVillagerTick(LivingEvent.LivingTickEvent event) {
-        if (!(event.getEntity() instanceof Villager villager)) return;
-        if(villager.getPersistentData().contains(VILLAGER_QUEST_PROFESSION_TAG)){
-            VillagerProfession villagerProfession = null;
-            String questProfession = villager.getPersistentData().getString(VILLAGER_QUEST_PROFESSION_TAG);
-            for (VillagerProfession profession : ForgeRegistries.VILLAGER_PROFESSIONS.getValues()) {
-                ResourceLocation key = ForgeRegistries.VILLAGER_PROFESSIONS.getKey(profession);
-                if (key != null && key.getPath().equals(questProfession)) {
-                    villagerProfession = profession;
-                    break;
-                }
-            }
-            if(villagerProfession != null) {
-                villager.setVillagerData(
-                        villager.getVillagerData().setProfession(villagerProfession)
-                );
-            }
-        }
-    }*/
 
         @SubscribeEvent
         public static void onVillagerSpawn(MobSpawnEvent event) {
@@ -117,7 +106,7 @@ public class QuestVillagerEvents {
             if (villager.getVillagerData().getLevel() > 1 && villagerQuest == null) return;
 
 
-            boolean roll = villager.getRandom().nextFloat() < 0.25F;
+            boolean roll = villager.getRandom().nextFloat() < 0.18F;
             data.putBoolean(IS_QUEST_VILLAGER_TAG, roll);
 
             if (!roll) return;
@@ -134,8 +123,41 @@ public class QuestVillagerEvents {
                 );
             }
         }
+    private static boolean hasFollowGoal(Villager villager) {
+        for (WrappedGoal wrapped : villager.goalSelector.getAvailableGoals()) {
+            if (wrapped.getGoal() instanceof MoveToPlayerGoal) {
+                return true;
+            }
+        }
+        return false;
+    }
 
-    @Mod.EventBusSubscriber(modid = RpgVillagerQuests.MODID, bus = Mod.EventBusSubscriber.Bus.FORGE, value = Dist.CLIENT)
+    @SubscribeEvent
+    public static void onVillagerTick(LivingEvent.LivingTickEvent event) {
+        if (!(event.getEntity() instanceof Villager villager)) return;
+
+        Player player = villager.getTradingPlayer();
+
+        if (player != null) {
+            Log.info("Player Is NOT Null!");
+            if (VillagerQuestManager.isQuestMenuOpen
+                    .getOrDefault(player.getUUID(), false)) {
+                Log.info("Logging MoveToPlayerGoal");
+                if (!hasFollowGoal(villager)) {
+                    villager.goalSelector.addGoal(
+                            0,
+                            new MoveToPlayerGoal(villager, 0.05D, 1.8F)
+                    );
+                }
+            }
+        }else {
+
+            villager.goalSelector.getAvailableGoals().removeIf(
+                    wrapped -> wrapped.getGoal() instanceof MoveToPlayerGoal
+            );
+        }
+    }
+        @Mod.EventBusSubscriber(modid = RpgVillagerQuests.MODID, bus = Mod.EventBusSubscriber.Bus.FORGE, value = Dist.CLIENT)
     public static class VillagerClientEvents {
         @SubscribeEvent
         public static void onVillagerInteract(PlayerInteractEvent.EntityInteract event) {

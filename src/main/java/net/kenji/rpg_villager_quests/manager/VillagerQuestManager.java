@@ -22,6 +22,17 @@ public class VillagerQuestManager {
     public static Map<UUID, Quest> currentQuestMap = new HashMap<>();
     public static Map<UUID, Quest> villagerQuestMap = new HashMap<>();
 
+    public static Map<UUID, Boolean> isQuestMenuOpen = new HashMap<>();
+
+    public static class QuestMenuVillagerPair{
+        public boolean isOpen = false;
+        public UUID villagerUuid = null;
+    }
+
+
+    public void setQuestMenuOpen(UUID playerUuid, Boolean value){
+        isQuestMenuOpen.put(playerUuid, value);
+    }
     public static Quest getVillagerQuest(UUID villager){
         return villagerQuestMap.get(villager);
     }
