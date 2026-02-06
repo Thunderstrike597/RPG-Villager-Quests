@@ -23,7 +23,7 @@ public class ObjectiveStage extends QuestStage {
     private final QuestObjective objective;
     private final QuestEffects effects;
 
-    public ObjectiveStage(String id, String displayName, QuestObjective objective, Dialogue pages, String belongingQuest, String nextStageId, QuestEffects stageEffects, List<QuestReward> questReward, String tag) {
+    public ObjectiveStage(String id, String displayName, QuestObjective objective, DialogueSet pages, String belongingQuest, String nextStageId, QuestEffects stageEffects, List<QuestReward> questReward, String tag) {
         super(id, displayName, QuestStageType.valueOf("objective".toUpperCase()), pages, belongingQuest, nextStageId, questReward, tag, 6);
         this.objective = objective;
         this.effects = stageEffects;
@@ -144,6 +144,6 @@ public class ObjectiveStage extends QuestStage {
 
     @Override
     public List<Page> getMainPages() {
-        return this.dialogue.main.pages;
+        return this.dialogueSet.main.pages;
     }
 }

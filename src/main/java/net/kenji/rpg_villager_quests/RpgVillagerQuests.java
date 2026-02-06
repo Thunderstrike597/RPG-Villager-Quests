@@ -5,6 +5,7 @@ import net.kenji.rpg_villager_quests.compat.xaeros_minimap.WaypointManagement;
 import net.kenji.rpg_villager_quests.entity.villager.VillagerQuestTypes;
 import net.kenji.rpg_villager_quests.manager.VillagerQuestManager;
 import net.kenji.rpg_villager_quests.network.ModPacketHandler;
+import net.kenji.rpg_villager_quests.sound.ModSounds;
 import net.minecraft.core.Registry;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
@@ -41,7 +42,7 @@ public class RpgVillagerQuests {
 
         MinecraftForge.EVENT_BUS.register(this);
 
-
+        ModSounds.SOUNDS.register(modEventBus);
         ModLoadingContext.get().registerConfig(ModConfig.Type.COMMON, Config.SPEC);
     }
 

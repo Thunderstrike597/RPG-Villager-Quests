@@ -18,8 +18,6 @@ import net.minecraft.world.entity.player.Player;
 import java.util.*;
 
 public class QuestInstance {
-
-
     private final Quest questDefinition;
 
     private int currentStageIndex;
@@ -30,14 +28,14 @@ public class QuestInstance {
     public UUID currentSecondaryEntity;
     public WaypointInstance currentQuestWaypoint;
 
+    public boolean wasInterrupted = false;
     public boolean queQuestAccept = false;
     public boolean queQuestComplete = false;
     public boolean queQuestDecline = false;
 
     private List<Page> temporaryDialogue;
-
-    // ✅ Store which stages are complete for THIS instance
     private final Set<String> completedStageIds = new HashSet<>();
+
 
     public QuestInstance(Quest quest, UUID villager) {
         this.questDefinition = quest;

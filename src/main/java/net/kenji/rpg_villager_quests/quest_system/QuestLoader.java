@@ -82,8 +82,8 @@ public class QuestLoader {
            }
         }
 
-        Dialogue completionDialogue = getDialogue(id, json, "completion_dialogue");
-        Dialogue reconsiderDialogue = getDialogueMainExclusive(id, json, "reconsider_dialogue");
+        DialogueSet completionDialogueSet = getDialogue(id, json, "completion_dialogue");
+        DialogueSet reconsiderDialogueSet = getDialogueMainExclusive(id, json, "reconsider_dialogue");
 
         String villagerProfession = "generic";
         if (json.has("profession")) {
@@ -94,7 +94,7 @@ public class QuestLoader {
             isGlobalQuest = json.get("is_global").getAsBoolean();
         }
 
-        return new Quest(id, displayName, type, stages, completionDialogue, reconsiderDialogue, villagerProfession, isGlobalQuest);
+        return new Quest(id, displayName, type, stages, completionDialogueSet, reconsiderDialogueSet, villagerProfession, isGlobalQuest);
     }
     private static DialogueStage parseDialogue(String id, JsonObject stage, String questId) {
         if (!stage.has("dialogue"))
@@ -108,7 +108,7 @@ public class QuestLoader {
         JsonArray choicesArray = stage.getAsJsonArray("choices");
 
 
-        Dialogue pages = getJsonDialoguePages(dialogue, "pages");
+        DialogueSet pages = getJsonDialoguePages(dialogue, "pages");
         List<Page> choice1Pages = getJsonPages(dialogue, "choice_1_pages");
         List<Page> choice2Pages = getJsonPages(dialogue, "choice_2_pages");
 
@@ -163,7 +163,7 @@ public class QuestLoader {
         String displayName = null;
 
         QuestObjective objective;
-        Dialogue mainInProgressDialogue = null;
+        DialogueSet mainInProgressDialogueSet = null;
         List<Page> secondaryInProgressDialogue = new ArrayList<>();
 
         if(stage.has("display_name")){
@@ -173,7 +173,7 @@ public class QuestLoader {
         if(stage.has("in_progress_dialogue")) {
             JsonObject inProgressDialogue = stage.get("in_progress_dialogue").getAsJsonObject();
             if(inProgressDialogue.has("main")) {
-                mainInProgressDialogue = getJsonDialoguePages(inProgressDialogue, "main");
+                mainInProgressDialogueSet = getJsonDialoguePages(inProgressDialogue, "main");
             }
             else{
                 throw new RuntimeException("Missing \"main\" In Progress Dialogue Type");
@@ -191,8 +191,8 @@ public class QuestLoader {
             replacePage.button2Text = "Leave";
             replaceInProgressPage.add(replacePage);
 
-            Dialogue.Outcome mainOutcome = new Dialogue.Outcome(replaceInProgressPage);
-            mainInProgressDialogue = new Dialogue(null, null, mainOutcome);
+            DialogueSet.Dialogue mainDialogue = new DialogueSet.Dialogue(replaceInProgressPage);
+            mainInProgressDialogueSet = new DialogueSet(null, null, mainDialogue);
         }
 
         String stageTag = "Objective";
@@ -305,7 +305,7 @@ public class QuestLoader {
         }
         QuestEffects completionEffects = new QuestEffects();
 
-        return new ObjectiveStage(id, displayName, objective, mainInProgressDialogue, questId, nextStage, completionEffects, parseRewards(stage), stageTag);
+        return new ObjectiveStage(id, displayName, objective, mainInProgressDialogueSet, questId, nextStage, completionEffects, parseRewards(stage), stageTag);
     }
 
     private static QuestEffects parseEffects(JsonObject obj) {
@@ -360,83 +360,83 @@ public class QuestLoader {
 
         return rewards;
     }
-    private static Dialogue getDialogueMainExclusive(String questId, JsonObject json, String dialogueName){
-        Dialogue.Outcome posOutcome = null;
-        Dialogue.Outcome negOutcome = null;
-        Dialogue.Outcome mainOutcome = null;
+    private static DialogueSet getDialogueMainExclusive(String questId, JsonObject json, String dialogueName){
+        DialogueSet.Dialogue posDialogue = null;
+        DialogueSet.Dialogue negDialogue = null;
+        DialogueSet.Dialogue mainDialogue = null;
 
         if(json.has(dialogueName)) {
             JsonObject completionDialogueObj = json.getAsJsonObject(dialogueName);
             if (completionDialogueObj.has("positive")) {
                 List<Page> pages = getJsonPages(completionDialogueObj, "positive");
-                posOutcome = new Dialogue.Outcome(pages);
+                posDialogue = new DialogueSet.Dialogue(pages);
             }
             else{
                 throw new RuntimeException("Missing 'positive' dialogue type '" + dialogueName + "' in quest -> " + questId);
             }
             if (completionDialogueObj.has("negative")) {
                 List<Page> pages = getJsonPages(completionDialogueObj, "negative");
-                negOutcome = new Dialogue.Outcome(pages);
+                negDialogue = new DialogueSet.Dialogue(pages);
             }
             else{
                 throw new RuntimeException("Missing 'negative' dialogue type '" + dialogueName + "' in quest -> " + questId);
             }
             if (completionDialogueObj.has("main")) {
                 List<Page> pages = getJsonPages(completionDialogueObj, "main");
-                mainOutcome = new Dialogue.Outcome(pages);
+                mainDialogue = new DialogueSet.Dialogue(pages);
             }
-            return new Dialogue(posOutcome, negOutcome, mainOutcome);
+            return new DialogueSet(posDialogue, negDialogue, mainDialogue);
         }
         return null;
     }
-    private static Dialogue getDialogueMainInclusive(String questId, JsonObject json, String dialogueName){
-        Dialogue.Outcome posOutcome = null;
-        Dialogue.Outcome negOutcome = null;
-        Dialogue.Outcome mainOutcome = null;
+    private static DialogueSet getDialogueMainInclusive(String questId, JsonObject json, String dialogueName){
+        DialogueSet.Dialogue posDialogue = null;
+        DialogueSet.Dialogue negDialogue = null;
+        DialogueSet.Dialogue mainDialogue = null;
 
         if(json.has(dialogueName)) {
             JsonObject dialogueObj = json.getAsJsonObject(dialogueName);
             if (dialogueObj.has("positive")) {
                 List<Page> pages = getJsonPages(dialogueObj, "positive");
 
-                posOutcome = new Dialogue.Outcome(pages);
+                posDialogue = new DialogueSet.Dialogue(pages);
             }
             if (dialogueObj.has("negative")) {
                 List<Page> pages = getJsonPages(dialogueObj, "negative");
-                negOutcome = new Dialogue.Outcome(pages);
+                negDialogue = new DialogueSet.Dialogue(pages);
             }
             if (dialogueObj.has("main")) {
                 List<Page> pages = getJsonPages(dialogueObj, "main");
-                mainOutcome = new Dialogue.Outcome(pages);
+                mainDialogue = new DialogueSet.Dialogue(pages);
             }
             else{
                 throw new RuntimeException("Missing 'main' dialogue type '" + dialogueName + "' in quest -> " + questId);
             }
-            return new Dialogue(posOutcome, negOutcome, mainOutcome);
+            return new DialogueSet(posDialogue, negDialogue, mainDialogue);
         }
         return null;
     }
-    private static Dialogue getDialogue(String questId, JsonObject json, String dialogueName){
-        Dialogue.Outcome posOutcome = null;
-        Dialogue.Outcome negOutcome = null;
-        Dialogue.Outcome mainOutcome = null;
+    private static DialogueSet getDialogue(String questId, JsonObject json, String dialogueName){
+        DialogueSet.Dialogue posDialogue = null;
+        DialogueSet.Dialogue negDialogue = null;
+        DialogueSet.Dialogue mainDialogue = null;
 
         if(json.has(dialogueName)) {
             JsonObject dialogueObj = json.getAsJsonObject(dialogueName);
             if (dialogueObj.has("positive")) {
                 List<Page> pages = getJsonPages(dialogueObj, "positive");
 
-                posOutcome = new Dialogue.Outcome(pages);
+                posDialogue = new DialogueSet.Dialogue(pages);
             }
             if (dialogueObj.has("negative")) {
                 List<Page> pages = getJsonPages(dialogueObj, "negative");
-                negOutcome = new Dialogue.Outcome(pages);
+                negDialogue = new DialogueSet.Dialogue(pages);
             }
             if (dialogueObj.has("main")) {
                 List<Page> pages = getJsonPages(dialogueObj, "main");
-                mainOutcome = new Dialogue.Outcome(pages);
+                mainDialogue = new DialogueSet.Dialogue(pages);
             }
-            return new Dialogue(posOutcome, negOutcome, mainOutcome);
+            return new DialogueSet(posDialogue, negDialogue, mainDialogue);
         }
         return null;
     }
@@ -466,7 +466,7 @@ public class QuestLoader {
         }
         return pages;
     }
-    private static Dialogue getJsonDialoguePages(JsonObject json, String objectName){
+    private static DialogueSet getJsonDialoguePages(JsonObject json, String objectName){
         List<Page> pages = new ArrayList<>();
 
         if(json.has(objectName)){
@@ -488,8 +488,8 @@ public class QuestLoader {
                 pages.add(newPage);
             }
         }
-        Dialogue.Outcome mainOutcome = new Dialogue.Outcome(pages);
-        return new Dialogue(null, null, mainOutcome);
+        DialogueSet.Dialogue mainDialogue = new DialogueSet.Dialogue(pages);
+        return new DialogueSet(null, null, mainDialogue);
     }
     private static QuestEffects getQuestEffects(JsonObject json){
         QuestEffects completionEffects = new QuestEffects();

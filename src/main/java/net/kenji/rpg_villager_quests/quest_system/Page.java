@@ -33,19 +33,18 @@ public class Page {
 
     public LoadPageTypes loadNextPage(Player player, ChoiceType choiceType , QuestInstance questInstance, List<Page> pages, int currentPageIndex, UUID villager) {
         if (questInstance != null) {
-
             switch (choiceType) {
                 case OPTION_1 -> {
                     if (pages.get(currentPageIndex).dialogueType == DialogueStage.DialogueType.CHOICE) {
                         return LoadPageTypes.CHOOSE_POSITIVE_DIALOGUE_OPTION;
                     } else {
 
-                        if (questInstance.getQuest().reconsiderDialogue.positive != null && questInstance.getQuest().reconsiderDialogue.main != null) {
+                        if (questInstance.getQuest().reconsiderDialogueSet.positive != null && questInstance.getQuest().reconsiderDialogueSet.main != null) {
                             if (currentPageIndex >= pages.size() - 1) {
-                                if (pages == questInstance.getQuest().reconsiderDialogue.main.pages) {
+                                if (pages == questInstance.getQuest().reconsiderDialogueSet.main.pages) {
                                     return LoadPageTypes.RECONSIDER_POSITIVE;
                                 }
-                                if (pages == questInstance.getQuest().reconsiderDialogue.positive.pages) {
+                                if (pages == questInstance.getQuest().reconsiderDialogueSet.positive.pages) {
                                     return LoadPageTypes.RECONTINUE_DIALOGUE;
                                 }
                             }
@@ -55,13 +54,18 @@ public class Page {
                             return LoadPageTypes.NEXT_MAIN_PAGE;
                         }
                         if (currentPageIndex >= pages.size() - 1) {
-                            if (questInstance.getQuest().stages.get(0).dialogue.positive != null) {
-                                if (pages == questInstance.getQuest().stages.get(0).dialogue.positive.pages)
+                            if(questInstance.getCurrentStage().interruptedDialogue.main != null) {
+                                if (pages == questInstance.getCurrentStage().interruptedDialogue.main.pages || pages == questInstance.getCurrentStage().interruptedDialogue.main.altPages){
+                                    return LoadPageTypes.RESUME_DIALOGUE;
+                                }
+                            }
+                            if (questInstance.getQuest().stages.get(0).dialogueSet.positive != null) {
+                                if (pages == questInstance.getQuest().stages.get(0).dialogueSet.positive.pages)
                                     return LoadPageTypes.CLOSE_DIALOGUE;
-                                if (pages == Objects.requireNonNull(questInstance.getQuest().stages.get(0).dialogue.main).pages)
+                                if (pages == Objects.requireNonNull(questInstance.getQuest().stages.get(0).dialogueSet.main).pages)
                                     return LoadPageTypes.ACCEPT_DIALOGUE;
                             } else if (questInstance.getCurrentStage() == questInstance.getQuest().stages.get(0))
-                                if (pages == Objects.requireNonNull(questInstance.getQuest().stages.get(0).dialogue.main).pages) {
+                                if (pages == Objects.requireNonNull(questInstance.getQuest().stages.get(0).dialogueSet.main).pages) {
                                     return LoadPageTypes.ACCEPT_QUEST;
                                 }
                             if(!questInstance.isComplete(player)) {
@@ -78,21 +82,32 @@ public class Page {
                     if (pages.get(currentPageIndex).dialogueType == DialogueStage.DialogueType.CHOICE) {
                         return LoadPageTypes.CHOOSE_NEGATIVE_DIALOGUE_OPTION;
                     }
-                    if (questInstance.getQuest().reconsiderDialogue.main != null) {
-                        if (pages == questInstance.getQuest().reconsiderDialogue.main.pages) {
+                    if(questInstance.getCurrentStage().interruptedDialogue.main != null) {
+                        if (pages == questInstance.getCurrentStage().interruptedDialogue.main.pages || pages == questInstance.getCurrentStage().interruptedDialogue.main.altPages){
+                            return LoadPageTypes.CLOSE_DIALOGUE;
+                        }
+                    }
+                    if (questInstance.getQuest().reconsiderDialogueSet.main != null) {
+                        if (pages == questInstance.getQuest().reconsiderDialogueSet.main.pages) {
                             if (currentPageIndex >= pages.size() - 1)
                                 return LoadPageTypes.RECONSIDER_NEGATIVE;
                         }
                     }
-                    if (questInstance.getQuest().stages.get(0).dialogue.negative != null) {
-                        if (pages == questInstance.getQuest().stages.get(0).dialogue.main.pages)
-                            return LoadPageTypes.DECLINE_DIALOGUE;
+                    if (currentPageIndex >= pages.size() - 1) {
+                        if (questInstance.getQuest().stages.get(0).dialogueSet.negative != null) {
+                            if (pages == questInstance.getQuest().stages.get(0).dialogueSet.main.pages)
+                                return LoadPageTypes.DECLINE_DIALOGUE;
+                        }
                     }
                     if(!questInstance.isComplete(player)) {
-                        if (questInstance.getCurrentStage().canCompleteStage(player, questInstance, villager)) {
-                            if (questInstance.getCurrentStage().getNextStage(player, questInstance) != null)
-                                return LoadPageTypes.COMPLETE_STAGE;
-                            else return LoadPageTypes.COMPLETE_QUEST;
+                        if(questInstance.getCurrentStage() != questInstance.getQuest().stages.get(0)) {
+                            if (questInstance.getCurrentStage().canCompleteStage(player, questInstance, villager)) {
+                               if(pages.get(currentPageIndex).button1Text == null) {
+                                   if (questInstance.getCurrentStage().getNextStage(player, questInstance) != null)
+                                       return LoadPageTypes.COMPLETE_STAGE;
+                                   else return LoadPageTypes.COMPLETE_QUEST;
+                               }
+                            }
                         }
                     }
                     return LoadPageTypes.CLOSE_DIALOGUE;

@@ -88,7 +88,7 @@ public class QuestVillagerEvents {
         public static void onVillagerSpawn(MobSpawnEvent event) {
             if (!(event.getEntity() instanceof Villager villager)) return;
 
-            if(villager.getSpawnType() == MobSpawnType.EVENT){
+            if(villager.getSpawnType() == MobSpawnType.EVENT || villager.getPersistentData().getBoolean(IS_QUEST_VILLAGER_TAG)){
                 if(villager.getPersistentData().getBoolean("ForceNoQuest")){
                     villager.getPersistentData().remove("ForceNoQuest");
                 }

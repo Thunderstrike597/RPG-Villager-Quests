@@ -27,7 +27,7 @@ public class DialogueStage extends QuestStage {
 
     public ChoiceType chosenDialogueOption = ChoiceType.UNCHOSEN;
 
-    public List<Page> currentDialoguePages = dialogue.main.pages;
+    public List<Page> currentDialoguePages = dialogueSet.main.pages;
 
 
     public enum DialogueType{
@@ -35,7 +35,7 @@ public class DialogueStage extends QuestStage {
         CHOICE
     }
 
-    public DialogueStage(String id, String displayName, Dialogue pages, String belongingQuest, String nextStageId, List<QuestChoice> choices, List<Page> choice1Pages, List<Page> choice2Pages, List<QuestReward> questReward, String tag) {
+    public DialogueStage(String id, String displayName, DialogueSet pages, String belongingQuest, String nextStageId, List<QuestChoice> choices, List<Page> choice1Pages, List<Page> choice2Pages, List<QuestReward> questReward, String tag) {
         super(id, displayName, QuestStageType.valueOf("dialogue".toUpperCase()), pages, belongingQuest, nextStageId, questReward, tag, 12);
         this.choice1Pages = choice1Pages;
         this.choice2Pages = choice2Pages;
@@ -177,7 +177,7 @@ public class DialogueStage extends QuestStage {
 
     @Override
     public List<Page> getMainPages() {
-        return this.dialogue.main.pages;
+        return this.dialogueSet.main.pages;
     }
 
 }

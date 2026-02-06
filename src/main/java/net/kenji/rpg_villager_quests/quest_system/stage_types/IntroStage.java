@@ -14,18 +14,18 @@ import java.util.UUID;
 public class IntroStage extends QuestStage {
     public List<Page> currentIntroDialogue = new ArrayList<>();
 
-    public IntroStage(String displayName, Dialogue introDialogue, String belongingQuestId, String nextStageId) {
-        super("intro", displayName, QuestStageType.INTRO, introDialogue, belongingQuestId, nextStageId, null, null, 0);
+    public IntroStage(String displayName, DialogueSet introDialogueSet, String belongingQuestId, String nextStageId) {
+        super("intro", displayName, QuestStageType.INTRO, introDialogueSet, belongingQuestId, nextStageId, null, null, 0);
         setIntroDialogue(DialogueTypes.MAIN);
     }
 
     public void setIntroDialogue(DialogueTypes type){
        switch (type){
-           case POSITIVE -> currentIntroDialogue = this.dialogue.positive.pages;
-           case NEGATIVE -> currentIntroDialogue = this.dialogue.negative.pages;
+           case POSITIVE -> currentIntroDialogue = this.dialogueSet.positive.pages;
+           case NEGATIVE -> currentIntroDialogue = this.dialogueSet.negative.pages;
            case MAIN -> {
-               assert this.dialogue.main != null;
-               currentIntroDialogue = this.dialogue.main.pages;
+               assert this.dialogueSet.main != null;
+               currentIntroDialogue = this.dialogueSet.main.pages;
            }
        }
     }
@@ -68,6 +68,6 @@ public class IntroStage extends QuestStage {
     }
     @Override
     public List<Page> getMainPages() {
-        return this.dialogue.main.pages;
+        return this.dialogueSet.main.pages;
     }
 }

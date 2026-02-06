@@ -136,6 +136,7 @@ public class VillagerQuestMenu extends Screen {
     public static Quest villagerQuest;
     private static boolean skipDialogue;
     private static boolean pendingWidgetClear;
+    private static boolean isTalking;
     private static boolean initFinished;
     public static VillagerQuestMenu INSTANCE;
 
@@ -408,6 +409,8 @@ public class VillagerQuestMenu extends Screen {
 
 
     private List<Page> getQuestDialogue(QuestData questData, QuestInstance questInstance) {
+        Player player = getMinecraft().player;
+        if(player == null) return null;
 
         if(questInstance == null)
             questInstance = questData.addInactiveQuest(questVillager);
@@ -428,6 +431,10 @@ public class VillagerQuestMenu extends Screen {
 
 
         if(questInstance != null) {
+            if(questInstance.wasInterrupted){
+                return questInstance.getCurrentStage().interruptedDialogue.getMainPages(player);
+            }
+
             if(questInstance.getQuest().getQuedTemporaryDialogue(questInstance) != null){
                 return questInstance.getQuest().getQuedTemporaryDialogue(questInstance);
             }
@@ -454,6 +461,15 @@ public class VillagerQuestMenu extends Screen {
         questInstance.clearQuedDialogue();
         questInstance.queQuestDecline = false;
         onIntroDialgogueSelectDialogue(true);
+    }
+    public void onResumeDialogue(){
+        Player player = getMinecraft().player;
+        if(player == null) return;
+
+        QuestData questData = QuestData.get(player);
+        QuestInstance questInstance = questData.getQuestInstance(villagerQuest.id, questVillager, true);
+        questInstance.wasInterrupted = false;
+        onRefreshDialogue(true);
     }
 
     public void onRefreshDialogue(boolean resetPageIndex){
@@ -515,11 +531,11 @@ public class VillagerQuestMenu extends Screen {
             return;
         QuestInstance questInstance = QuestData.get(player).getQuestInstance(villagerQuest.getQuestId(), questVillager, true);
         if (accept) {
-            questInstance.queTemporaryDialogue(questInstance.getQuest().stages.get(0).dialogue.positive.pages);
+            questInstance.queTemporaryDialogue(questInstance.getQuest().stages.get(0).dialogueSet.positive.pages);
             queQuestAccept(false);
         }
         else{
-            questInstance.queTemporaryDialogue(questInstance.getQuest().stages.get(0).dialogue.negative.pages);
+            questInstance.queTemporaryDialogue(questInstance.getQuest().stages.get(0).dialogueSet.negative.pages);
             questInstance.queQuestDecline = true;
         }
 
@@ -560,10 +576,10 @@ public class VillagerQuestMenu extends Screen {
         switch (choiceType){
             case OPTION_1 -> {
                 questInstance.queQuestDecline = false;
-                questInstance.queTemporaryDialogue(questInstance.getQuest().reconsiderDialogue.positive.pages);
+                questInstance.queTemporaryDialogue(questInstance.getQuest().reconsiderDialogueSet.positive.pages);
             }
             case OPTION_2 -> {
-                questInstance.queTemporaryDialogue(questInstance.getQuest().reconsiderDialogue.negative.pages);
+                questInstance.queTemporaryDialogue(questInstance.getQuest().reconsiderDialogueSet.negative.pages);
             }
         }
         onRefreshDialogue(true);
@@ -614,7 +630,7 @@ public class VillagerQuestMenu extends Screen {
         Page currentPage = pages.get(currentPageIndex);
         if (player == null) return;
 
-        QuestInstance questInstance = QuestData.get(player).getQuestInstance(villagerQuest.getQuestId(), questVillager, false);
+        QuestInstance questInstance = QuestData.get(player).getQuestInstance(villagerQuest.getQuestId(), questVillager, true);
         visibleChars = 0;
         lastTypeTime = 0;
         isPausedAfterPeriod = false;
@@ -675,11 +691,17 @@ public class VillagerQuestMenu extends Screen {
         if (posButton != null)
             posButton.active = false;
         posButton = null;
+
+        if(!Objects.equals(pages.get(currentPageIndex).button1Text, "NONE")){
+            if(!questInstance.queQuestAccept && !questInstance.queQuestDecline && !questInstance.queQuestComplete)
+                questInstance.wasInterrupted = true;
+        }
+
         super.onClose();
 
         if (questInstance != null) {
             if (questInstance.queQuestDecline) {
-                questInstance.queTemporaryDialogue(questInstance.getQuest().reconsiderDialogue.main.pages);
+                questInstance.queTemporaryDialogue(questInstance.getQuest().reconsiderDialogueSet.main.pages);
                 return;
             }
             if(questInstance.queQuestAccept){
@@ -885,7 +907,6 @@ public class VillagerQuestMenu extends Screen {
                         if (now - lastTypeTime >= typeSpeed) {
                             visibleChars++;
                             lastTypeTime = now;
-
                             // Check if the character we just revealed is a period
                             if (visibleChars > 0 && visibleChars <= fullText.length()) {
                                 char lastChar = fullText.charAt(visibleChars - 1);

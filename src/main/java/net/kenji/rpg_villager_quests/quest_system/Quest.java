@@ -19,19 +19,19 @@ public class Quest {
     public final String displayName;
     public final String type;
     public final List<QuestStage> stages;
-    public final Dialogue reconsiderDialogue;
-    public final Dialogue completionDialogue;
+    public final DialogueSet reconsiderDialogueSet;
+    public final DialogueSet completionDialogueSet;
     public final VillagerProfession questProfession;
     public final boolean isGlobalQuest;
 
-    public Quest(String id, String displayName, String type, List<QuestStage> stages, Dialogue completionDialogue, Dialogue reconsiderDialogue, String villagerProfession, boolean isGlobalQuest) {
+    public Quest(String id, String displayName, String type, List<QuestStage> stages, DialogueSet completionDialogueSet, DialogueSet reconsiderDialogueSet, String villagerProfession, boolean isGlobalQuest) {
         this.id = id;
         this.displayName = displayName;
         this.type = type;
         this.stages = stages;
         this.isGlobalQuest = isGlobalQuest;
-        if(reconsiderDialogue != null){
-            this.reconsiderDialogue = reconsiderDialogue;
+        if(reconsiderDialogueSet != null){
+            this.reconsiderDialogueSet = reconsiderDialogueSet;
         }
         else{
             List<Page> mainPages = new ArrayList<>();
@@ -42,12 +42,12 @@ public class Quest {
             mainPage.text = "You're back? Have you changed your mind?";
             mainPages.add(mainPage);
 
-            Dialogue.Outcome mainOutcome = new Dialogue.Outcome(mainPages);
+            DialogueSet.Dialogue mainDialogue = new DialogueSet.Dialogue(mainPages);
 
-            this.reconsiderDialogue = new Dialogue(null,null , mainOutcome);
+            this.reconsiderDialogueSet = new DialogueSet(null,null , mainDialogue);
         }
-        if(completionDialogue != null)
-            this.completionDialogue = completionDialogue;
+        if(completionDialogueSet != null)
+            this.completionDialogueSet = completionDialogueSet;
         else{
 
             Page defaultPage = new Page();
@@ -57,8 +57,8 @@ public class Quest {
             List<Page> defaultPageList = new ArrayList<>();
             defaultPageList.add(defaultPage);
 
-            Dialogue.Outcome defaultOutcome = new Dialogue.Outcome(defaultPageList);
-            this.completionDialogue = new Dialogue(defaultOutcome, null);
+            DialogueSet.Dialogue defaultDialogue = new DialogueSet.Dialogue(defaultPageList);
+            this.completionDialogueSet = new DialogueSet(defaultDialogue, null);
         }
         if(!Objects.equals(villagerProfession, "generic")){
             for (VillagerProfession profession : ForgeRegistries.VILLAGER_PROFESSIONS.getValues()) {
@@ -82,15 +82,15 @@ public class Quest {
         return null;
     }
     public List<Page> getCompletionDialogue(QuestInstance questInstance) {
-        if (completionDialogue.positive != null && completionDialogue.negative != null) {
+        if (completionDialogueSet.positive != null && completionDialogueSet.negative != null) {
             if (questInstance.getQuestReputation() == Reputation.GOOD) {
-                return completionDialogue.positive.pages;
+                return completionDialogueSet.positive.pages;
             } else if (questInstance.getQuestReputation() == Reputation.BAD) {
-                return completionDialogue.negative.pages;
+                return completionDialogueSet.negative.pages;
             }
-            return completionDialogue.positive.pages;
+            return completionDialogueSet.positive.pages;
         }
-        return completionDialogue.main.pages;
+        return completionDialogueSet.main.pages;
     }
 
     public QuestStage getStageById(String id){

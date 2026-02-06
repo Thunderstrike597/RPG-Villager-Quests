@@ -1,0 +1,8 @@
+{
+  "entity.villager.villager_talk":
+  {
+    "category":"master",
+    "subtitle":"entity.villager.villager_talk",
+    "sounds":[{"name":"rpg_villager_quests:entity/villager/villager_talk", "stream":true}]
+  }
+}

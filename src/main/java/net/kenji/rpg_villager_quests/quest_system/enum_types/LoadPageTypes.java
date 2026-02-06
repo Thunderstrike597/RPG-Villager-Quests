@@ -14,6 +14,7 @@ public enum LoadPageTypes {
     DECLINE_DIALOGUE(() -> VillagerQuestMenu.INSTANCE.onIntroDialgogueSelectDialogue(false)),
     COMPLETE_STAGE(VillagerQuestMenu.INSTANCE::onCompleteStage),
     COMPLETE_QUEST(VillagerQuestMenu.INSTANCE::onCompleteQuest),
+    RESUME_DIALOGUE(VillagerQuestMenu.INSTANCE::onResumeDialogue),
     CLOSE_DIALOGUE(VillagerQuestMenu.INSTANCE::onClose);
 
     public Runnable pressMethod;
